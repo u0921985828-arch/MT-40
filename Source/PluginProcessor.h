@@ -53,6 +53,14 @@ public:
 
     RhythmEngine::Transport getTransportState() const noexcept { return rhythm.getTransport(); }
 
+    // --- UI (WebView) -> engine bridges (thread-safe) --------------------
+    // Called from the message thread by the on-screen keyboard / panel.
+    void injectNoteOn (int note, float velocity);
+    void injectNoteOff (int note);
+    void uiPressSynchro() noexcept { synchroPending.store (true); }
+    void uiSetFillHeld (bool held) noexcept { fillHeldUI.store (held); }
+    void uiStartStop() noexcept { startStopPending.store (true); }
+
 private:
     void handleMidiMessage (const juce::MidiMessage& m);
     void handleNoteOn (int note, float velocity);
@@ -69,6 +77,13 @@ private:
 
     VoiceAllocator melodic;
     RhythmEngine rhythm;
+
+    // On-screen keyboard notes are queued here and merged into the block's
+    // MIDI stream on the audio thread (§ WebView keyboard).
+    juce::MidiMessageCollector keyboardCollector;
+    std::atomic<bool> synchroPending  { false };
+    std::atomic<bool> fillHeldUI      { false };
+    std::atomic<bool> startStopPending { false };
 
     // Casio-Chord accompaniment state.
     std::vector<int> heldChordZoneNotes;

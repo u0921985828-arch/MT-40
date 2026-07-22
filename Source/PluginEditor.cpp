@@ -38,6 +38,32 @@ juce::WebBrowserComponent::Options CasioMT40AudioProcessorEditor::makeOptions()
                 juce::File::SpecialLocationType::tempDirectory)))
         .withNativeIntegrationEnabled()
         .withResourceProvider ([this] (const auto& url) { return getResource (url); })
+        // On-screen keyboard + transport controls -> engine.
+        .withNativeFunction ("noteOn", [this] (auto& a, auto complete)
+        {
+            processor.injectNoteOn ((int) a[0], (float) a[1]);
+            complete (juce::var());
+        })
+        .withNativeFunction ("noteOff", [this] (auto& a, auto complete)
+        {
+            processor.injectNoteOff ((int) a[0]);
+            complete (juce::var());
+        })
+        .withNativeFunction ("synchro", [this] (auto&, auto complete)
+        {
+            processor.uiPressSynchro();
+            complete (juce::var());
+        })
+        .withNativeFunction ("setFill", [this] (auto& a, auto complete)
+        {
+            processor.uiSetFillHeld ((bool) a[0]);
+            complete (juce::var());
+        })
+        .withNativeFunction ("startStop", [this] (auto&, auto complete)
+        {
+            processor.uiStartStop();
+            complete (juce::var());
+        })
         .withOptionsFrom (masterRelay)
         .withOptionsFrom (rhythmRelay)
         .withOptionsFrom (bassRelay)

@@ -133,6 +133,20 @@ void RhythmEngine::noteOnInSplitZone() noexcept
     }
 }
 
+void RhythmEngine::start() noexcept
+{
+    transport = Transport::Playing;
+    currentStep = 0;
+    stepPhase = 0.0;
+    fireStep (0);
+}
+
+void RhythmEngine::stop() noexcept
+{
+    transport = Transport::Stopped;
+    // Percussion/bass tails are left to decay naturally.
+}
+
 void RhythmEngine::allSplitNotesReleased() noexcept
 {
     // Returning to stopped is left to host/UI policy; the free-running clock

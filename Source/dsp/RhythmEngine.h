@@ -47,6 +47,8 @@ public:
     // --- Transport / state machine inputs (§5.2) -------------------------
     void pressSynchro() noexcept;                 // STOPPED -> ARMED
     void noteOnInSplitZone() noexcept;            // STOPPED/ARMED -> PLAYING
+    void start() noexcept;                        // force PLAYING from the top
+    void stop() noexcept;                         // -> STOPPED (tails ring out)
     void allSplitNotesReleased() noexcept;        // may return to STOPPED
     void setFillHeld (bool held) noexcept;        // Fill-in button
 

@@ -33,6 +33,7 @@ void CasioMT40AudioProcessor::prepareToPlay (double sr, int)
     sampleRate = sr;
     melodic.prepare (sr);
     rhythm.prepare (sr);
+    keyboardCollector.reset (sr);
     lfoPhase = 0.0;
     currentPatch = -1;
     heldChordZoneNotes.clear();
@@ -234,7 +235,22 @@ void CasioMT40AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     updateFromParameters();
 
+    // Apply UI-driven transport controls (§5.2) on the audio thread.
+    if (synchroPending.exchange (false))
+        rhythm.pressSynchro();
+    if (startStopPending.exchange (false))
+    {
+        if (rhythm.getTransport() == RhythmEngine::Transport::Playing)
+            rhythm.stop();
+        else
+            rhythm.start();
+    }
+    rhythm.setFillHeld (fillHeldUI.load());
+
     const int numSamples = buffer.getNumSamples();
+
+    // Merge on-screen keyboard notes into the incoming MIDI stream.
+    keyboardCollector.removeNextBlockOfMessages (midi, numSamples);
     auto* left  = buffer.getWritePointer (0);
     auto* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer (1) : nullptr;
 
@@ -275,6 +291,20 @@ void CasioMT40AudioProcessor::setStateInformation (const void* data, int sizeInB
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
             apvts.replaceState (juce::ValueTree::fromXml (*xml));
+}
+
+void CasioMT40AudioProcessor::injectNoteOn (int note, float velocity)
+{
+    auto m = juce::MidiMessage::noteOn (1, note, velocity);
+    m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+    keyboardCollector.addMessageToQueue (m);
+}
+
+void CasioMT40AudioProcessor::injectNoteOff (int note)
+{
+    auto m = juce::MidiMessage::noteOff (1, note);
+    m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+    keyboardCollector.addMessageToQueue (m);
 }
 
 juce::AudioProcessorEditor* CasioMT40AudioProcessor::createEditor()
