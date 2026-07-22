@@ -40,6 +40,26 @@ PCM playback anywhere in the signal path.
 | §5 Casio Chord | `CasioChord` | `Source/dsp/CasioChord.{h,cpp}` |
 | §6 APVTS params | `createParameterLayout` | `Source/Parameters.{h,cpp}` |
 | §1-§7 Top level | `CasioMT40AudioProcessor` | `Source/PluginProcessor.{h,cpp}` |
+| GUI (WebView) | `CasioMT40AudioProcessorEditor` + `ui/index.html` | `Source/PluginEditor.{h,cpp}` |
+
+## GUI — native WebView
+
+The editor hosts a `juce::WebBrowserComponent` (native integration enabled)
+instead of native JUCE widgets. Parameters are bridged with typed relays and
+attachments:
+
+| Web widget | Relay | Attachment |
+| :-- | :-- | :-- |
+| `<input type=range>` | `WebSliderRelay` | `WebSliderParameterAttachment` |
+| `<input type=checkbox>` | `WebToggleButtonRelay` | `WebToggleButtonParameterAttachment` |
+| `<select>` | `WebComboBoxRelay` | `WebComboBoxParameterAttachment` |
+
+The relay *name* (e.g. `"master_vca_gain"`) matches the JS
+`Juce.getSliderState(name)` call, giving two-way sync between the HTML controls,
+the APVTS, and host automation. `ui/index.html` and the JUCE front-end JS
+(`ui/js/juce/*.js`) are embedded via `juce_add_binary_data` and returned by the
+editor's `getResource()` resource provider — the WebView loads entirely from
+memory with no network access.
 
 ## Key modelling decisions
 

@@ -1,99 +1,138 @@
 #include "PluginEditor.h"
-#include "dsp/Presets.h"
-#include "dsp/RhythmEngine.h"
+#include "BinaryData.h"
+#include <cstring>
+
+namespace
+{
+    std::vector<std::byte> toByteVector (const char* data, int size)
+    {
+        std::vector<std::byte> v (static_cast<size_t> (size));
+        std::memcpy (v.data(), data, static_cast<size_t> (size));
+        return v;
+    }
+
+    // Basename of a request path, with the query string stripped.
+    juce::String basenameOf (const juce::String& url)
+    {
+        auto path = url.upToFirstOccurrenceOf ("?", false, false);
+        return path.fromLastOccurrenceOf ("/", false, false);
+    }
+}
+
+bool CasioMT40AudioProcessorEditor::SinglePageBrowser::pageAboutToLoad (const juce::String& url)
+{
+    // Only allow the embedded resource-provider origin (and the initial blank
+    // page). There are no external links in the UI, so nothing should ever
+    // navigate away.
+    return url == juce::WebBrowserComponent::getResourceProviderRoot()
+        || url.startsWith ("about:");
+}
+
+juce::WebBrowserComponent::Options CasioMT40AudioProcessorEditor::makeOptions()
+{
+    using Options = juce::WebBrowserComponent::Options;
+    return Options{}
+        .withBackend (Options::Backend::webview2)
+        .withWinWebView2Options (Options::WinWebView2{}
+            .withUserDataFolder (juce::File::getSpecialLocation (
+                juce::File::SpecialLocationType::tempDirectory)))
+        .withNativeIntegrationEnabled()
+        .withResourceProvider ([this] (const auto& url) { return getResource (url); })
+        .withOptionsFrom (masterRelay)
+        .withOptionsFrom (rhythmRelay)
+        .withOptionsFrom (bassRelay)
+        .withOptionsFrom (tempoRelay)
+        .withOptionsFrom (vibratoRelay)
+        .withOptionsFrom (sustainRelay)
+        .withOptionsFrom (modeRelay)
+        .withOptionsFrom (rhythmSelRelay)
+        .withOptionsFrom (presetRelay);
+}
 
 CasioMT40AudioProcessorEditor::CasioMT40AudioProcessorEditor (CasioMT40AudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    auto setupKnob = [this] (juce::Slider& s)
-    {
-        s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-        s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 64, 18);
-        addAndMakeVisible (s);
-    };
-    setupKnob (masterKnob);
-    setupKnob (rhythmKnob);
-    setupKnob (bassKnob);
-    setupKnob (tempoKnob);
-
-    addAndMakeVisible (vibratoButton);
-    addAndMakeVisible (sustainButton);
-
-    modeBox.addItemList ({ "Off", "Play", "Chord" }, 1);
-    addAndMakeVisible (modeBox);
-
-    const auto& presets = getMelodicPresets();
-    for (int i = 0; i < (int) presets.size(); ++i)
-        presetBox.addItem (presets[(size_t) i].name, i + 1);
-    addAndMakeVisible (presetBox);
-
-    static const char* rhythmNames[RhythmEngine::kNumRhythms] =
-        { "Sleng Teng", "Rock 2", "Pops", "Swing", "Bossa", "Waltz" };
-    for (int i = 0; i < RhythmEngine::kNumRhythms; ++i)
-        rhythmBox.addItem (rhythmNames[i], i + 1);
-    addAndMakeVisible (rhythmBox);
-
-    addLabelled (masterKnob, "Main");
-    addLabelled (rhythmKnob, "Rhythm");
-    addLabelled (bassKnob,   "Bass");
-    addLabelled (tempoKnob,  "Tempo");
-    addLabelled (modeBox,    "Mode");
-    addLabelled (rhythmBox,  "Rhythm Sel");
-    addLabelled (presetBox,  "Preset");
+    webView = std::make_unique<SinglePageBrowser> (makeOptions());
+    addAndMakeVisible (*webView);
 
     auto& apvts = processor.apvts;
-    masterAtt  = std::make_unique<APVTS::SliderAttachment> (apvts, ParamIDs::masterVolume, masterKnob);
-    rhythmAtt  = std::make_unique<APVTS::SliderAttachment> (apvts, ParamIDs::rhythmVolume, rhythmKnob);
-    bassAtt    = std::make_unique<APVTS::SliderAttachment> (apvts, ParamIDs::bassVolume,   bassKnob);
-    tempoAtt   = std::make_unique<APVTS::SliderAttachment> (apvts, ParamIDs::tempo,        tempoKnob);
-    vibratoAtt = std::make_unique<APVTS::ButtonAttachment> (apvts, ParamIDs::vibrato,      vibratoButton);
-    sustainAtt = std::make_unique<APVTS::ButtonAttachment> (apvts, ParamIDs::sustain,      sustainButton);
-    modeAtt    = std::make_unique<APVTS::ComboBoxAttachment> (apvts, ParamIDs::kbdMode,    modeBox);
-    rhythmBoxAtt = std::make_unique<APVTS::ComboBoxAttachment> (apvts, ParamIDs::rhythmIdx, rhythmBox);
-    presetAtt  = std::make_unique<APVTS::ComboBoxAttachment> (apvts, ParamIDs::patchIdx,   presetBox);
+    auto param = [&apvts] (const char* id) -> juce::RangedAudioParameter&
+    {
+        return *apvts.getParameter (id);
+    };
 
-    setSize (560, 280);
+    masterAtt  = std::make_unique<juce::WebSliderParameterAttachment>       (param (ParamIDs::masterVolume), masterRelay,  nullptr);
+    rhythmAtt  = std::make_unique<juce::WebSliderParameterAttachment>       (param (ParamIDs::rhythmVolume), rhythmRelay,  nullptr);
+    bassAtt    = std::make_unique<juce::WebSliderParameterAttachment>       (param (ParamIDs::bassVolume),   bassRelay,    nullptr);
+    tempoAtt   = std::make_unique<juce::WebSliderParameterAttachment>       (param (ParamIDs::tempo),        tempoRelay,   nullptr);
+    vibratoAtt = std::make_unique<juce::WebToggleButtonParameterAttachment> (param (ParamIDs::vibrato),      vibratoRelay, nullptr);
+    sustainAtt = std::make_unique<juce::WebToggleButtonParameterAttachment> (param (ParamIDs::sustain),      sustainRelay, nullptr);
+    modeAtt    = std::make_unique<juce::WebComboBoxParameterAttachment>     (param (ParamIDs::kbdMode),      modeRelay,    nullptr);
+    rhythmSelAtt = std::make_unique<juce::WebComboBoxParameterAttachment>   (param (ParamIDs::rhythmIdx),    rhythmSelRelay, nullptr);
+    presetAtt  = std::make_unique<juce::WebComboBoxParameterAttachment>     (param (ParamIDs::patchIdx),     presetRelay,  nullptr);
+
+    webView->goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
+
+    setResizable (true, true);
+    setResizeLimits (420, 300, 900, 620);
+    setSize (560, 380);
+    startTimerHz (15); // push transport state to the UI
 }
 
-void CasioMT40AudioProcessorEditor::addLabelled (juce::Component& c, const juce::String& text)
+CasioMT40AudioProcessorEditor::~CasioMT40AudioProcessorEditor()
 {
-    auto* l = new juce::Label ({}, text);
-    l->setJustificationType (juce::Justification::centred);
-    l->attachToComponent (&c, false);
-    addAndMakeVisible (l);
-    labels.add (l);
+    stopTimer();
+}
+
+std::optional<juce::WebBrowserComponent::Resource>
+CasioMT40AudioProcessorEditor::getResource (const juce::String& url) const
+{
+    const auto name = (url == "/" || url.isEmpty()) ? juce::String ("index.html")
+                                                    : basenameOf (url);
+
+    int size = 0;
+    const char* data = nullptr;
+    juce::String mime;
+
+    if (name == "index.html")
+    {
+        data = BinaryData::index_html; size = BinaryData::index_htmlSize; mime = "text/html";
+    }
+    else if (name == "index.js")
+    {
+        data = BinaryData::index_js; size = BinaryData::index_jsSize; mime = "text/javascript";
+    }
+    else if (name == "check_native_interop.js")
+    {
+        data = BinaryData::check_native_interop_js;
+        size = BinaryData::check_native_interop_jsSize;
+        mime = "text/javascript";
+    }
+
+    if (data == nullptr)
+        return std::nullopt;
+
+    return juce::WebBrowserComponent::Resource { toByteVector (data, size), std::move (mime) };
+}
+
+void CasioMT40AudioProcessorEditor::timerCallback()
+{
+    const int state = static_cast<int> (processor.getTransportState());
+    if (state != lastTransport && webView != nullptr)
+    {
+        lastTransport = state;
+        webView->evaluateJavascript (
+            "window.mt40SetTransport && window.mt40SetTransport(" + juce::String (state) + ");");
+    }
 }
 
 void CasioMT40AudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colour (0xff2b2b30));
-    g.setColour (juce::Colours::whitesmoke);
-    g.setFont (juce::Font (juce::FontOptions (20.0f, juce::Font::bold)));
-    g.drawText ("CASIO MT-40  (DSP Emulation)", getLocalBounds().removeFromTop (34),
-                juce::Justification::centred);
+    g.fillAll (juce::Colour (0xff1b1b1f));
 }
 
 void CasioMT40AudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced (16);
-    area.removeFromTop (40);
-
-    auto knobRow = area.removeFromTop (110);
-    const int kw = knobRow.getWidth() / 4;
-    masterKnob.setBounds (knobRow.removeFromLeft (kw).reduced (8));
-    rhythmKnob.setBounds (knobRow.removeFromLeft (kw).reduced (8));
-    bassKnob.setBounds   (knobRow.removeFromLeft (kw).reduced (8));
-    tempoKnob.setBounds  (knobRow.removeFromLeft (kw).reduced (8));
-
-    area.removeFromTop (24);
-    auto toggleRow = area.removeFromTop (30);
-    vibratoButton.setBounds (toggleRow.removeFromLeft (120));
-    sustainButton.setBounds (toggleRow.removeFromLeft (120));
-
-    area.removeFromTop (24);
-    auto comboRow = area.removeFromTop (30);
-    const int cw = comboRow.getWidth() / 3;
-    modeBox.setBounds   (comboRow.removeFromLeft (cw).reduced (6, 0));
-    rhythmBox.setBounds (comboRow.removeFromLeft (cw).reduced (6, 0));
-    presetBox.setBounds (comboRow.removeFromLeft (cw).reduced (6, 0));
+    if (webView != nullptr)
+        webView->setBounds (getLocalBounds());
 }

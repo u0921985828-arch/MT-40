@@ -62,15 +62,26 @@ target_sources(CasioMT40 PRIVATE
     Source/dsp/CasioChord.cpp
     Source/dsp/Presets.cpp)
 
+# --- Embed the WebView UI (HTML + JUCE JS frontend) as binary data ----------
+# The GUI is authored in ui/ and served in-process by the editor's resource
+# provider, so the plugin needs no network access and ships as a single binary.
+juce_add_binary_data(CasioMT40Data SOURCES
+    ui/index.html
+    ui/js/juce/index.js
+    ui/js/juce/check_native_interop.js)
+
 target_compile_definitions(CasioMT40 PUBLIC
-    JUCE_WEB_BROWSER=0
+    JUCE_WEB_BROWSER=1            # native WebView UI (§ GUI)
     JUCE_USE_CURL=0
+    JUCE_USE_WIN_WEBVIEW2=1       # Windows backend (WebView2)
     JUCE_VST3_CAN_REPLACE_VST2=0)
 
 target_include_directories(CasioMT40 PRIVATE Source)
 
 target_link_libraries(CasioMT40 PRIVATE
+    CasioMT40Data
     juce::juce_audio_utils
+    juce::juce_gui_extra
     juce::juce_dsp
     juce::juce_audio_processors
     PUBLIC

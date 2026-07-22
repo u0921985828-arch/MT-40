@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Casio MT-40</title>
+  <style>
+    :root {
+      --bg:#1b1b1f; --panel:#26262c; --panel2:#2e2e36; --line:#3a3a44;
+      --ink:#e9e9ef; --dim:#9a9aa8; --accent:#ff6a3d; --accent2:#ffce54;
+      --grn:#39d98a; --amber:#ffb454;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); }
+    body { padding:14px; user-select:none; -webkit-user-select:none; }
+
+    .brand { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .brand .logo {
+      font-weight:800; letter-spacing:1px; font-size:18px;
+      padding:4px 10px; border-radius:5px;
+      background:linear-gradient(180deg,var(--accent),#d8461f); color:#1b1b1f;
+    }
+    .brand .sub { color:var(--dim); font-size:12px; }
+    .transport {
+      margin-left:auto; display:flex; align-items:center; gap:6px;
+      font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:1px;
+    }
+    .led { width:10px; height:10px; border-radius:50%; background:#444; box-shadow:inset 0 0 3px #000; }
+    .led.on-stop { background:#555; }
+    .led.on-armed { background:var(--amber); box-shadow:0 0 8px var(--amber); }
+    .led.on-play  { background:var(--grn);  box-shadow:0 0 8px var(--grn); }
+
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:12px; }
+    .card h4 { margin:0 0 8px; font-size:11px; font-weight:600; color:var(--dim);
+               text-transform:uppercase; letter-spacing:1px; }
+
+    input[type=range] {
+      -webkit-appearance:none; appearance:none; width:100%; height:6px;
+      background:var(--panel2); border-radius:4px; outline:none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+      background:var(--accent); cursor:pointer; border:2px solid #1b1b1f;
+    }
+    input[type=range]::-moz-range-thumb {
+      width:16px; height:16px; border-radius:50%; background:var(--accent);
+      cursor:pointer; border:2px solid #1b1b1f;
+    }
+    .val { font-variant-numeric:tabular-nums; font-size:15px; font-weight:700; margin-top:6px; }
+    .val small { color:var(--dim); font-weight:500; font-size:11px; }
+
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px; }
+
+    .switch { display:flex; align-items:center; justify-content:space-between; }
+    .toggle { position:relative; width:46px; height:24px; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .slider-tg {
+      position:absolute; inset:0; background:var(--panel2); border-radius:24px;
+      transition:.15s; border:1px solid var(--line);
+    }
+    .slider-tg::before {
+      content:""; position:absolute; width:18px; height:18px; left:3px; top:2px;
+      background:#c9c9d2; border-radius:50%; transition:.15s;
+    }
+    .toggle input:checked + .slider-tg { background:var(--accent); }
+    .toggle input:checked + .slider-tg::before { transform:translateX(21px); background:#fff; }
+
+    select {
+      width:100%; padding:7px 8px; background:var(--panel2); color:var(--ink);
+      border:1px solid var(--line); border-radius:6px; font-size:13px; outline:none;
+    }
+    .hint { margin-top:12px; color:var(--dim); font-size:11px; line-height:1.5; }
+    .warn { color:var(--amber); }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <div class="logo">CASIO&nbsp;MT-40</div>
+    <div class="sub">DSP Emulation · WebView UI</div>
+    <div class="transport">
+      <span id="tState">stopped</span>
+      <span id="tLed" class="led on-stop"></span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h4>Main Volume</h4>
+      <input type="range" id="master" min="0" max="1" step="0.001" />
+      <div class="val" id="masterVal">–</div>
+    </div>
+    <div class="card">
+      <h4>Rhythm Volume</h4>
+      <input type="range" id="rhythm" min="0" max="1" step="0.001" />
+      <div class="val" id="rhythmVal">–</div>
+    </div>
+    <div class="card">
+      <h4>Bass Volume</h4>
+      <input type="range" id="bass" min="0" max="1" step="0.001" />
+      <div class="val" id="bassVal">–</div>
+    </div>
+    <div class="card">
+      <h4>Tempo</h4>
+      <input type="range" id="tempo" min="0" max="1" step="0.001" />
+      <div class="val" id="tempoVal">–</div>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div class="card switch">
+      <div><h4 style="margin:0">Vibrato</h4><small style="color:var(--dim)">5.5 Hz LFO</small></div>
+      <label class="toggle"><input type="checkbox" id="vibrato" /><span class="slider-tg"></span></label>
+    </div>
+    <div class="card switch">
+      <div><h4 style="margin:0">Sustain</h4><small style="color:var(--dim)">3× release</small></div>
+      <label class="toggle"><input type="checkbox" id="sustain" /><span class="slider-tg"></span></label>
+    </div>
+  </div>
+
+  <div class="row3">
+    <div class="card"><h4>Mode</h4><select id="mode"></select></div>
+    <div class="card"><h4>Rhythm</h4><select id="rhythmSel"></select></div>
+    <div class="card"><h4>Preset</h4><select id="preset"></select></div>
+  </div>
+
+  <div class="hint" id="hint">
+    Chord mode: keys C2–D♯3 trigger Casio-Chord + rhythm; keys above play the melody.
+  </div>
+
+  <script type="module">
+    import * as Juce from "./js/juce/index.js";
+
+    // Transport LED updated from C++ (window.mt40SetTransport).
+    const tLed = document.getElementById("tLed");
+    const tState = document.getElementById("tState");
+    window.mt40SetTransport = (state) => {
+      const names = ["stopped", "armed", "playing"];
+      const cls   = ["on-stop", "on-armed", "on-play"];
+      tState.textContent = names[state] ?? "stopped";
+      tLed.className = "led " + (cls[state] ?? "on-stop");
+    };
+
+    // --- Slider binding --------------------------------------------------
+    function bindSlider(name, elId, valId, fmt) {
+      const state = Juce.getSliderState(name);
+      const el = document.getElementById(elId);
+      const valEl = document.getElementById(valId);
+      const refresh = () => {
+        el.value = state.getNormalisedValue();
+        valEl.innerHTML = fmt(state.getScaledValue(), state.properties);
+      };
+      state.valueChangedEvent.addListener(refresh);
+      state.propertiesChangedEvent.addListener(refresh);
+      el.addEventListener("input", () => state.setNormalisedValue(parseFloat(el.value)));
+      el.addEventListener("pointerdown", () => state.sliderDragStarted());
+      el.addEventListener("pointerup",   () => state.sliderDragEnded());
+      refresh();
+    }
+
+    const pct = (v) => `${Math.round(v * 100)}<small> %</small>`;
+    const bpm = (v) => `${Math.round(v)}<small> BPM</small>`;
+
+    // --- Toggle binding --------------------------------------------------
+    function bindToggle(name, elId) {
+      const state = Juce.getToggleState(name);
+      const el = document.getElementById(elId);
+      const refresh = () => { el.checked = state.getValue(); };
+      state.valueChangedEvent.addListener(refresh);
+      el.addEventListener("change", () => state.setValue(el.checked));
+      refresh();
+    }
+
+    // --- Combo binding ---------------------------------------------------
+    function bindCombo(name, elId) {
+      const state = Juce.getComboBoxState(name);
+      const el = document.getElementById(elId);
+      const rebuild = () => {
+        const choices = state.properties.choices || [];
+        el.innerHTML = "";
+        choices.forEach((label, i) => {
+          const o = document.createElement("option");
+          o.value = i; o.textContent = label;
+          el.appendChild(o);
+        });
+        el.value = state.getChoiceIndex();
+      };
+      state.propertiesChangedEvent.addListener(rebuild);
+      state.valueChangedEvent.addListener(() => { el.value = state.getChoiceIndex(); });
+      el.addEventListener("change", () => state.setChoiceIndex(parseInt(el.value, 10)));
+      rebuild();
+    }
+
+    try {
+      bindSlider("master_vca_gain", "master", "masterVal", pct);
+      bindSlider("rhythm_bus_gain", "rhythm", "rhythmVal", pct);
+      bindSlider("bass_osc_gain",   "bass",   "bassVal",   pct);
+      bindSlider("host_bpm",        "tempo",  "tempoVal",  bpm);
+      bindToggle("global_lfo_on",   "vibrato");
+      bindToggle("env_release_mult","sustain");
+      bindCombo ("kbd_mode",        "mode");
+      bindCombo ("active_rhythm_idx","rhythmSel");
+      bindCombo ("active_patch_idx","preset");
+    } catch (e) {
+      document.getElementById("hint").innerHTML =
+        '<span class="warn">Native bridge unavailable — open this UI inside the plugin host.</span>';
+    }
+  </script>
+</body>
+</html>

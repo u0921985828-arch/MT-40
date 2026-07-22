@@ -23,6 +23,12 @@ is synthesized in real time from DSP first principles. No samples are used.
 * **Casio Chord (§5, §7)** — one-finger Major / Minor / 7th / Minor-7th
   detection. See [`docs/CASIO_CHORD_TRUTH_TABLE.md`](docs/CASIO_CHORD_TRUTH_TABLE.md).
 * **APVTS + MIDI CC map (§6)** — all parameters automatable and CC-controllable.
+* **Native WebView GUI** — the control surface is authored in HTML/CSS/JS
+  (`ui/index.html`) and rendered in a JUCE 8 `WebBrowserComponent` with native
+  integration. Each parameter is bridged via a typed relay + attachment, so the
+  web widgets, the APVTS, and host automation stay in sync. The UI (including
+  JUCE's own front-end JS library) is embedded as `BinaryData` and served by an
+  in-process resource provider — no web server, no network access.
 
 ## Build
 
@@ -33,6 +39,13 @@ cmake --build build --parallel
 
 JUCE 8.0.4 is fetched automatically. Reuse a local checkout with
 `-DJUCE_DIR=/path/to/JUCE`. Produces VST3, AU (macOS), and a Standalone build.
+
+The GUI uses the platform native WebView, so building with `JUCE_WEB_BROWSER=1`
+requires:
+
+* **macOS** — WKWebView (system, no extra dependency).
+* **Windows** — the WebView2 runtime (pre-installed on Win 10/11).
+* **Linux** — WebKitGTK dev package, e.g. `libwebkit2gtk-4.1-dev`.
 
 ## Parameter / MIDI CC map (§6)
 
@@ -51,9 +64,12 @@ JUCE 8.0.4 is fetched automatically. Reuse a local checkout with
 ## Layout
 
 ```
+ui/
+  index.html                WebView control surface (HTML/CSS/JS)
+  js/juce/                  JUCE front-end JS library (embedded)
 Source/
   PluginProcessor.{h,cpp}   top-level: MIDI, split logic, mixing
-  PluginEditor.{h,cpp}      control-surface GUI
+  PluginEditor.{h,cpp}      WebView host: relays + parameter attachments
   Parameters.{h,cpp}        APVTS layout (§6)
   dsp/
     DCOVoice.h              melodic voice (§3.1)

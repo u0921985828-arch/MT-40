@@ -1,9 +1,17 @@
 #include "Parameters.h"
+#include "dsp/Presets.h"
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 {
     using namespace juce;
     AudioProcessorValueTreeState::ParameterLayout layout;
+
+    // Human-readable choice lists so the WebView combo boxes populate their
+    // option labels directly from the parameter (via properties.choices).
+    StringArray rhythmChoices { "Sleng Teng", "Rock 2", "Pops", "Swing", "Bossa", "Waltz" };
+    StringArray presetChoices;
+    for (const auto& p : getMelodicPresets())
+        presetChoices.add (p.name);
 
     layout.add (std::make_unique<AudioParameterFloat> (
         ParameterID { ParamIDs::masterVolume, 1 }, "Main Volume",
@@ -31,11 +39,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         ParameterID { ParamIDs::kbdMode, 1 }, "Mode",
         StringArray { "Off", "Play", "Chord" }, 1));
 
-    layout.add (std::make_unique<AudioParameterInt> (
-        ParameterID { ParamIDs::rhythmIdx, 1 }, "Rhythm", 0, 5, 0));
+    layout.add (std::make_unique<AudioParameterChoice> (
+        ParameterID { ParamIDs::rhythmIdx, 1 }, "Rhythm", rhythmChoices, 0));
 
-    layout.add (std::make_unique<AudioParameterInt> (
-        ParameterID { ParamIDs::patchIdx, 1 }, "Preset", 0, 21, 0));
+    layout.add (std::make_unique<AudioParameterChoice> (
+        ParameterID { ParamIDs::patchIdx, 1 }, "Preset", presetChoices, 0));
 
     return layout;
 }

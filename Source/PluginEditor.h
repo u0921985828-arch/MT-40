@@ -1,39 +1,68 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 #include "PluginProcessor.h"
+#include <optional>
 
 // ---------------------------------------------------------------------------
-// CasioMT40AudioProcessorEditor — minimal control surface exposing the §6
-// parameters. Rotary controls for the gains/tempo, toggles for vibrato and
-// sustain, and combo boxes for mode / rhythm / preset.
+// CasioMT40AudioProcessorEditor — JUCE 8 *native WebView* GUI.
+//
+// The control surface is authored in HTML/CSS/JS (see ui/index.html) and
+// rendered inside a juce::WebBrowserComponent with native integration. Each
+// §6 parameter is bridged to the front-end through a typed relay + parameter
+// attachment, so the HTML widgets stay in sync with the APVTS in both
+// directions (and with host automation).
+//
+// The HTML/JS assets — including JUCE's own front-end library — are embedded
+// as BinaryData and served by an in-process resource provider (no web server,
+// no network access).
 // ---------------------------------------------------------------------------
-class CasioMT40AudioProcessorEditor : public juce::AudioProcessorEditor
+class CasioMT40AudioProcessorEditor : public juce::AudioProcessorEditor,
+                                      private juce::Timer
 {
 public:
     explicit CasioMT40AudioProcessorEditor (CasioMT40AudioProcessor&);
-    ~CasioMT40AudioProcessorEditor() override = default;
+    ~CasioMT40AudioProcessorEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
-    using APVTS = juce::AudioProcessorValueTreeState;
+    // A WebBrowserComponent that refuses to navigate away from the embedded UI.
+    struct SinglePageBrowser : juce::WebBrowserComponent
+    {
+        using WebBrowserComponent::WebBrowserComponent;
+        bool pageAboutToLoad (const juce::String& url) override;
+    };
 
-    juce::Slider makeKnob();
-    void addLabelled (juce::Component& c, const juce::String& text);
+    void timerCallback() override; // pushes transport state to the UI
+
+    std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url) const;
+    juce::WebBrowserComponent::Options makeOptions();
 
     CasioMT40AudioProcessor& processor;
 
-    juce::Slider masterKnob, rhythmKnob, bassKnob, tempoKnob;
-    juce::ToggleButton vibratoButton { "Vibrato" }, sustainButton { "Sustain" };
-    juce::ComboBox modeBox, rhythmBox, presetBox;
+    // --- Relays (front-end <-> back-end bridges). Names MUST match the
+    //     getSliderState/getToggleState/getComboBoxState names in the JS. ---
+    juce::WebSliderRelay       masterRelay  { "master_vca_gain" };
+    juce::WebSliderRelay       rhythmRelay  { "rhythm_bus_gain" };
+    juce::WebSliderRelay       bassRelay    { "bass_osc_gain" };
+    juce::WebSliderRelay       tempoRelay   { "host_bpm" };
+    juce::WebToggleButtonRelay vibratoRelay { "global_lfo_on" };
+    juce::WebToggleButtonRelay sustainRelay { "env_release_mult" };
+    juce::WebComboBoxRelay      modeRelay   { "kbd_mode" };
+    juce::WebComboBoxRelay      rhythmSelRelay { "active_rhythm_idx" };
+    juce::WebComboBoxRelay      presetRelay { "active_patch_idx" };
 
-    juce::OwnedArray<juce::Label> labels;
+    std::unique_ptr<SinglePageBrowser> webView;
 
-    std::unique_ptr<APVTS::SliderAttachment> masterAtt, rhythmAtt, bassAtt, tempoAtt;
-    std::unique_ptr<APVTS::ButtonAttachment> vibratoAtt, sustainAtt;
-    std::unique_ptr<APVTS::ComboBoxAttachment> modeAtt, rhythmBoxAtt, presetAtt;
+    // --- Parameter attachments (constructed after webView / relays) -------
+    std::unique_ptr<juce::WebSliderParameterAttachment>       masterAtt, rhythmAtt, bassAtt, tempoAtt;
+    std::unique_ptr<juce::WebToggleButtonParameterAttachment> vibratoAtt, sustainAtt;
+    std::unique_ptr<juce::WebComboBoxParameterAttachment>     modeAtt, rhythmSelAtt, presetAtt;
+
+    int lastTransport = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CasioMT40AudioProcessorEditor)
 };
