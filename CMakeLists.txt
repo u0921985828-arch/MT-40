@@ -52,15 +52,12 @@ target_sources(CasioMT40 PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
     Source/Parameters.cpp
-    Source/dsp/DCOVoice.cpp
-    Source/dsp/VoiceAllocator.cpp
     Source/dsp/TwinTResonator.cpp
     Source/dsp/SnareDrum.cpp
     Source/dsp/HiHat.cpp
     Source/dsp/SlengTengBass.cpp
     Source/dsp/RhythmEngine.cpp
-    Source/dsp/CasioChord.cpp
-    Source/dsp/Presets.cpp)
+    Source/dsp/CasioChord.cpp)
 
 # --- Embed the WebView UI (HTML + JUCE JS frontend) as binary data ----------
 # The GUI is authored in ui/ and served in-process by the editor's resource

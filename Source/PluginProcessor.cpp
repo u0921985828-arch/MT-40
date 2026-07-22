@@ -32,6 +32,7 @@ void CasioMT40AudioProcessor::prepareToPlay (double sr, int)
 {
     sampleRate = sr;
     melodic.prepare (sr);
+    chordVoices.prepare (sr);
     rhythm.prepare (sr);
     keyboardCollector.reset (sr);
     lfoPhase = 0.0;
@@ -58,9 +59,12 @@ void CasioMT40AudioProcessor::updateFromParameters()
         const auto& presets = getMelodicPresets();
         const int idx = std::clamp (patch, 0, static_cast<int> (presets.size()) - 1);
         melodic.setPreset (presets[idx]);
+        chordVoices.setPreset (presets[idx]);
     }
 
-    melodic.setReleaseMultiplier (*pSustain > 0.5f ? kSustainReleaseMult : 1.0);
+    const double relMult = *pSustain > 0.5f ? kSustainReleaseMult : 1.0;
+    melodic.setReleaseMultiplier (relMult);
+    chordVoices.setReleaseMultiplier (relMult);
 
     rhythm.setTempo (*pTempo);
     rhythm.setRhythm (static_cast<int> (*pRhythmIdx));
@@ -86,6 +90,7 @@ void CasioMT40AudioProcessor::handleMidiMessage (const juce::MidiMessage& m)
     else if (m.isAllNotesOff() || m.isAllSoundOff())
     {
         melodic.allNotesOff();
+        chordVoices.allNotesOff();
         heldChordZoneNotes.clear();
         activeChordTones.clear();
     }
@@ -99,7 +104,11 @@ void CasioMT40AudioProcessor::handleNoteOn (int note, float velocity)
     {
         // Chord/bass trigger zone: start the rhythm and update the chord.
         rhythm.noteOnInSplitZone();
-        heldChordZoneNotes.push_back (note);
+        // Dedup: a repeated Note-On (retrigger, no intervening Note-Off) must
+        // not leave an orphaned entry that keeps the chord stuck.
+        if (std::find (heldChordZoneNotes.begin(), heldChordZoneNotes.end(), note)
+                == heldChordZoneNotes.end())
+            heldChordZoneNotes.push_back (note);
         recomputeChord();
         return;
     }
@@ -133,14 +142,13 @@ void CasioMT40AudioProcessor::handleNoteOff (int note)
 
 void CasioMT40AudioProcessor::recomputeChord()
 {
-    // Release the previous accompaniment voicing.
-    for (int n : activeChordTones)
-        melodic.noteOff (n);
-    activeChordTones.clear();
-
     const auto chord = CasioChord::detect (heldChordZoneNotes);
+
     if (! chord.valid)
     {
+        for (int n : activeChordTones)
+            chordVoices.noteOff (n);
+        activeChordTones.clear();
         rhythm.setChordRoot (-1);
         return;
     }
@@ -148,14 +156,26 @@ void CasioMT40AudioProcessor::recomputeChord()
     // Bass follows the chord root (dedicated monophonic voice, §2).
     rhythm.setChordRoot (chord.bassNote);
 
-    // Voice the chord tones through the melodic pool as accompaniment, one
-    // octave above the split root so they sit above the bass.
+    // Build the new accompaniment voicing (one octave above the split root).
+    std::vector<int> newTones;
+    newTones.reserve (4);
     for (int i = 0; i < chord.numTones; ++i)
-    {
-        const int n = chord.tones[i] + 12 * (1 + kChordVoicingOctave);
-        melodic.noteOn (n, 0.6f);
-        activeChordTones.push_back (n);
-    }
+        newTones.push_back (chord.tones[i] + 12 * (1 + kChordVoicingOctave));
+
+    // Only re-voice when the chord actually changed; otherwise adding/removing
+    // a redundant key would needlessly re-attack the held chord (clicks).
+    if (newTones == activeChordTones)
+        return;
+
+    for (int n : activeChordTones)
+        chordVoices.noteOff (n);
+
+    // The accompaniment plays in its OWN voice pool, so releasing it never
+    // steals a note the player is holding on the melody manual.
+    for (int n : newTones)
+        chordVoices.noteOn (n, 0.6f);
+
+    activeChordTones = std::move (newTones);
 }
 
 void CasioMT40AudioProcessor::handleControlChange (int cc, int value)
@@ -179,8 +199,9 @@ void CasioMT40AudioProcessor::handleControlChange (int cc, int value)
 
         case MidiCC::kbdMode:
         {
-            // 0 Off, 1 Play, 2 Chord -> choice index normalised.
-            const int idx = value < 43 ? 0 : (value < 86 ? 1 : 2);
+            // §6: discrete values 0 = Off, 1 = Play, 2 = Chord. The CC value is
+            // the choice index directly (higher values clamp to the last mode).
+            const int idx = std::clamp (value, 0, 2);
             if (auto* p = apvts.getParameter (ParamIDs::kbdMode))
                 p->setValueNotifyingHost (p->convertTo0to1 (static_cast<float> (idx)));
             break;
@@ -188,8 +209,8 @@ void CasioMT40AudioProcessor::handleControlChange (int cc, int value)
 
         case MidiCC::rhythmSelect:
         {
-            const int idx = std::clamp (value * RhythmEngine::kNumRhythms / 128, 0,
-                                        RhythmEngine::kNumRhythms - 1);
+            // §6: integer 0..5 sent directly as the CC value (clamped).
+            const int idx = std::clamp (value, 0, RhythmEngine::kNumRhythms - 1);
             if (auto* p = apvts.getParameter (ParamIDs::rhythmIdx))
                 p->setValueNotifyingHost (p->convertTo0to1 (static_cast<float> (idx)));
             break;
@@ -213,7 +234,8 @@ float CasioMT40AudioProcessor::renderNextSample()
 
     const float vibratoDepth = (*pVibrato > 0.5f) ? kVibratoDepthSemis : 0.0f;
 
-    const float mel = melodic.render (lfo, vibratoDepth);
+    const float mel = melodic.render (lfo, vibratoDepth)
+                    + chordVoices.render (lfo, vibratoDepth);
     const float rhy = rhythm.process(); // already includes rhythm+bass gains
 
     const float master = *pMaster;

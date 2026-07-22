@@ -103,7 +103,6 @@ void RhythmEngine::reset() noexcept
     transport = Transport::Stopped;
     fillMode = FillMode::None;
     fillHeld = fillWasHeld = false;
-    fillTapCount = 0;
     pendingNormalOnBarLine = false;
 }
 
@@ -159,12 +158,12 @@ void RhythmEngine::setFillHeld (bool held) noexcept
 {
     if (held && ! fillWasHeld)
     {
-        // Rising edge = a new tap.
-        ++fillTapCount;
-        if (fillTapCount >= 2)
-            fillMode = FillMode::SnareEighth;   // double-tap & hold -> 1/8 snares
-        else
-            fillMode = FillMode::KickQuarter;   // first hold -> 1/4 kicks
+        // Rising edge. First hold from normal -> 1/4 kicks; a second
+        // consecutive hold (double-tap) -> 1/8 snares; a further tap cycles
+        // back to 1/4 kicks. Deriving from the current mode (instead of a
+        // latching counter) means a fresh single hold always starts at 1/4.
+        fillMode = (fillMode == FillMode::KickQuarter) ? FillMode::SnareEighth
+                                                       : FillMode::KickQuarter;
         pendingNormalOnBarLine = false;
     }
     else if (! held && fillWasHeld)
@@ -187,7 +186,6 @@ void RhythmEngine::advanceStep() noexcept
         if (pendingNormalOnBarLine && ! fillHeld)
         {
             fillMode = FillMode::None;
-            fillTapCount = 0;
             pendingNormalOnBarLine = false;
         }
     }

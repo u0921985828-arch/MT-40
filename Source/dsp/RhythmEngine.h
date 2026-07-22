@@ -100,7 +100,6 @@ private:
     FillMode fillMode = FillMode::None;
     bool fillHeld = false;
     bool fillWasHeld = false;
-    int fillTapCount = 0;
     bool pendingNormalOnBarLine = false;
 
     int activeRhythm = 0;

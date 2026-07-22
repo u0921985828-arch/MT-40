@@ -75,7 +75,9 @@ private:
         return note < kSplitNote;
     }
 
-    VoiceAllocator melodic;
+    VoiceAllocator melodic;      // right-hand / melody voices
+    VoiceAllocator chordVoices;  // Casio-Chord accompaniment (kept separate so
+                                 // releasing a chord never steals a melody note)
     RhythmEngine rhythm;
 
     // On-screen keyboard notes are queued here and merged into the block's
