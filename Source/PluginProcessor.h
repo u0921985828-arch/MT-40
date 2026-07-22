@@ -1,0 +1,93 @@
+#pragma once
+
+#include <juce_audio_processors/juce_audio_processors.h>
+#include "Parameters.h"
+#include "dsp/VoiceAllocator.h"
+#include "dsp/RhythmEngine.h"
+#include "dsp/CasioChord.h"
+#include "dsp/Presets.h"
+#include <vector>
+
+// ---------------------------------------------------------------------------
+// CasioMT40AudioProcessor — top-level plugin (§1-§7).
+//
+// Wires the APVTS parameters to the DSP engine, handles MIDI (including the
+// split-keyboard / Casio-Chord logic and the CC map from §6), runs the global
+// vibrato LFO, and mixes the melodic pool with the analog rhythm bus.
+// ---------------------------------------------------------------------------
+class CasioMT40AudioProcessor : public juce::AudioProcessor
+{
+public:
+    CasioMT40AudioProcessor();
+    ~CasioMT40AudioProcessor() override = default;
+
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override {}
+    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+    juce::AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override { return true; }
+
+    const juce::String getName() const override { return "Casio MT-40"; }
+    bool acceptsMidi() const override { return true; }
+    bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
+    double getTailLengthSeconds() const override { return 1.0; }
+
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram (int) override {}
+    const juce::String getProgramName (int) override { return {}; }
+    void changeProgramName (int, const juce::String&) override {}
+
+    void getStateInformation (juce::MemoryBlock& destData) override;
+    void setStateInformation (const void* data, int sizeInBytes) override;
+
+    juce::AudioProcessorValueTreeState apvts;
+
+    // Split-keyboard boundaries (§2). Lowest key = C2 (MIDI 36).
+    static constexpr int kLowestKey = 36;
+    static constexpr int kSplitKeyIndex = 15;                 // keys 0-14 vs 15-36
+    static constexpr int kSplitNote = kLowestKey + kSplitKeyIndex; // MIDI 51
+
+    RhythmEngine::Transport getTransportState() const noexcept { return rhythm.getTransport(); }
+
+private:
+    void handleMidiMessage (const juce::MidiMessage& m);
+    void handleNoteOn (int note, float velocity);
+    void handleNoteOff (int note);
+    void handleControlChange (int cc, int value);
+    void updateFromParameters();
+    void recomputeChord();
+    float renderNextSample();
+
+    bool isChordZone (int note) const noexcept
+    {
+        return note < kSplitNote;
+    }
+
+    VoiceAllocator melodic;
+    RhythmEngine rhythm;
+
+    // Casio-Chord accompaniment state.
+    std::vector<int> heldChordZoneNotes;
+    std::vector<int> activeChordTones;
+
+    double sampleRate = 44100.0;
+    double lfoPhase = 0.0;
+    int currentPatch = -1;
+
+    // Cached parameter pointers.
+    std::atomic<float>* pMaster = nullptr;
+    std::atomic<float>* pRhythm = nullptr;
+    std::atomic<float>* pBass   = nullptr;
+    std::atomic<float>* pTempo  = nullptr;
+    std::atomic<float>* pVibrato = nullptr;
+    std::atomic<float>* pSustain = nullptr;
+    std::atomic<float>* pMode    = nullptr;
+    std::atomic<float>* pRhythmIdx = nullptr;
+    std::atomic<float>* pPatch   = nullptr;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CasioMT40AudioProcessor)
+};

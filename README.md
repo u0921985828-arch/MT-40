@@ -1,0 +1,79 @@
+# Casio MT-40 VST/AU Emulator
+
+A mathematically accurate, **PCM-free** emulation of the 1981 Casio MT-40
+(Casiotone MT-40), built in C++ with the [JUCE](https://juce.com) framework.
+Every sound generator — melodic voices and the analog rhythm section alike —
+is synthesized in real time from DSP first principles. No samples are used.
+
+> The MT-40's factory "Rock" rhythm + bass is the origin of the legendary
+> **"Sleng Teng"** riddim. That preset is modelled here from scratch.
+
+## Features
+
+* **Melodic CV synthesis (§3)** — 8-voice pool of dual-pulse DCO voices with
+  per-preset duty cycles, fixed inter-oscillator detune (chorused fatness), a
+  static 1-pole analog LPF, and Casio's two-stage (linear-attack /
+  exponential-release) VCA envelope. Oldest-note voice stealing.
+* **Analog rhythm section (§4)** — Twin-T resonant kick, parallel body+noise
+  snare, and choke-grouped closed/open hi-hats, all driven by a shared LFSR
+  noise source and impulse excitation.
+* **Sleng Teng engine (§5)** — hardcoded 2-bar / 16-steps-per-bar sequencer,
+  free-running clock, dedicated monophonic square-wave bass, and the
+  Synchro / Fill-in transport state machine.
+* **Casio Chord (§5, §7)** — one-finger Major / Minor / 7th / Minor-7th
+  detection. See [`docs/CASIO_CHORD_TRUTH_TABLE.md`](docs/CASIO_CHORD_TRUTH_TABLE.md).
+* **APVTS + MIDI CC map (§6)** — all parameters automatable and CC-controllable.
+
+## Build
+
+```sh
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
+
+JUCE 8.0.4 is fetched automatically. Reuse a local checkout with
+`-DJUCE_DIR=/path/to/JUCE`. Produces VST3, AU (macOS), and a Standalone build.
+
+## Parameter / MIDI CC map (§6)
+
+| Control | CC | Parameter ID | Range |
+| :-- | :-: | :-- | :-- |
+| Main Volume | 7 | `master_vca_gain` | 0.0 – 1.0 |
+| Rhythm Volume | 12 | `rhythm_bus_gain` | 0.0 – 1.0 |
+| Bass Volume | 13 | `bass_osc_gain` | 0.0 – 1.0 |
+| Tempo | — | `host_bpm` | 40 – 240 BPM |
+| Vibrato | 1 | `global_lfo_on` | Off / On (5.5 Hz) |
+| Sustain | 64 | `env_release_mult` | Short / Long (3×) |
+| Mode | 85 | `kbd_mode` | Off / Play / Chord |
+| Rhythm Select | 86 | `active_rhythm_idx` | 0 – 5 |
+| Preset | PC | `active_patch_idx` | 0 – 21 |
+
+## Layout
+
+```
+Source/
+  PluginProcessor.{h,cpp}   top-level: MIDI, split logic, mixing
+  PluginEditor.{h,cpp}      control-surface GUI
+  Parameters.{h,cpp}        APVTS layout (§6)
+  dsp/
+    DCOVoice.h              melodic voice (§3.1)
+    OnePoleLPF.h            static analog LPF (§3.2)
+    TwoStageEnvelope.h      CV VCA envelope (§3.3)
+    ExpDecay.h              percussion VCA
+    Biquad.h                RBJ biquad (BPF/HPF/LPF)
+    LFSRNoise.h             shared noise source (§4)
+    VoiceAllocator.h        8-voice pool (§2)
+    TwinTResonator.{h,cpp}  kick (§4.1)
+    SnareDrum.{h,cpp}       snare (§4.2)
+    HiHat.{h,cpp}           hi-hat + choke (§4.3)
+    SlengTengBass.{h,cpp}   mono bass (§5.1)
+    RhythmEngine.{h,cpp}    sequencer + state machine (§5)
+    CasioChord.{h,cpp}      chord detection (§5, §7)
+    Presets.{h,cpp}         22 melodic patches
+docs/
+  ARCHITECTURE.md
+  CASIO_CHORD_TRUTH_TABLE.md
+```
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full signal flow and
+module map.
