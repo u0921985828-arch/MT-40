@@ -8,7 +8,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     // Human-readable choice lists so the WebView combo boxes populate their
     // option labels directly from the parameter (via properties.choices).
-    StringArray rhythmChoices { "Sleng Teng", "Rock 2", "Pops", "Swing", "Bossa", "Waltz" };
+    // The six rhythms printed on the real MT-40 panel. Index 0 ("Rock") is
+    // the pattern that became the "Sleng Teng" riddim.
+    StringArray rhythmChoices { "Rock", "Samba", "Swing", "Slow Rock", "Waltz", "Pops" };
     StringArray presetChoices;
     for (const auto& p : getMelodicPresets())
         presetChoices.add (p.name);
