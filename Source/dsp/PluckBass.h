@@ -4,7 +4,7 @@
 #include "ExpDecay.h"
 
 // ---------------------------------------------------------------------------
-// SlengTengBass — dedicated monophonic bass voice (§2 bass pool, §5.1 timbre).
+// PluckBass — dedicated monophonic bass voice (§2 bass pool, §5.1 timbre).
 //
 //   Pure square wave -> 12 dB/oct (2-pole) LPF (fc ~= 800 Hz) -> pluck
 //   envelope (fast attack, med-fast decay, ZERO sustain).
@@ -12,7 +12,7 @@
 // Monophonic with Highest-Note priority: a new note always replaces the
 // current one, and the played pitch tracks the highest note in the held set.
 // ---------------------------------------------------------------------------
-class SlengTengBass
+class PluckBass
 {
 public:
     void prepare (double sampleRate) noexcept;

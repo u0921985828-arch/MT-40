@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sleng Teng ST-40</title>
+  <title>Artifacts ST-40</title>
   <style>
     :root{
       --cream:#efe7d8; --cream-lo:#e6ddc9; --cream-hi:#f4eee1; --edge:#cabd9f; --div:#d4c8ac;
@@ -89,7 +89,7 @@
     .badge{ position:absolute; display:flex; align-items:center; justify-content:center;
       background:linear-gradient(180deg,#c8bb9e,#a99a78); border:.1cqw solid #8b7d5e; border-radius:.3cqw;
       box-shadow:inset 0 .1cqw 0 rgba(255,255,255,.5),0 .15cqw .25cqw rgba(0,0,0,.25); }
-    .badge b{ font-weight:800; font-style:italic; letter-spacing:.06cqw; color:#1c1a17; font-size:1.9cqw; }
+    .badge b{ font-weight:800; font-style:italic; letter-spacing:.05cqw; color:#1c1a17; font-size:1.5cqw; }
 
     /* tone strip */
     .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; overflow:hidden; }
@@ -205,7 +205,7 @@
     const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
 
     // ================= POWER + brand =================
-    P("badge",89.6,1.9,7.2,2.9,'<b>SLENG</b>');
+    P("badge",87.0,1.9,9.8,2.7,'<b>ARTIFACTS</b>');
     P("led",84.9,4.0,0.9,0.9);
     const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
 
@@ -227,7 +227,7 @@
     P("board",0,boardY,100,boardB-boardY);
     // brand + bass block
     const bx=3.2;
-    P("brand",bx,boardY+0.5,20,null,'<span class="c">Sleng Teng </span><span class="m">ST-40</span>');
+    P("brand",bx,boardY+0.5,20,null,'<span class="c">Artifacts </span><span class="m">ST-40</span>');
     P("ul",bx,boardY+3.0,17); P("ul",bx,boardY+3.3,17);
     T(bx+5.5,boardB-2.0,"bass",1.1,"txt",6).style.color="#5c4636";
 

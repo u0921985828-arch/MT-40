@@ -18,7 +18,7 @@ void RhythmEngine::prepare (double sampleRate) noexcept
     setTempo (bpm);
 
     // -----------------------------------------------------------------
-    // Rhythm 5: "Rock" — the ST-40 pattern that became the "Sleng Teng"
+    // Rhythm 5: "Rock" — the ST-40 pattern that became a classic digital-reggae
     // riddim (rightmost slider position). Hardcoded 2-bar loop (§5.1). The
     // bass row holds semitone offsets from the auto-chord root; kRest = rest.
     // -----------------------------------------------------------------
@@ -29,7 +29,7 @@ void RhythmEngine::prepare (double sampleRate) noexcept
         { _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_,   _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_ }, // snare
         { X,_,X,_, X,_,X,_, X,_,X,_, X,_,X,_,   X,_,X,_, X,_,X,_, X,_,X,_, X,_,X,_ }, // closed hat
         { _,_,_,_, _,_,_,_, _,_,_,_, _,_,X,_,   _,_,_,_, _,_,_,_, _,_,_,_, _,_,X,_ }, // open hat
-        // bass: the Sleng Teng riff (offsets from root, kRest = tie/rest)
+        // bass: the bass riff (offsets from root, kRest = tie/rest)
         { 0,kRest,0,kRest, 7,kRest,0,kRest, 0,kRest,3,kRest, 7,kRest,5,kRest,
           0,kRest,0,kRest, 7,kRest,0,kRest, 0,kRest,3,kRest, 5,kRest,3,kRest }
     };

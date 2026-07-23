@@ -3,7 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 // ---------------------------------------------------------------------------
-// Parameters — APVTS layout for the Sleng Teng ST-40 emulator (§6, §7 task 1).
+// Parameters — APVTS layout for the Artifacts ST-40 emulator (§6, §7 task 1).
 //
 // Parameter IDs, ranges and default values mirror the proposed VST MIDI CC
 // mapping table. The MIDI CC -> parameter routing (CC7, CC12, CC13, CC1,

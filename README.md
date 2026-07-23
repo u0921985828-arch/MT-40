@@ -1,13 +1,13 @@
-# Sleng Teng ST-40 — VST/AU Emulator
+# Artifacts ST-40 — VST/AU Emulator
 
 A mathematically accurate, **PCM-free** emulation of a legendary 1981
 mini rhythm keyboard, built in C++ with the [JUCE](https://juce.com) framework.
 Every sound generator — melodic voices and the analog rhythm section alike —
 is synthesized in real time from DSP first principles. No samples are used.
 
-> The **ST-40** is named after the **Sleng Teng** riddim: the keyboard's factory
-> "Rock" rhythm + bass line is where that legendary sound was born. That preset
-> is modelled here from scratch, unbranded.
+> The **Artifacts ST-40** models a classic 1981 mini keyboard whose factory
+> "Rock" rhythm + bass line became one of the most influential digital-reggae
+> basslines ever recorded. That preset is rebuilt here from scratch, unbranded.
 
 ## Features
 
@@ -18,7 +18,7 @@ is synthesized in real time from DSP first principles. No samples are used.
 * **Analog rhythm section (§4)** — Twin-T resonant kick, parallel body+noise
   snare, and choke-grouped closed/open hi-hats, all driven by a shared LFSR
   noise source and impulse excitation.
-* **Sleng Teng engine (§5)** — hardcoded 2-bar / 16-steps-per-bar sequencer,
+* **Bass & rhythm engine (§5)** — hardcoded 2-bar / 16-steps-per-bar sequencer,
   free-running clock, dedicated monophonic square-wave bass, and the
   Synchro / Fill-in transport state machine.
 * **Auto-Chord (§5, §7)** — one-finger Major / Minor / 7th / Minor-7th
@@ -83,7 +83,7 @@ Source/
     TwinTResonator.{h,cpp}  kick (§4.1)
     SnareDrum.{h,cpp}       snare (§4.2)
     HiHat.{h,cpp}           hi-hat + choke (§4.3)
-    SlengTengBass.{h,cpp}   mono bass (§5.1)
+    PluckBass.{h,cpp}   mono bass (§5.1)
     RhythmEngine.{h,cpp}    sequencer + state machine (§5)
     AutoChord.{h,cpp}       chord detection (§5, §7)
     Presets.h               the 22 tone presets

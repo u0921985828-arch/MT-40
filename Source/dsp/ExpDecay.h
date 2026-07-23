@@ -6,7 +6,7 @@
 // ExpDecay — one-shot exponential decay envelope for percussion VCAs.
 //
 // Triggered instantaneously to 1.0, then decays exponentially. Used by the
-// snare noise tail, hi-hat closed/open VCAs, and the Sleng Teng bass pluck.
+// snare noise tail, hi-hat closed/open VCAs, and the mono bass pluck.
 // The choke-group logic (§4.3) resets the level to 0 with hardReset().
 // ---------------------------------------------------------------------------
 class ExpDecay

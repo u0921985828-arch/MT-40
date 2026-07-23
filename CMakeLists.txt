@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.22)
 project(ST40 VERSION 0.1.0 LANGUAGES C CXX)
 
 # ---------------------------------------------------------------------------
-# Sleng Teng ST-40 VST/AU emulator
+# Artifacts ST-40 VST/AU emulator
 #
 # Real-time DSP synthesis of a classic 1981 mini rhythm keyboard (the unit that
-# birthed the Sleng Teng riddim). No PCM sample playback is used anywhere: every
+# birthed a legendary digital-reggae riddim). No PCM sample playback is used anywhere: every
 # sound generator is synthesized from the DSP logic described in
 # docs/ARCHITECTURE.md.
 #
@@ -42,7 +42,7 @@ juce_add_plugin(ST40
     PLUGIN_MANUFACTURER_CODE  Oedp
     PLUGIN_CODE               St40
     FORMATS                   VST3 AU Standalone
-    PRODUCT_NAME              "Sleng Teng ST-40"
+    PRODUCT_NAME              "Artifacts ST-40"
     IS_SYNTH                  TRUE
     NEEDS_MIDI_INPUT          TRUE
     NEEDS_MIDI_OUTPUT         FALSE
@@ -56,7 +56,7 @@ target_sources(ST40 PRIVATE
     Source/dsp/TwinTResonator.cpp
     Source/dsp/SnareDrum.cpp
     Source/dsp/HiHat.cpp
-    Source/dsp/SlengTengBass.cpp
+    Source/dsp/PluckBass.cpp
     Source/dsp/RhythmEngine.cpp
     Source/dsp/AutoChord.cpp)
 

@@ -3,12 +3,12 @@
 #include "TwinTResonator.h"
 #include "SnareDrum.h"
 #include "HiHat.h"
-#include "SlengTengBass.h"
+#include "PluckBass.h"
 #include "LFSRNoise.h"
 #include <array>
 
 // ---------------------------------------------------------------------------
-// RhythmEngine — analog rhythm section sequencer + Sleng Teng bass line, with
+// RhythmEngine — analog rhythm section sequencer + mono bass line, with
 // the Synchro / Fill-in state machine (§4, §5).
 //
 //   * 6 rhythm patterns (§6, active_rhythm_idx 0-5). Index 0 is the "Sleng
@@ -17,7 +17,7 @@
 //   * Transport state machine: STOPPED -> ARMED -> PLAYING (§5.2).
 //   * Fill-in logic: hold = 1/4 kicks; double-tap & hold = 1/8 snares (§5.2).
 //
-// The dedicated monophonic bass voice (§2) plays the Sleng Teng bass line,
+// The dedicated monophonic bass voice (§2) plays the mono bass line,
 // transposed to follow the current auto-chord root.
 // ---------------------------------------------------------------------------
 class RhythmEngine
@@ -86,7 +86,7 @@ private:
     TwinT_Resonator kick;
     SnareDrum snare;
     HiHat hat;
-    SlengTengBass bass;
+    PluckBass bass;
 
     std::array<Pattern, kNumRhythms> patterns;
 

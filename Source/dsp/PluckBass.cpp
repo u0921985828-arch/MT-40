@@ -1,7 +1,7 @@
-#include "SlengTengBass.h"
+#include "PluckBass.h"
 #include <cmath>
 
-void SlengTengBass::prepare (double sampleRate) noexcept
+void PluckBass::prepare (double sampleRate) noexcept
 {
     fs = sampleRate;
     lpf.setLowPass (fs, 800.0, 0.707); // 12 dB/oct pluck tone
@@ -10,7 +10,7 @@ void SlengTengBass::prepare (double sampleRate) noexcept
     reset();
 }
 
-void SlengTengBass::reset() noexcept
+void PluckBass::reset() noexcept
 {
     lpf.reset();
     env.hardReset();
@@ -19,7 +19,7 @@ void SlengTengBass::reset() noexcept
     attackGain = 0.0f;
 }
 
-void SlengTengBass::trigger (int midiNote) noexcept
+void PluckBass::trigger (int midiNote) noexcept
 {
     note = midiNote;
     const double freq = 440.0 * std::pow (2.0, (midiNote - 69) / 12.0);
@@ -30,13 +30,13 @@ void SlengTengBass::trigger (int midiNote) noexcept
     attackInc = static_cast<float> (1.0 / (0.003 * fs)); // ~3 ms fast attack
 }
 
-void SlengTengBass::release() noexcept
+void PluckBass::release() noexcept
 {
     // Zero-sustain pluck: nothing to hold. Leave the envelope decaying.
     note = -1;
 }
 
-float SlengTengBass::process() noexcept
+float PluckBass::process() noexcept
 {
     if (! env.isActive()) return 0.0f;
 

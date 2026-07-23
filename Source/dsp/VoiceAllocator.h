@@ -10,7 +10,7 @@
 //   * 8-voice melodic pool, Oldest-Note-Stealing when full.
 //   * (The single dedicated bass voice is handled separately by the Sleng
 //     Teng / auto-chord bass path, which is monophonic Highest-Note
-//     priority — see SlengTengBass / RhythmEngine.)
+//     priority — see PluckBass / RhythmEngine.)
 // ---------------------------------------------------------------------------
 class VoiceAllocator
 {

@@ -9,7 +9,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     // Human-readable choice lists so the WebView combo boxes populate their
     // option labels directly from the parameter (via properties.choices).
     // The six rhythms in the order printed on the ST-40 rhythm slider
-    // (left -> right). "Rock" (rightmost) is the original "Sleng Teng".
+    // (left -> right). "Rock" (rightmost) is the classic digital-reggae rhythm.
     StringArray rhythmChoices { "Samba", "Waltz", "Swing", "Slow Rock", "Pops", "Rock" };
     StringArray presetChoices;
     for (const auto& p : getMelodicPresets())
