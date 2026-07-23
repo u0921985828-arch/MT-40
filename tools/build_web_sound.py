@@ -18,33 +18,38 @@ OUT = os.path.join(SCR, "st40-emulator-sound.html")
 # Pure-JS DSP: identical text is embedded in the worklet realm AND the page
 # realm (worklets run in a separate realm, so the code must exist in both).
 CORE = r'''
-// [duty1,duty2,detuneCents,lpfHz,attack,decay,sustain,release,gain]
-// Percussive tones use sustain 0 (they ring out and die while held);
-// sustained tones hold at their sustain level until the key is released.
+// Casiotone "consonant-vowel" voices. Each preset:
+//  fam  harmonic family (wavetable body / "vowel")
+//  det  chorus detune (cents)   ch  chorus mix (0-1)
+//  lpf  warmth low-pass (Hz)
+//  atk/dec/sus/rel  ADSR       gain output level
+//  cons attack transient type (0 none, 1 bright click, 2 airy chiff)
+//  clv  transient level        cdec transient decay (s)
+const P_=(fam,det,ch,lpf,atk,dec,sus,rel,gain,cons,clv,cdec)=>({fam,det,ch,lpf,atk,dec,sus,rel,gain,cons,clv,cdec});
 const PRESETS=[
-[0.50,0.25,6,3000,0.002,1.60,0.00,0.35,0.85], // 1 electric piano  (struck, long decay)
-[0.20,0.12,7,3600,0.001,0.35,0.00,0.14,0.80], // 2 banjo           (plucked, short)
-[0.40,0.20,6,2800,0.001,0.90,0.00,0.22,0.82], // 3 guitar          (plucked)
-[0.25,0.15,6,4000,0.001,0.60,0.00,0.18,0.80], // 4 harpsichord     (plucked)
-[0.50,0.50,4,3200,0.001,0.45,0.00,0.15,0.74], // 5 xylophone       (mallet ping)
-[0.50,0.33,5,2800,0.001,0.90,0.00,0.20,0.74], // 6 celesta         (bell)
-[0.30,0.30,5,3800,0.001,1.40,0.00,0.25,0.72], // 7 glockenspiel    (bell, long)
-[0.50,0.50,4,2600,0.004,0.05,1.00,0.10,0.84], // 8 organ           (sustained)
-[0.40,0.40,10,2600,0.012,0.08,0.95,0.16,0.80],// 9 accordion
-[0.50,0.50,3,3600,0.004,0.05,1.00,0.09,0.85], //10 pipe organ
-[0.33,0.33,6,2200,0.010,0.10,0.90,0.16,0.80], //11 oriental pipe
-[0.35,0.20,7,3600,0.030,0.12,0.90,0.20,0.82], //12 brass          (slow-ish onset)
-[0.125,0.20,9,1600,0.060,0.15,0.90,0.30,0.74],//13 cello          (bowed)
-[0.15,0.30,14,3200,0.006,0.10,0.95,0.22,0.72],//14 synth fuzz
-[0.125,0.125,8,3000,0.070,0.15,0.90,0.28,0.74],//15 violin         (bowed)
-[0.35,0.20,7,4000,0.010,0.10,0.92,0.20,0.82], //16 trumpet
-[0.12,0.35,16,2600,0.006,0.10,0.90,0.30,0.70],//17 funny fuzz
-[0.125,0.125,12,2800,0.090,0.20,0.90,0.40,0.72],//18 st. ensemble  (slow swell)
-[0.50,0.50,5,2000,0.030,0.08,0.95,0.24,0.80], //19 clarinet
-[0.50,0.50,4,1200,0.050,0.10,0.90,0.26,0.80], //20 flute
-[0.50,0.45,3,1600,0.035,0.08,0.92,0.22,0.78], //21 recorder
-[0.50,0.40,5,1400,0.050,0.10,0.90,0.28,0.76]  //22 folk flute
-].map(a=>({d1:a[0],d2:a[1],det:a[2],lpf:a[3],atk:a[4],dec:a[5],sus:a[6],rel:a[7],gain:a[8]}));
+ P_('epiano',  6,0.15,4200,0.002,1.60,0.00,0.35,0.70,1,0.25,0.030), // 1 electric piano
+ P_('pluck',   7,0.00,5000,0.001,0.35,0.00,0.14,0.62,1,0.40,0.020), // 2 banjo
+ P_('pluck',   6,0.10,3600,0.001,0.90,0.00,0.22,0.66,1,0.30,0.025), // 3 guitar
+ P_('harpsi',  6,0.12,5200,0.001,0.60,0.00,0.18,0.60,1,0.35,0.020), // 4 harpsichord
+ P_('mallet',  4,0.00,6000,0.001,0.45,0.00,0.15,0.60,1,0.30,0.015), // 5 xylophone
+ P_('mallet',  5,0.10,5000,0.001,0.90,0.00,0.20,0.60,1,0.25,0.020), // 6 celesta
+ P_('mallet',  5,0.00,7000,0.001,1.40,0.00,0.25,0.58,1,0.30,0.012), // 7 glockenspiel
+ P_('organ',   4,0.08,4500,0.004,0.05,1.00,0.10,0.60,0,0.00,0.020), // 8 organ
+ P_('reed',   12,0.50,4000,0.012,0.08,0.95,0.16,0.56,0,0.00,0.020), // 9 accordion
+ P_('pipe',    3,0.10,5000,0.004,0.05,1.00,0.09,0.60,2,0.06,0.050), //10 pipe organ
+ P_('reed',    6,0.20,3200,0.010,0.10,0.90,0.16,0.58,0,0.00,0.020), //11 oriental pipe
+ P_('brass',   7,0.20,4200,0.030,0.12,0.90,0.20,0.58,1,0.08,0.030), //12 brass
+ P_('string',  9,0.40,3000,0.060,0.15,0.90,0.30,0.55,2,0.05,0.050), //13 cello
+ P_('fuzz',   14,0.20,5000,0.006,0.10,0.95,0.22,0.50,0,0.00,0.020), //14 synth fuzz
+ P_('string',  8,0.35,4200,0.070,0.15,0.90,0.28,0.54,2,0.05,0.050), //15 violin
+ P_('brass',   7,0.15,5000,0.010,0.10,0.92,0.20,0.56,1,0.10,0.030), //16 trumpet
+ P_('fuzz',   16,0.25,3800,0.006,0.10,0.90,0.30,0.50,0,0.00,0.020), //17 funny fuzz
+ P_('string', 12,0.80,4000,0.090,0.20,0.90,0.40,0.52,0,0.00,0.020), //18 st. ensemble
+ P_('clarinet',5,0.15,3600,0.030,0.08,0.95,0.24,0.60,2,0.05,0.040), //19 clarinet
+ P_('flute',   4,0.15,4000,0.050,0.10,0.90,0.26,0.62,2,0.12,0.050), //20 flute
+ P_('flute',   3,0.10,4600,0.035,0.08,0.92,0.22,0.62,2,0.14,0.045), //21 recorder
+ P_('flute',   5,0.15,4200,0.050,0.10,0.90,0.28,0.60,2,0.12,0.050)  //22 folk flute
+];
 
 const REST=-128;
 // 6 rhythm patterns (index: 0 Samba,1 Waltz,2 Swing,3 Slow Rock,4 Pops,5 Rock)
@@ -108,14 +113,56 @@ class Env2{constructor(fs){this.fs=fs;this.atk=0.005;this.dec=0.1;this.sus=1;thi
 class Exp{constructor(fs){this.fs=fs;this.dec=0.1;this.c=0.999;this.lvl=0;}
  set(d){this.dec=d;this.c=d>0?Math.exp(-6.9077553/(d*this.fs)):0;} trig(){this.lvl=1;} choke(){this.lvl=0;} active(){return this.lvl>1e-4;}
  n(){const o=this.lvl;this.lvl*=this.c;if(this.lvl<1e-5)this.lvl=0;return o;}}
-class Voice{constructor(fs){this.fs=fs;this.lpf=new OnePole(fs);this.env=new Env2(fs);this.p1=0;this.p2=0;this.f=440;this.vel=1;this.note=-1;this.act=false;this.age=0;this.pr=PRESETS[0];}
- setPreset(p){this.pr=p;this.lpf.set(p.lpf);this.env.times(p.atk,p.dec,p.sus,p.rel);} setMult(m){this.env.setMult(m);}
- on(n,v){this.note=n;this.vel=v;this.f=440*Math.pow(2,(n-69)/12);this.p1=0;this.p2=0;this.lpf.reset();this.env.times(this.pr.atk,this.pr.dec,this.pr.sus,this.pr.rel);this.env.on();this.act=true;this.age=0;}
+// --- Additive band-limited wavetables (the "vowel" / tonal body) ----------
+// Each harmonic family is baked into a set of mip tables capped at rising
+// harmonic counts; playback picks the finest table whose top partial stays
+// below ~17 kHz, so high notes never alias.
+const NT=1024, NMASK=1023, MIPS=[2,4,8,16,32];
+function rd(tab,ph){ const x=ph*NT, i=x|0, fr=x-i; const a=tab[i], b=tab[(i+1)&NMASK]; return a+(b-a)*fr; }
+function pickMip(f){ const lim=17000/Math.max(1,f); let j=0; for(let m=0;m<MIPS.length;m++) if(MIPS[m]<=lim) j=m; return j; }
+const FAM={
+ organ:   k=>[1,0.5,0.7,0.35,0,0.2,0,0.12][k-1]||0,
+ pipe:    k=>[1,0.7,0.5,0.4,0.28,0.2,0.14,0.1,0.07,0.05,0.04,0.03][k-1]||0,
+ clarinet:k=>(k%2===1)?1/k:0,
+ reed:    k=>(k%2===1)?1/k:0.4/k,
+ brass:   k=>(1/k)*Math.pow(0.93,k-1),
+ string:  k=>1/Math.pow(k,0.9),
+ flute:   k=>[1,0.22,0.05,0.02][k-1]||0,
+ pluck:   k=>1/k,
+ harpsi:  k=>(1/Math.sqrt(k))*Math.pow(0.96,k-1),
+ mallet:  k=>[1,0.15,0.6,0.1,0.35,0,0.2][k-1]||0,
+ epiano:  k=>[1,0.3,0.12,0.5,0.05,0,0.18][k-1]||0,
+ fuzz:    k=>(1/Math.sqrt(k))*Math.pow(0.97,k-1)
+};
+function buildWaves(hf){ const acc=new Float32Array(NT), caps=new Set(MIPS), tabs=[]; const maxH=MIPS[MIPS.length-1];
+ for(let k=1;k<=maxH;k++){ const a=hf(k); if(a){ const wk=2*Math.PI*k/NT; for(let i=0;i<NT;i++) acc[i]+=a*Math.sin(wk*i); }
+  if(caps.has(k)){ tabs.push(acc.slice()); } }
+ tabs.forEach(t=>{ let m=1e-9; for(let i=0;i<NT;i++){ const v=Math.abs(t[i]); if(v>m)m=v; } for(let i=0;i<NT;i++) t[i]/=m; });
+ return tabs; }
+const FAMILY_TABLES={}; for(const k in FAM) FAMILY_TABLES[k]=buildWaves(FAM[k]);
+
+// --- Voice: wavetable body + chorus + ADSR + "consonant" attack transient --
+class Voice{constructor(fs){this.fs=fs;this.lpf=new OnePole(fs);this.env=new Env2(fs);this.cenv=new Exp(fs);
+  this.noise=new LFSR((0x1234+((fs|0)*2654435761))>>>0);this.cnf=new OnePole(fs);this.cnf.set(1800);
+  this.ph1=0;this.ph2=0;this.f=440;this.vel=1;this.note=-1;this.act=false;this.age=0;this.pr=PRESETS[0];
+  this.tabs=FAMILY_TABLES.organ;this.tab=this.tabs[0];this.detR=1;this.ch=0;this.clv=0;this.cons=0;}
+ setPreset(p){this.pr=p;this.tabs=FAMILY_TABLES[p.fam]||FAMILY_TABLES.organ;this.lpf.set(p.lpf);
+  this.env.times(p.atk,p.dec,p.sus,p.rel);this.detR=Math.pow(2,(p.det||0)/1200);this.ch=p.ch||0;
+  this.clv=p.clv||0;this.cons=p.cons||0;this.cenv.set(p.cdec||0.02);}
+ setMult(m){this.env.setMult(m);}
+ on(n,v){this.note=n;this.vel=v;this.f=440*Math.pow(2,(n-69)/12);this.ph1=0;this.ph2=0;this.lpf.reset();this.cnf.reset();
+  this.tab=this.tabs[pickMip(this.f)];this.env.times(this.pr.atk,this.pr.dec,this.pr.sus,this.pr.rel);this.env.on();
+  if(this.clv>0)this.cenv.trig();this.act=true;this.age=0;}
  off(){this.env.off();}
- render(lfo,depth){if(!this.act)return 0;const det=Math.pow(2,this.pr.det/1200),vib=Math.pow(2,(lfo*depth)/12);
-  const i1=this.f*vib/this.fs,i2=this.f*det*vib/this.fs;const a=(this.p1<this.pr.d1)?1:-1,b=(this.p2<this.pr.d2)?1:-1;
-  this.p1+=i1;if(this.p1>=1)this.p1-=1;this.p2+=i2;if(this.p2>=1)this.p2-=1;
-  let raw=0.5*(a+b);raw=this.lpf.p(raw);const e=this.env.n();if(!this.env.active())this.act=false;return raw*e*this.vel*this.pr.gain;}}
+ render(lfo,depth){if(!this.act)return 0;const vib=Math.pow(2,(lfo*depth)/12),inc=this.f*vib/this.fs;
+  this.ph1+=inc;if(this.ph1>=1)this.ph1-=1;
+  let vowel=rd(this.tab,this.ph1);
+  if(this.ch>0){ this.ph2+=inc*this.detR;if(this.ph2>=1)this.ph2-=1; vowel=(vowel+this.ch*rd(this.tab,this.ph2))/(1+this.ch); }
+  vowel=this.lpf.p(vowel);
+  const e=this.env.n();
+  let cons=0; if(this.clv>0&&this.cenv.active()){ const nz=this.noise.next(),lp=this.cnf.p(nz); cons=(this.cons===2?lp:nz-lp)*this.cenv.n()*this.clv; }
+  if(!this.env.active()&&!this.cenv.active())this.act=false;
+  return (vowel*e+cons)*this.vel*this.pr.gain;}}
 class Alloc{constructor(fs){this.v=[];for(let i=0;i<8;i++)this.v.push(new Voice(fs));}
  setPreset(p){this.v.forEach(x=>x.setPreset(p));} setMult(m){this.v.forEach(x=>x.setMult(m));}
  on(n,vel){for(const x of this.v)if(x.act&&x.note===n){x.on(n,vel);return;}for(const x of this.v)if(!x.act){x.on(n,vel);return;}let o=this.v[0];for(const x of this.v)if(x.age>o.age)o=x;o.on(n,vel);}
