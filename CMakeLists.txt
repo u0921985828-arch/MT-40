@@ -3,11 +3,12 @@ cmake_minimum_required(VERSION 3.22)
 project(CasioMT40 VERSION 0.1.0 LANGUAGES C CXX)
 
 # ---------------------------------------------------------------------------
-# Casio MT-40 VST/AU emulator
+# Sleng Teng ST-40 VST/AU emulator
 #
-# Real-time DSP synthesis of the 1981 Casio MT-40 (Casiotone MT-40). No PCM
-# sample playback is used anywhere: every sound generator is synthesized from
-# the DSP logic described in docs/ARCHITECTURE.md.
+# Real-time DSP synthesis of a classic 1981 mini rhythm keyboard (the unit that
+# birthed the Sleng Teng riddim). No PCM sample playback is used anywhere: every
+# sound generator is synthesized from the DSP logic described in
+# docs/ARCHITECTURE.md.
 #
 # JUCE is pulled in via FetchContent so the project is self-contained. If you
 # already have a local JUCE checkout, pass -DJUCE_DIR=/path/to/JUCE to reuse it.
@@ -39,9 +40,9 @@ endif()
 juce_add_plugin(CasioMT40
     COMPANY_NAME              "OpenEmu DSP"
     PLUGIN_MANUFACTURER_CODE  Oedp
-    PLUGIN_CODE               Mt40
+    PLUGIN_CODE               St40
     FORMATS                   VST3 AU Standalone
-    PRODUCT_NAME              "Casio MT-40"
+    PRODUCT_NAME              "Sleng Teng ST-40"
     IS_SYNTH                  TRUE
     NEEDS_MIDI_INPUT          TRUE
     NEEDS_MIDI_OUTPUT         FALSE

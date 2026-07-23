@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Casio MT-40</title>
+  <title>Sleng Teng ST-40</title>
   <style>
     :root{
       --cream:#efe7d8; --cream-lo:#e6ddc9; --cream-hi:#f4eee1; --edge:#cabd9f; --div:#d4c8ac;
@@ -169,7 +169,7 @@
     const beatLed=P("led",29.5,4.6,0.85,0.85);
     P("redline",26.6,5.5,7.6,0.09).style.background="#b6a888";  // bracket line
     const orange=P("sq orange",26.6,6.1,2.2,2.2);
-    T(25.0,8.55,"<b>casio bass</b>",0.74,"txt",6);
+    T(25.0,8.55,"<b>chord bass</b>",0.74,"txt",6);
     T(25.0,9.15,'synchro/<span class="box">fill in</span>',0.74,"txt",6);
     const beige=P("sq beige",30.2,6.1,2.2,2.2);
     T(29.7,8.7,"start/stop",0.78,"txt",4.6);
@@ -205,7 +205,7 @@
     const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
 
     // ================= POWER + CASIO =================
-    P("casio",89.6,1.9,7.2,2.9,'<b>CASIO</b>');
+    P("casio",89.6,1.9,7.2,2.9,'<b>SLENG</b>');
     P("led",84.9,4.0,0.9,0.9);
     const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
 
@@ -227,7 +227,7 @@
     P("board",0,boardY,100,boardB-boardY);
     // brand + bass block
     const bx=3.2;
-    P("brand",bx,boardY+0.5,20,null,'<span class="c">Casiotone </span><span class="m">MT-40</span>');
+    P("brand",bx,boardY+0.5,20,null,'<span class="c">Sleng Teng </span><span class="m">ST-40</span>');
     P("ul",bx,boardY+3.0,17); P("ul",bx,boardY+3.3,17);
     T(bx+5.5,boardB-2.0,"bass",1.1,"txt",6).style.color="#5c4636";
 

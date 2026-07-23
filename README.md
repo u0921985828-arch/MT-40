@@ -1,12 +1,13 @@
-# Casio MT-40 VST/AU Emulator
+# Sleng Teng ST-40 — VST/AU Emulator
 
-A mathematically accurate, **PCM-free** emulation of the 1981 Casio MT-40
-(Casiotone MT-40), built in C++ with the [JUCE](https://juce.com) framework.
+A mathematically accurate, **PCM-free** emulation of a legendary 1981
+mini rhythm keyboard, built in C++ with the [JUCE](https://juce.com) framework.
 Every sound generator — melodic voices and the analog rhythm section alike —
 is synthesized in real time from DSP first principles. No samples are used.
 
-> The MT-40's factory "Rock" rhythm + bass is the origin of the legendary
-> **"Sleng Teng"** riddim. That preset is modelled here from scratch.
+> The **ST-40** is named after the **Sleng Teng** riddim: the keyboard's factory
+> "Rock" rhythm + bass line is where that legendary sound was born. That preset
+> is modelled here from scratch, unbranded.
 
 ## Features
 
