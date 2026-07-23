@@ -60,11 +60,15 @@ const PAT=[
   hc:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
   ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   b:[0,REST,REST,REST,REST,REST,7,REST,0,REST,REST,REST,5,REST,REST,REST,0,REST,REST,REST,REST,REST,7,REST,0,REST,REST,REST,5,REST,3,REST]},
- {k:[1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
+ // Index 5 = "Rock" — the MT-40 pattern that became the Sleng Teng riddim.
+ // Bassline in E minor (root-relative offsets 0=E, 3=G, 5=A, 7=B), the
+ // ascending/descending 4-note climb; steppers kick 1&3, snare 2&4, hats on
+ // eighths, open hat as the bar-2 turnaround. Default tempo 82 BPM, root E2.
+ {k:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
   s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
-  b:[0,REST,0,REST,7,REST,0,REST,0,REST,3,REST,7,REST,5,REST,0,REST,0,REST,7,REST,0,REST,0,REST,3,REST,5,REST,3,REST]}
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,0,REST,0,REST,3,REST,5,REST,5,REST,7,REST,5,REST,0,REST,0,REST,0,REST,3,REST,5,REST,7,REST,5,REST,3,REST]}
 ];
 
 class Biquad{constructor(){this.b0=1;this.b1=0;this.b2=0;this.a1=0;this.a2=0;this.x1=0;this.x2=0;this.y1=0;this.y2=0;}
@@ -107,14 +111,16 @@ class Snare{constructor(fs,noise){this.fs=fs;this.noise=noise;this.body=new Biqu
 class Hat{constructor(fs,noise){this.fs=fs;this.noise=noise;this.h1=new Biquad();this.h1.hp(fs,8000,0.5412);this.h2=new Biquad();this.h2.hp(fs,8000,1.3066);this.ce=new Exp(fs);this.oe=new Exp(fs);this.ce.set(0.04);this.oe.set(0.30);}
  closed(){if(this.oe.active())this.oe.choke();this.ce.trig();} open(){this.oe.trig();} active(){return this.ce.active()||this.oe.active();}
  p(){if(!this.active())return 0;let n=this.noise.next();n=this.h1.p(n);n=this.h2.p(n);return n*(this.ce.n()+this.oe.n());}}
-class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,800,0.707);this.env=new Exp(fs);this.env.set(0.22);this.ph=0;this.inc=0;this.ag=0;this.ai=0;}
- trig(n){this.inc=440*Math.pow(2,(n-69)/12)/this.fs;this.ph=0;this.env.trig();this.ag=0;this.ai=1/(0.003*this.fs);}
+// Deep "digital" MT-40 bass: pulse wave, resonant LPF for body, longer decay
+// so eighth notes sustain and connect; slight drive for punch.
+class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,1300,1.1);this.env=new Exp(fs);this.env.set(0.40);this.ph=0;this.inc=0;this.ag=0;this.ai=0;}
+ trig(n){this.inc=440*Math.pow(2,(n-69)/12)/this.fs;this.ph=0;this.env.trig();this.ag=0;this.ai=1/(0.004*this.fs);}
  active(){return this.env.active();}
- p(){if(!this.env.active())return 0;const sq=(this.ph<0.5)?1:-1;this.ph+=this.inc;if(this.ph>=1)this.ph-=1;if(this.ag<1){this.ag+=this.ai;if(this.ag>1)this.ag=1;}return this.lpf.p(sq)*this.env.n()*this.ag;}}
+ p(){if(!this.env.active())return 0;const sq=(this.ph<0.45)?1:-1;this.ph+=this.inc;if(this.ph>=1)this.ph-=1;if(this.ag<1){this.ag+=this.ai;if(this.ag>1)this.ag=1;}return Math.tanh(1.4*this.lpf.p(sq))*this.env.n()*this.ag*1.15;}}
 function detectChord(held){if(!held.length)return null;let root=held[0];for(const n of held)if(n>root)root=n;let add=0;for(const n of held)if(n<root)add++;
  let t;if(add===0)t=[root,root+4,root+7];else if(add===1)t=[root,root+3,root+7];else if(add===2)t=[root,root+4,root+7,root+10];else t=[root,root+3,root+7,root+10];return {root:root,tones:t};}
 class Rhythm{constructor(fs){this.fs=fs;this.noise=new LFSR(0xACE1);this.kick=new Kick(fs);this.snare=new Snare(fs,this.noise);this.hat=new Hat(fs,this.noise);this.bass=new Bass(fs);
- this.bpm=90;this.sps=0;this.setTempo(90);this.phase=0;this.step=0;this.trans=0;this.fill=0;this.fh=false;this.fw=false;this.pend=false;this.rIdx=5;this.root=-1;this.rg=0.8;this.bg=0.8;}
+ this.bpm=82;this.sps=0;this.setTempo(82);this.phase=0;this.step=0;this.trans=0;this.fill=0;this.fh=false;this.fw=false;this.pend=false;this.rIdx=5;this.root=-1;this.rg=0.8;this.bg=0.85;}
  setTempo(b){this.bpm=Math.max(40,Math.min(240,b));this.sps=this.fs/((this.bpm/60)*4);}
  setRhythm(i){this.rIdx=Math.max(0,Math.min(5,i));} setChordRoot(r){this.root=r;}
  synchro(){if(this.trans===0)this.trans=1;}
@@ -126,7 +132,7 @@ class Rhythm{constructor(fs){this.fs=fs;this.noise=new LFSR(0xACE1);this.kick=ne
  fire(st){const p=PAT[this.rIdx];let kh=p.k[st]!==0;if(this.fill===1)kh=(st%4===0);if(kh)this.kick.trig();
   let sh=p.s[st]!==0;if(this.fill===2)sh=(st%2===0);if(sh)this.snare.trig();
   if(p.ho[st]!==0)this.hat.open();else if(p.hc[st]!==0)this.hat.closed();
-  const off=p.b[st];if(off!==REST){const root=(this.root>=0)?this.root:45;this.bass.trig(root+off);}}
+  const off=p.b[st];if(off!==REST){const root=(this.root>=0)?this.root:40;this.bass.trig(root+off);}}
  p(){if(this.trans===2){this.phase+=1;if(this.phase>=this.sps){this.phase-=this.sps;this.adv();}}
   const drums=this.kick.p()+this.snare.p()+this.hat.p();const b=this.bass.p();return drums*this.rg+b*this.bg;}}
 
@@ -218,8 +224,8 @@ BRIDGE = CORE + r'''
         getValue(){return this._v;}, setValue(x){ this._v=x; postMsg({t:"param",id:name,v:x?1:0}); this.valueChangedEvent.fire(); } }; }
       function combo(ch,ix,name){ return { properties:{choices:ch}, valueChangedEvent:L(),propertiesChangedEvent:L(),_i:ix,
         getChoiceIndex(){return this._i;}, setChoiceIndex(i){ this._i=i; postMsg({t:"param",id:name,v:i}); this.valueChangedEvent.fire(); } }; }
-      const sl={ master_vca_gain:slider(0.85,0.85,"master_vca_gain"), host_bpm:slider(90,0.25,"host_bpm"),
-        rhythm_bus_gain:slider(0.8,0.8,"rhythm_bus_gain"), bass_osc_gain:slider(0.8,0.8,"bass_osc_gain") };
+      const sl={ master_vca_gain:slider(0.85,0.85,"master_vca_gain"), host_bpm:slider(82,0.21,"host_bpm"),
+        rhythm_bus_gain:slider(0.8,0.8,"rhythm_bus_gain"), bass_osc_gain:slider(0.85,0.85,"bass_osc_gain") };
       const tg={ global_lfo_on:toggle(false,"global_lfo_on"), env_release_mult:toggle(false,"env_release_mult") };
       const co={ active_rhythm_idx:combo(["Samba","Waltz","Swing","Slow Rock","Pops","Rock"],5,"active_rhythm_idx"),
         active_patch_idx:combo(["electric piano","banjo","guitar","harpsichord","xylophone","celesta","glockenspiel","organ","accordion","pipe organ","oriental pipe","brass","cello","synth fuzz","violin","trumpet","funny fuzz","st. ensemble","clarinet","flute","recorder","folk flute"],0,"active_patch_idx") };
