@@ -413,7 +413,18 @@
     (function(){ const low=53,high=89, X0=22, X1=97.2, Y0=boardY+1.0, Y1=boardB-0.6;
       const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
       const w=(X1-X0)/whites.length; const wm=new Map();
-      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,w-0.12,Y1-Y0); wm.set(n,k); attMelody(k,n,i); });
+      // White keys are notched into the real piano shape where a black key sits
+      // above them, so their tap area (clip-path also clips hit-testing) and the
+      // amber press highlight stop exactly at the black key edge — no more
+      // triggering / painting a white key under a neighbouring black one.
+      const wk=w-0.12, notchY=61;
+      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,wk,Y1-Y0); wm.set(n,k); attMelody(k,n,i);
+        const leftN=(n-1>=low)&&isB(n-1), rightN=(n+1<=high)&&isB(n+1);
+        if(leftN||rightN){
+          const lx=leftN ? 100*(0.3*w-0.15)/wk : 0;
+          const rx=rightN? 100*(0.7*w+0.15)/wk : 100;
+          k.style.clipPath=`polygon(${lx}% 0,${rx}% 0,${rx}% ${notchY}%,100% ${notchY}%,100% 100%,0 100%,0 ${notchY}%,${lx}% ${notchY}%)`;
+        } });
       for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
         const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); att(root.lastChild,n); }
     })();
