@@ -235,6 +235,34 @@
     .band{ background:linear-gradient(180deg,#e2552f,#d5431f);
       box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.28), inset 0 -.14cqw .2cqw rgba(0,0,0,.28); }
     .led{ box-shadow: inset 0 0 .2cqw rgba(0,0,0,.6), inset 0 .08cqw .06cqw rgba(255,255,255,.5); }
+
+    /* ================= realism pass 3 — wear, contact shadow, tilt & motion ================= */
+    body{ perspective:2000px; overflow-x:hidden; }
+    .st40{ transform:rotateX(2.6deg); transform-origin:50% 36%;
+      filter:drop-shadow(0 2.2cqw 1.7cqw rgba(0,0,0,.5)); }
+    /* faint vintage wear + uneven gloss on the case, below the controls */
+    .st40::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+      background:
+        repeating-linear-gradient(118deg, rgba(255,255,255,.05) 0 .05cqw, transparent .05cqw 2.4cqw),
+        radial-gradient(55% 42% at 80% 14%, rgba(255,255,255,.14), transparent 62%),
+        radial-gradient(46% 60% at 10% 92%, rgba(70,45,18,.06), transparent 60%);
+      mix-blend-mode:overlay; }
+    /* keys: physical press, warmer ivory, black-key contact shadow on whites */
+    .wkey,.bwk,.bkey,.bbk{ transition:transform .06s ease, filter .06s ease; }
+    .wkey.down,.bwk.down{ transform:translateY(.5cqw); filter:brightness(.96); }
+    .bkey.down,.bbk.down{ transform:translateY(.34cqw); filter:brightness(1.1); }
+    .wkey{ background:linear-gradient(180deg,#fffef9 0%,#fbf7ec 10%,#f0e9d8 55%,#e7dfc9 88%,#d9d0ba 100%); }
+    .bkey,.bbk{ box-shadow:0 .55cqw .6cqw rgba(0,0,0,.6), .18cqw .12cqw .38cqw rgba(0,0,0,.32), -.18cqw .12cqw .38cqw rgba(0,0,0,.32); }
+    /* tempo lamp flashes on each pulse at the current BPM */
+    @keyframes beatflash{
+      0%{ background:radial-gradient(circle at 40% 35%,#ff8663,#e2472a); box-shadow:0 0 1.3cqw #ef5a2c, inset 0 0 .2cqw rgba(0,0,0,.35); }
+      20%{ background:radial-gradient(circle at 40% 35%,#8a2016,#4c110a); box-shadow:inset 0 0 .2cqw rgba(0,0,0,.6); }
+      100%{ background:radial-gradient(circle at 40% 35%,#8a2016,#4c110a); box-shadow:inset 0 0 .2cqw rgba(0,0,0,.6); } }
+    .led.beating{ animation:beatflash var(--beat,.66s) linear infinite; }
+    @media (prefers-reduced-motion:reduce){
+      .st40{ transform:none; }
+      .led.beating{ animation:none; }
+      .wkey,.bwk,.bkey,.bbk{ transition:none; } }
   </style>
 </head>
 <body>
@@ -406,7 +434,11 @@
     P("warn",0,0).id="warn"; const warn=root.lastChild; warn.className="warn"; warn.textContent="Native bridge unavailable — open inside the plugin host.";
 
     // ================= BINDINGS =================
-    window.st40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2); };
+    let tempoS=null;
+    function updateBeat(){ if(tempoS) beatLed.style.setProperty("--beat",(60/Math.max(40,tempoS.getScaledValue()))+"s"); }
+    // Transport lamp: solid on when playing; flashes each pulse when armed/playing.
+    window.st40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2);
+      beatLed.classList.toggle("beating", st>=1); updateBeat(); };
     function bindKnob(dial,states){ const s0=states[0];
       const r=()=>{ dial.style.transform=`rotate(${-140+s0.getNormalisedValue()*280}deg)`; };
       s0.valueChangedEvent.addListener(r); s0.propertiesChangedEvent.addListener(r);
@@ -438,7 +470,8 @@
 
     try{
       bindKnob(volDial,[Juce.getSliderState("master_vca_gain")]);
-      bindKnob(tempoDial,[Juce.getSliderState("host_bpm")]);
+      tempoS=Juce.getSliderState("host_bpm"); bindKnob(tempoDial,[tempoS]);
+      tempoS.valueChangedEvent.addListener(updateBeat); updateBeat();
       bindKnob(rbvDial,[Juce.getSliderState("rhythm_bus_gain"),Juce.getSliderState("bass_osc_gain")]);
       bindToggleSwitch(susSw,"env_release_mult");
       bindToggleSwitch(vibSw,"global_lfo_on");
