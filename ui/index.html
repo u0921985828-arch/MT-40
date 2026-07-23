@@ -310,19 +310,23 @@
     const volDial=knob(18.2,3.5,D);
     T(15.2,5.3,"min",0.9,"dim"); T(19.6,5.3,"max",0.9,"dim");
     const tempoDial=knob(30,3.3,D);
-    T(25.8,5.05,"slow",0.85,"dim"); T(31.9,5.05,"fast",0.85,"dim"); T(28,5.5,"tempo",0.95,"txt",4);
+    T(25.8,5.0,"slow",0.82,"dim"); T(31.9,5.0,"fast",0.82,"dim");
+    // "tempo" plates over the slow–fast rule (panel-cream knockout), sitting
+    // above the transport buttons so it collides with neither.
+    const tmpL=T(28.5,5.15,"tempo",0.78,"txt",3);
+    tmpL.style.background="#f4ede1"; tmpL.style.borderRadius=".25cqw"; tmpL.style.lineHeight="1.05";
     const rbvDial=knob(41,3.2,D);
     T(36.9,4.85,"min",0.82,"dim"); T(42.8,4.85,"max",0.82,"dim");
-    T(38.3,5.35,"<b>rhythm/bass</b>",0.72,"txt",5.4); T(39.5,5.85,"volume",0.72,"txt",3);
+    T(38.3,5.3,"<b>rhythm/bass</b>",0.66,"txt",5.4); T(39.5,5.78,"volume",0.62,"txt",3);
 
     // ================= RHYTHM buttons + LED + slider =================
     const beatLed=P("led",29.5,4.6,0.85,0.85);
     P("redline",26.6,5.5,7.6,0.09).style.background="#b6a888";  // bracket line
     const orange=P("sq orange",26.6,6.1,2.2,2.2);
-    T(25.0,8.55,"<b>chord bass</b>",0.74,"txt",6);
-    T(25.0,9.15,'synchro/<span class="box">fill in</span>',0.74,"txt",6);
+    T(25.4,8.5,"<b>chord bass</b>",0.62,"txt",4.6);
+    T(25.4,9.06,"synchro / fill-in",0.56,"txt",4.6);
     const beige=P("sq beige",30.2,6.1,2.2,2.2);
-    T(29.7,8.7,"start/stop",0.78,"txt",4.6);
+    T(29.3,8.78,"start/stop",0.66,"txt",4.2);
     // rhythm slider (names in a tight zigzag directly above the track)
     const RHY=["samba","waltz","swing","slow rock","pops","rock"];
     P("rtrack",37.6,7.5,10.4,1.7,'<div class="ln"></div>');
@@ -330,9 +334,13 @@
     rrange.className="rrange a"; rrange.style.cssText="left:37.6cqw;top:7.5cqw;width:10.4cqw;height:1.7cqw;";
     root.appendChild(rrange);
     T(41.0,9.35,"rhythm",0.85,"txt",4);
-    const zig=[0,0.45,0,0,0,0.45];
+    // Six selector names in one compact row above the track. "slow rock" is
+    // set two lines so it fits its cell without colliding with its neighbours.
     RHY.forEach((nm,i)=>{ const fx=38.3+i*(9.3/5);
-      P("rtick",fx,7.3,null,null).style.width=".35cqw"; T(fx-1.6,6.9+zig[i],nm,0.68,"txt",3.4); });
+      P("rtick",fx,7.35,null,null).style.width=".3cqw";
+      const two=(nm==="slow rock");
+      const t=T(fx-1.9,two?6.35:6.72,two?"slow<br>rock":nm,two?0.5:0.52,"txt",3.8);
+      t.style.whiteSpace="nowrap"; t.style.lineHeight=two?"1.0":"1.1"; });
 
     // ================= TONE (memory / mode) =================
     function slideSwitch(x,y,w,h,cls,positions,labels,label){
