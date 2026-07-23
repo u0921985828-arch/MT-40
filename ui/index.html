@@ -97,6 +97,10 @@
     .tcell .nm{ font-size:.76cqw; color:var(--ink); display:block; line-height:1.05; margin-top:.08cqw; }
     .tcell.sel{ background:rgba(216,69,42,.15); }
     .tcell.sel .nm{ font-weight:700; }
+    /* SET mode: the tone strip + melody keys read as selectors */
+    .setmode .tcell{ background:rgba(216,69,42,.10); }
+    .setmode .tcell.sel{ background:rgba(216,69,42,.24); }
+    .setmode .wkey{ background:linear-gradient(180deg,#fff2ec,#f0dbd1); }
 
     /* keyboard */
     .board{ position:absolute; background:linear-gradient(180deg,var(--bevel),var(--gold-lo)); }
@@ -214,7 +218,9 @@
       "accordion","pipe organ","oriental pipe","brass","cello","synth fuzz","violin","trumpet","funny fuzz",
       "st. ensemble","clarinet","flute","recorder","folk flute"];
     const stripL=3, stripR=97.2, stripW=stripR-stripL, cw=stripW/22;
-    let patchState=null, memSlots=[0,7,14,19], curSlot=0;
+    // Factory tone-memory defaults (manual §4): 1 Electric Piano, 2 Celesta,
+    // 3 Pipe Organ, 4 Flute — tone numbers 1/6/10/20 -> indices 0/5/9/19.
+    let patchState=null, memSlots=[0,5,9,19], curSlot=0, modeSet=false;
     const tcells=[];
     TONE.forEach((nm,i)=>{ const c=P("tcell",stripL+i*cw,11.9,cw,3.2,`<span class="n">${i+1}</span><span class="nm">${nm}</span>`);
       c.dataset.i=i; c.addEventListener("click",()=>{ if(patchState){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } });
@@ -239,12 +245,21 @@
     function att(el,n){ el.addEventListener("pointerdown",e=>{el.setPointerCapture(e.pointerId);press(el,n);});
       el.addEventListener("pointerup",()=>rel(el,n)); el.addEventListener("pointercancel",()=>rel(el,n));
       el.addEventListener("pointerleave",e=>{ if(e.buttons) rel(el,n); }); }
+    // SET mode (manual §5 control): each melody white key selects one of the 22
+    // tones and stores it in the current tone-memory slot; PLAY mode plays notes.
+    function selectTone(i){ if(patchState && i<22){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } }
+    function attMelody(el,n,wi){
+      el.addEventListener("pointerdown",e=>{ el.setPointerCapture(e.pointerId);
+        if(modeSet){ el.classList.add("down"); selectTone(wi); } else press(el,n); });
+      el.addEventListener("pointerup",()=>{ if(modeSet) el.classList.remove("down"); else rel(el,n); });
+      el.addEventListener("pointercancel",()=>{ if(modeSet) el.classList.remove("down"); else rel(el,n); });
+      el.addEventListener("pointerleave",e=>{ if(e.buttons){ if(modeSet) el.classList.remove("down"); else rel(el,n); } }); }
 
     // main manual 53..89 (F3..F6), area x=22..97.2, y=boardY+1..boardB-0.6
     (function(){ const low=53,high=89, X0=22, X1=97.2, Y0=boardY+1.0, Y1=boardB-0.6;
       const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
       const w=(X1-X0)/whites.length; const wm=new Map();
-      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,w-0.12,Y1-Y0); wm.set(n,k); att(k,n); });
+      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,w-0.12,Y1-Y0); wm.set(n,k); attMelody(k,n,i); });
       for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
         const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); att(root.lastChild,n); }
     })();
@@ -294,6 +309,9 @@
       memSlots[curSlot]=patchState.getChoiceIndex();
       patchState.valueChangedEvent.addListener(markTones); patchState.propertiesChangedEvent.addListener(markTones);
       memSw.on(slot=>{ curSlot=slot; patchState.setChoiceIndex(memSlots[slot]); }); markTones(); }
+
+    // Mode switch: index 1 = SET (white keys select tones), 0 = PLAY.
+    modeSw.on(i=>{ modeSet=(i===1); root.classList.toggle("setmode", modeSet); });
 
     orange.addEventListener("pointerdown",()=>{ synchro&&synchro(); setFill&&setFill(true); });
     const oUp=()=>setFill&&setFill(false);
