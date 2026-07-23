@@ -122,6 +122,49 @@
     .bklab{ position:absolute; text-align:center; font-size:.85cqw; color:#5c4636; pointer-events:none; }
     .bassdiv{ position:absolute; width:.1cqw; background:#8a7250; opacity:.45; border-radius:.05cqw; }
     .warn{ position:absolute; left:3cqw; bottom:.4cqw; color:var(--red); font-size:1cqw; font-weight:700; display:none; }
+
+    /* ================= realism pass — material, light & depth ================= */
+    .st40{
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+        radial-gradient(130% 92% at 50% -14%, rgba(255,255,255,.34), transparent 56%),
+        linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
+      background-blend-mode: soft-light, screen, normal;
+      box-shadow:
+        0 3cqw 7cqw rgba(0,0,0,.6), 0 .7cqw 1.4cqw rgba(0,0,0,.34),
+        inset 0 .16cqw 0 rgba(255,255,255,.75),
+        inset 0 -.5cqw 1.2cqw rgba(60,40,15,.14),
+        inset 0 0 2.4cqw rgba(70,45,18,.10); }
+    /* speaker louvers become carved grooves */
+    .slot{ background:linear-gradient(180deg,#b3a37f,#cabd9c);
+      box-shadow: inset 0 .12cqw .2cqw rgba(0,0,0,.42), 0 .09cqw 0 rgba(255,255,255,.6); }
+    /* knobs: cast shadow + specular hit */
+    .knob{ filter:drop-shadow(0 .36cqw .42cqw rgba(0,0,0,.42)); }
+    .knob .face::after{ content:""; position:absolute; top:11%; left:14%; width:38%; height:30%;
+      border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.62),transparent 70%); pointer-events:none; }
+    /* square buttons: gloss highlight + seated well */
+    .sq{ box-shadow:0 .42cqw .5cqw rgba(0,0,0,.4), 0 0 0 .1cqw rgba(0,0,0,.10),
+      inset 0 .2cqw .3cqw rgba(255,255,255,.45), inset 0 -.3cqw .42cqw rgba(0,0,0,.3); }
+    .sq::after{ content:""; position:absolute; left:12%; right:12%; top:9%; height:36%; border-radius:.42cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.55),transparent); pointer-events:none; }
+    /* slide switches: glossier thumb, deeper track */
+    .swt{ box-shadow:inset 0 .16cqw .34cqw rgba(0,0,0,.34), inset 0 -.05cqw 0 rgba(255,255,255,.5); }
+    .swth{ box-shadow:0 .18cqw .3cqw rgba(0,0,0,.45), inset 0 .18cqw .14cqw rgba(255,255,255,.55),
+      inset 0 -.14cqw .2cqw rgba(0,0,0,.28); }
+    /* white keys: glossy with sheen + separation shadow */
+    .wkey{ background:linear-gradient(180deg,#ffffff,#fbf9f2 14%,#eae4d5 86%,#dbd3c1);
+      box-shadow: inset 0 .16cqw 0 rgba(255,255,255,.95), inset -.12cqw 0 .16cqw rgba(0,0,0,.07),
+        0 .4cqw .5cqw rgba(0,0,0,.14); }
+    .bwk{ background:linear-gradient(180deg,#ffffff,#f4eee0 58%,#e3dcc9);
+      box-shadow: inset 0 .14cqw 0 rgba(255,255,255,.92), 0 .3cqw .4cqw rgba(0,0,0,.18); }
+    /* black keys: glossy body + specular streak */
+    .bkey{ background:linear-gradient(180deg,#5b564e 0%,#2c2925 20%,#141210 100%); box-shadow:0 .42cqw .5cqw rgba(0,0,0,.55); }
+    .bbk{ background:linear-gradient(180deg,#5b564e,#2c2925 22%,#141210); }
+    .bkey::after,.bbk::after{ content:""; position:absolute; left:16%; right:16%; top:6%; height:24%;
+      border-radius:.2cqw; background:linear-gradient(180deg,rgba(255,255,255,.28),transparent); pointer-events:none; }
+    /* keybed + red band: subtle sheen */
+    .board{ box-shadow: inset 0 .3cqw .6cqw rgba(255,255,255,.12), inset 0 -.4cqw 1cqw rgba(0,0,0,.2); }
+    .band{ box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.22), inset 0 -.12cqw .2cqw rgba(0,0,0,.2); }
   </style>
 </head>
 <body>
