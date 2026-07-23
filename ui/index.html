@@ -92,9 +92,9 @@
     .casio b{ font-weight:800; font-style:italic; letter-spacing:.06cqw; color:#1c1a17; font-size:1.9cqw; }
 
     /* tone strip */
-    .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; }
-    .tcell .n{ font-size:1cqw; color:var(--red); font-weight:700; display:block; line-height:1; }
-    .tcell .nm{ font-size:.82cqw; color:var(--ink); display:block; line-height:1.1; margin-top:.1cqw; }
+    .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; overflow:hidden; }
+    .tcell .n{ font-size:.95cqw; color:var(--red); font-weight:700; display:block; line-height:1; }
+    .tcell .nm{ font-size:.76cqw; color:var(--ink); display:block; line-height:1.05; margin-top:.08cqw; }
     .tcell.sel{ background:rgba(216,69,42,.15); }
     .tcell.sel .nm{ font-weight:700; }
 
@@ -116,6 +116,7 @@
       cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .2cqw .3cqw rgba(0,0,0,.5); }
     .bbk.down{ background:linear-gradient(180deg,#2a2723,#000); }
     .bklab{ position:absolute; text-align:center; font-size:.85cqw; color:#5c4636; pointer-events:none; }
+    .bassdiv{ position:absolute; width:.1cqw; background:#8a7250; opacity:.45; border-radius:.05cqw; }
     .warn{ position:absolute; left:3cqw; bottom:.4cqw; color:var(--red); font-size:1cqw; font-weight:700; display:none; }
   </style>
 </head>
@@ -159,33 +160,33 @@
     const volDial=knob(18.2,3.5,D);
     T(15.2,5.3,"min",0.9,"dim"); T(19.6,5.3,"max",0.9,"dim");
     const tempoDial=knob(30,3.3,D);
-    T(25.8,5.1,"slow",0.9,"dim"); T(31.8,5.1,"fast",0.9,"dim"); T(28,5.9,"tempo",1.0,"txt",4);
-    const rbvDial=knob(41,3.3,D);
-    T(36.9,5.1,"min",0.9,"dim"); T(42.8,5.1,"max",0.9,"dim");
-    T(38.3,5.75,"<b>rhythm/bass</b>",0.82,"txt",5.4); T(39.5,6.5,"volume",0.82,"txt",3);
+    T(25.8,5.05,"slow",0.85,"dim"); T(31.9,5.05,"fast",0.85,"dim"); T(28,5.5,"tempo",0.95,"txt",4);
+    const rbvDial=knob(41,3.2,D);
+    T(36.9,4.85,"min",0.82,"dim"); T(42.8,4.85,"max",0.82,"dim");
+    T(38.3,5.35,"<b>rhythm/bass</b>",0.72,"txt",5.4); T(39.5,5.85,"volume",0.72,"txt",3);
 
     // ================= RHYTHM buttons + LED + slider =================
-    const beatLed=P("led",29.5,5.2,0.9,0.9);
-    P("redline",26.6,6.0,7.6,0.09).style.background="#b6a888";  // bracket line
-    const orange=P("sq orange",26.6,6.5,2.3,2.3);
-    T(25.0,9.0,"<b>casio bass</b>",0.78,"txt",6);
-    T(25.0,9.65,'synchro/<span class="box">fill in</span>',0.78,"txt",6);
-    const beige=P("sq beige",30.3,6.5,2.3,2.3);
-    T(29.8,9.1,"start/stop",0.82,"txt",4.6);
-    // rhythm slider
+    const beatLed=P("led",29.5,4.6,0.85,0.85);
+    P("redline",26.6,5.5,7.6,0.09).style.background="#b6a888";  // bracket line
+    const orange=P("sq orange",26.6,6.1,2.2,2.2);
+    T(25.0,8.55,"<b>casio bass</b>",0.74,"txt",6);
+    T(25.0,9.15,'synchro/<span class="box">fill in</span>',0.74,"txt",6);
+    const beige=P("sq beige",30.2,6.1,2.2,2.2);
+    T(29.7,8.7,"start/stop",0.78,"txt",4.6);
+    // rhythm slider (names in a tight zigzag directly above the track)
     const RHY=["samba","waltz","swing","slow rock","pops","rock"];
-    P("rtrack",37.6,6.6,10.4,2.2,'<div class="ln"></div>');
+    P("rtrack",37.6,7.5,10.4,1.7,'<div class="ln"></div>');
     const rrange=document.createElement("input"); rrange.type="range"; rrange.min=0; rrange.max=5; rrange.step=1;
-    rrange.className="rrange a"; rrange.style.cssText="left:37.6cqw;top:6.6cqw;width:10.4cqw;height:2.2cqw;";
+    rrange.className="rrange a"; rrange.style.cssText="left:37.6cqw;top:7.5cqw;width:10.4cqw;height:1.7cqw;";
     root.appendChild(rrange);
-    T(41.0,9.05,"rhythm",0.92,"txt",4);
-    const zig=[0,0.75,0,0,0,0.75];
+    T(41.0,9.35,"rhythm",0.85,"txt",4);
+    const zig=[0,0.45,0,0,0,0.45];
     RHY.forEach((nm,i)=>{ const fx=38.3+i*(9.3/5);
-      P("rtick",fx,5.95,null,null); T(fx-1.7,5.1+zig[i],nm,0.78,"txt",3.5); });
+      P("rtick",fx,7.3,null,null).style.width=".35cqw"; T(fx-1.6,6.9+zig[i],nm,0.68,"txt",3.4); });
 
     // ================= TONE (memory / mode) =================
     function slideSwitch(x,y,w,h,cls,positions,labels,label){
-      const t=P("swt "+cls,x,y,w,h); const thw=Math.min(w/positions*1.5,w/positions*1.5);
+      const t=P("swt "+cls,x,y,w,h);
       const th=document.createElement("div"); th.className="swth"; th.style.width=(w/positions*1.4)+"cqw"; t.appendChild(th);
       labels.forEach((tl,i)=>{ T(x+w*(i+0.5)/positions-1.2,y-1.5,tl,0.9,"txt",2.4);
         P("dot",x+w*(i+0.5)/positions-0.2,y-0.5,null,null).style.background="#6b5f4a"; });
@@ -247,16 +248,26 @@
       for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
         const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); att(root.lastChild,n); }
     })();
-    // bass manual 36..50, discrete keys, x=bx..20.5
-    (function(){ const low=36,high=50, X0=bx, X1=20.8, Y0=boardY+4.2, Y1=boardB-2.3;
+    // bass manual 36..50 — discrete keys matching the hardware: black keys in a
+    // separate upper band, white-key letters ABOVE the white keys, and thin
+    // vertical guide lines at every white-key boundary.
+    (function(){ const low=36,high=50, X0=bx, X1=20.8;
+      const blackLabelY=boardY+3.5, blackTop=boardY+4.3, blackH=2.3;
+      const whiteLabelY=boardY+7.0, whiteTop=boardY+7.9, whiteBot=boardB-2.6;
       const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
-      const gap=0.4, w=((X1-X0)-gap*(whites.length-1))/whites.length; const wm=new Map();
-      whites.forEach((n,i)=>{ const x=X0+i*(w+gap); const k=P("bwk",x,Y0,w,(Y1-Y0)*0.62); wm.set(n,k); att(k,n);
-        T(x,Y1-1.0,NN[((n%12)+12)%12],0.85,"bklab",w); });
+      const gap=0.5, w=((X1-X0)-gap*(whites.length-1))/whites.length; const wm=new Map();
+      // vertical guide lines at each white-key boundary (through both bands)
+      for(let i=0;i<=whites.length;i++){ const gx=X0+i*(w+gap)-gap/2;
+        P("bassdiv",gx,blackTop-0.4,null,whiteBot-(blackTop-0.4)); }
+      // white keys + letters above them
+      whites.forEach((n,i)=>{ const x=X0+i*(w+gap);
+        const k=P("bwk",x,whiteTop,w,whiteBot-whiteTop); wm.set(n,k); att(k,n);
+        T(x,whiteLabelY,NN[((n%12)+12)%12],0.9,"bklab",w); });
+      // black keys (upper band) + accidental labels above them
       for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
-        const x=X0+(idx+1)*(w+gap)-w*0.75/2 -gap/2; const bw=w*0.75;
-        P("bbk",x,Y0,bw,(Y1-Y0)*0.42); att(root.lastChild,n);
-        T(x,Y0-1.1,FLAT[((n%12)+12)%12],0.8,"bklab",bw); }
+        const bw=w*0.78; const cx=X0+(idx+1)*(w+gap)-gap/2-bw/2;
+        P("bbk",cx,blackTop,bw,blackH); att(root.lastChild,n);
+        T(cx,blackLabelY,FLAT[((n%12)+12)%12],0.85,"bklab",bw); }
     })();
 
     P("warn",0,0).id="warn"; const warn=root.lastChild; warn.className="warn"; warn.textContent="Native bridge unavailable — open inside the plugin host.";
@@ -278,6 +289,9 @@
       const r=()=>{ rrange.value=s.getChoiceIndex(); }; s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
       rrange.addEventListener("input",()=>s.setChoiceIndex(parseInt(rrange.value,10))); r(); }
     function bindTone(name){ patchState=Juce.getComboBoxState(name);
+      // Seed the active memory slot from the live tone so the first recall of
+      // slot 0 restores what is actually playing rather than jumping to patch 0.
+      memSlots[curSlot]=patchState.getChoiceIndex();
       patchState.valueChangedEvent.addListener(markTones); patchState.propertiesChangedEvent.addListener(markTones);
       memSw.on(slot=>{ curSlot=slot; patchState.setChoiceIndex(memSlots[slot]); }); markTones(); }
 
