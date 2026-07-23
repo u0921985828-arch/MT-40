@@ -21,7 +21,7 @@
       background-image:radial-gradient(circle at 50% -10%,#2b2620,#0e0d0b 78%); }
     body{ padding:16px; display:flex; justify-content:center; user-select:none; -webkit-user-select:none; }
 
-    .mt40{ position:relative; width:100%; max-width:1120px; aspect-ratio:100/31;
+    .st40{ position:relative; width:100%; max-width:1120px; aspect-ratio:100/31;
       background:linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
       border:1px solid var(--edge); border-radius:1.4cqw;
       box-shadow:0 2.4cqw 6cqw rgba(0,0,0,.55), inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.10);
@@ -85,11 +85,11 @@
     .brownsw .swth{ background:linear-gradient(180deg,#b48f68,var(--brown) 55%,var(--brown-lo)); }
     .darksw .swth{ background:linear-gradient(180deg,#54524c,var(--dark) 55%,#1f1e1b); }
 
-    /* CASIO badge */
-    .casio{ position:absolute; display:flex; align-items:center; justify-content:center;
+    /* brand badge */
+    .badge{ position:absolute; display:flex; align-items:center; justify-content:center;
       background:linear-gradient(180deg,#c8bb9e,#a99a78); border:.1cqw solid #8b7d5e; border-radius:.3cqw;
       box-shadow:inset 0 .1cqw 0 rgba(255,255,255,.5),0 .15cqw .25cqw rgba(0,0,0,.25); }
-    .casio b{ font-weight:800; font-style:italic; letter-spacing:.06cqw; color:#1c1a17; font-size:1.9cqw; }
+    .badge b{ font-weight:800; font-style:italic; letter-spacing:.06cqw; color:#1c1a17; font-size:1.9cqw; }
 
     /* tone strip */
     .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; overflow:hidden; }
@@ -121,11 +121,11 @@
   </style>
 </head>
 <body>
-  <div class="mt40" id="mt40"></div>
+  <div class="st40" id="st40"></div>
 
   <script type="module">
     import * as Juce from "./js/juce/index.js";
-    const root=document.getElementById("mt40");
+    const root=document.getElementById("st40");
 
     // ---- native functions ----
     let noteOn,noteOff,synchro,setFill,startStop;
@@ -204,8 +204,8 @@
     const susSw=slideSwitch(67.6,4.7,5.4,2.7,"brownsw",2,["off","on"],"sustain");
     const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
 
-    // ================= POWER + CASIO =================
-    P("casio",89.6,1.9,7.2,2.9,'<b>SLENG</b>');
+    // ================= POWER + brand =================
+    P("badge",89.6,1.9,7.2,2.9,'<b>SLENG</b>');
     P("led",84.9,4.0,0.9,0.9);
     const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
 
@@ -273,7 +273,7 @@
     P("warn",0,0).id="warn"; const warn=root.lastChild; warn.className="warn"; warn.textContent="Native bridge unavailable — open inside the plugin host.";
 
     // ================= BINDINGS =================
-    window.mt40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2); };
+    window.st40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2); };
     function bindKnob(dial,states){ const s0=states[0];
       const r=()=>{ dial.style.transform=`rotate(${-140+s0.getNormalisedValue()*280}deg)`; };
       s0.valueChangedEvent.addListener(r); s0.propertiesChangedEvent.addListener(r);

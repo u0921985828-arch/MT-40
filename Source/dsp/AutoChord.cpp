@@ -1,7 +1,7 @@
-#include "CasioChord.h"
+#include "AutoChord.h"
 #include <algorithm>
 
-CasioChord::Result CasioChord::detect (const std::vector<int>& heldNotesInZone)
+AutoChord::Result AutoChord::detect (const std::vector<int>& heldNotesInZone)
 {
     Result r;
     if (heldNotesInZone.empty())
@@ -41,7 +41,7 @@ CasioChord::Result CasioChord::detect (const std::vector<int>& heldNotesInZone)
     return r;
 }
 
-const char* CasioChord::typeName (Type t) noexcept
+const char* AutoChord::typeName (Type t) noexcept
 {
     switch (t)
     {

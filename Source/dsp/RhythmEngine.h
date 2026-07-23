@@ -18,7 +18,7 @@
 //   * Fill-in logic: hold = 1/4 kicks; double-tap & hold = 1/8 snares (§5.2).
 //
 // The dedicated monophonic bass voice (§2) plays the Sleng Teng bass line,
-// transposed to follow the current Casio-Chord root.
+// transposed to follow the current auto-chord root.
 // ---------------------------------------------------------------------------
 class RhythmEngine
 {

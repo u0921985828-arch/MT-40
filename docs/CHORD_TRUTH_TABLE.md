@@ -1,6 +1,6 @@
-# Casio Chord — Minor / 7th Interval Detection Truth Table
+# auto chord — Minor / 7th Interval Detection Truth Table
 
-*Section 7, Task 3 deliverable. Implemented in `Source/dsp/CasioChord.cpp`.*
+*Section 7, Task 3 deliverable. Implemented in `Source/dsp/AutoChord.cpp`.*
 
 ## 1. Zone & root selection
 
@@ -8,7 +8,7 @@ The 37-key bed is split (§2):
 
 | Key index | Note range | Zone |
 | :-- | :-- | :-- |
-| `0 – 14`  | C2 – (split) | **Casio Chord / Bass trigger zone** |
+| `0 – 14`  | C2 – (split) | **auto chord / Bass trigger zone** |
 | `15 – 36` | (split) – C5 | Melodic zone |
 
 Key index → MIDI note: `note = 36 + keyIndex` (key 0 = C2 = MIDI 36).
@@ -21,7 +21,7 @@ Highest-Note rule directly.
 
 ## 2. Chord-type selection
 
-Casio Chord is a *one-finger* system. The chord **type** is chosen by **how many
+auto chord is a *one-finger* system. The chord **type** is chosen by **how many
 additional keys are held to the LEFT of (lower than) the root**:
 
 | Additional keys left of root | Chord type      | Intervals from root (semitones) | # tones |

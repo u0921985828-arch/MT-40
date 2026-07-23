@@ -6,7 +6,7 @@
 #include <optional>
 
 // ---------------------------------------------------------------------------
-// CasioMT40AudioProcessorEditor — JUCE 8 *native WebView* GUI.
+// ST40AudioProcessorEditor — JUCE 8 *native WebView* GUI.
 //
 // The control surface is authored in HTML/CSS/JS (see ui/index.html) and
 // rendered inside a juce::WebBrowserComponent with native integration. Each
@@ -18,12 +18,12 @@
 // as BinaryData and served by an in-process resource provider (no web server,
 // no network access).
 // ---------------------------------------------------------------------------
-class CasioMT40AudioProcessorEditor : public juce::AudioProcessorEditor,
+class ST40AudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::Timer
 {
 public:
-    explicit CasioMT40AudioProcessorEditor (CasioMT40AudioProcessor&);
-    ~CasioMT40AudioProcessorEditor() override;
+    explicit ST40AudioProcessorEditor (ST40AudioProcessor&);
+    ~ST40AudioProcessorEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -41,7 +41,7 @@ private:
     std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url) const;
     juce::WebBrowserComponent::Options makeOptions();
 
-    CasioMT40AudioProcessor& processor;
+    ST40AudioProcessor& processor;
 
     // --- Relays (front-end <-> back-end bridges). Names MUST match the
     //     getSliderState/getToggleState/getComboBoxState names in the JS. ---
@@ -64,5 +64,5 @@ private:
 
     int lastTransport = -1;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CasioMT40AudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ST40AudioProcessorEditor)
 };

@@ -7,7 +7,7 @@
 //
 // A patch is defined entirely by DSP metadata (no samples): the duty cycle of
 // each of the two multiplexed pulse waves, the fixed detune between them (the
-// inherent MT-40 "chorused" fatness), the static analog LPF cutoff, and the
+// inherent ST-40 "chorused" fatness), the static analog LPF cutoff, and the
 // two-stage envelope times.
 // ---------------------------------------------------------------------------
 struct MelodicPreset
@@ -22,7 +22,7 @@ struct MelodicPreset
     float gain;         // per-patch output trim
 };
 
-// The 22 real MT-40 tones, in panel order (numbers 1-22 printed above the
+// The 22 real ST-40 tones, in panel order (numbers 1-22 printed above the
 // keyboard). DSP metadata per §3: 50% square -> reed/flute family, narrow
 // pulse -> plucked/strings, bright patches ~4 kHz cutoff, dark ~1.2 kHz.
 inline const std::array<MelodicPreset, 22>& getMelodicPresets()

@@ -1,8 +1,8 @@
-# Casio MT-40 — DSP Emulation Architecture
+# Sleng Teng ST-40 — DSP Emulation Architecture
 
-A real-time, **sample-free** emulation of the 1981 Casio MT-40 (Casiotone
-MT-40). Every generator is synthesized from DSP first principles — there is no
-PCM playback anywhere in the signal path.
+A real-time, **sample-free** emulation of a classic 1981 mini rhythm keyboard
+(the unit that birthed the Sleng Teng riddim). Every generator is synthesized
+from DSP first principles — there is no PCM playback anywhere in the signal path.
 
 ## Signal flow
 
@@ -15,7 +15,7 @@ PCM playback anywhere in the signal path.
                          └─────────────────────────────────────────────────────────────────────────────┘       │
                                                                                                                  ├─► ×master ─► out
                          ┌──────────────── Rhythm bus (analog models) ────────────────┐                          │
- Casio Chord ──► root ──►│  RhythmEngine (sequencer + Synchro/Fill state machine)     │                          │
+ auto chord ──► root ──►│  RhythmEngine (sequencer + Synchro/Fill state machine)     │                          │
  (§5, truth table)       │   ├─ TwinT_Resonator  (kick,  §4.1)                        │                          │
                          │   ├─ SnareDrum        (body + LFSR wires, §4.2) ──► ×rhythmGain ─────────────────────┤
                          │   ├─ HiHat            (LFSR + 4th-order HP + choke, §4.3)   │                          │
@@ -37,10 +37,10 @@ PCM playback anywhere in the signal path.
 | §4 Noise source | `LFSRNoise` (shared) | `Source/dsp/LFSRNoise.h` |
 | §5.1 Sleng Teng bass | `SlengTengBass` | `Source/dsp/SlengTengBass.{h,cpp}` |
 | §5 Sequencer + §5.2 state machine | `RhythmEngine` | `Source/dsp/RhythmEngine.{h,cpp}` |
-| §5 Casio Chord | `CasioChord` | `Source/dsp/CasioChord.{h,cpp}` |
+| §5 auto chord | `AutoChord` | `Source/dsp/AutoChord.{h,cpp}` |
 | §6 APVTS params | `createParameterLayout` | `Source/Parameters.{h,cpp}` |
-| §1-§7 Top level | `CasioMT40AudioProcessor` | `Source/PluginProcessor.{h,cpp}` |
-| GUI (WebView) | `CasioMT40AudioProcessorEditor` + `ui/index.html` | `Source/PluginEditor.{h,cpp}` |
+| §1-§7 Top level | `ST40AudioProcessor` | `Source/PluginProcessor.{h,cpp}` |
+| GUI (WebView) | `ST40AudioProcessorEditor` + `ui/index.html` | `Source/PluginEditor.{h,cpp}` |
 
 ## GUI — native WebView
 

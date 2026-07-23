@@ -8,11 +8,11 @@ namespace
     constexpr double kVibratoHz = 5.5;          // §6: vibrato on = 5.5 Hz
     constexpr float  kVibratoDepthSemis = 0.20f; // subtle pitch modulation
     constexpr double kSustainReleaseMult = 3.0;  // §3.3: 3x when sustain ON
-    // Octave the Casio-Chord accompaniment plays in (above the split root).
+    // Octave the auto-chord accompaniment plays in (above the split root).
     constexpr int kChordVoicingOctave = 0;
 }
 
-CasioMT40AudioProcessor::CasioMT40AudioProcessor()
+ST40AudioProcessor::ST40AudioProcessor()
     : AudioProcessor (BusesProperties()
           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
@@ -28,7 +28,7 @@ CasioMT40AudioProcessor::CasioMT40AudioProcessor()
     pPatch     = apvts.getRawParameterValue (ParamIDs::patchIdx);
 }
 
-void CasioMT40AudioProcessor::prepareToPlay (double sr, int)
+void ST40AudioProcessor::prepareToPlay (double sr, int)
 {
     sampleRate = sr;
     melodic.prepare (sr);
@@ -44,13 +44,13 @@ void CasioMT40AudioProcessor::prepareToPlay (double sr, int)
     updateFromParameters();
 }
 
-bool CasioMT40AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool ST40AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
     const auto& out = layouts.getMainOutputChannelSet();
     return out == juce::AudioChannelSet::mono() || out == juce::AudioChannelSet::stereo();
 }
 
-void CasioMT40AudioProcessor::updateFromParameters()
+void ST40AudioProcessor::updateFromParameters()
 {
     const int patch = static_cast<int> (*pPatch);
     if (patch != currentPatch)
@@ -75,7 +75,7 @@ void CasioMT40AudioProcessor::updateFromParameters()
 // ---------------------------------------------------------------------------
 // MIDI handling
 // ---------------------------------------------------------------------------
-void CasioMT40AudioProcessor::handleMidiMessage (const juce::MidiMessage& m)
+void ST40AudioProcessor::handleMidiMessage (const juce::MidiMessage& m)
 {
     if (m.isNoteOn())
         handleNoteOn (m.getNoteNumber(), m.getFloatVelocity());
@@ -96,7 +96,7 @@ void CasioMT40AudioProcessor::handleMidiMessage (const juce::MidiMessage& m)
     }
 }
 
-void CasioMT40AudioProcessor::handleNoteOn (int note, float velocity)
+void ST40AudioProcessor::handleNoteOn (int note, float velocity)
 {
     const int mode = static_cast<int> (*pMode); // 0 Off, 1 Play, 2 Chord
 
@@ -120,7 +120,7 @@ void CasioMT40AudioProcessor::handleNoteOn (int note, float velocity)
     melodic.noteOn (note, velocity);
 }
 
-void CasioMT40AudioProcessor::handleNoteOff (int note)
+void ST40AudioProcessor::handleNoteOff (int note)
 {
     const int mode = static_cast<int> (*pMode);
 
@@ -140,9 +140,9 @@ void CasioMT40AudioProcessor::handleNoteOff (int note)
     melodic.noteOff (note);
 }
 
-void CasioMT40AudioProcessor::recomputeChord()
+void ST40AudioProcessor::recomputeChord()
 {
-    const auto chord = CasioChord::detect (heldChordZoneNotes);
+    const auto chord = AutoChord::detect (heldChordZoneNotes);
 
     if (! chord.valid)
     {
@@ -178,7 +178,7 @@ void CasioMT40AudioProcessor::recomputeChord()
     activeChordTones = std::move (newTones);
 }
 
-void CasioMT40AudioProcessor::handleControlChange (int cc, int value)
+void ST40AudioProcessor::handleControlChange (int cc, int value)
 {
     // Map the incoming CC to the corresponding APVTS parameter (§6).
     auto setNorm = [this] (const char* id, float norm)
@@ -223,7 +223,7 @@ void CasioMT40AudioProcessor::handleControlChange (int cc, int value)
 // ---------------------------------------------------------------------------
 // Audio rendering
 // ---------------------------------------------------------------------------
-float CasioMT40AudioProcessor::renderNextSample()
+float ST40AudioProcessor::renderNextSample()
 {
     // Global vibrato LFO (§6, CC1: on = 5.5 Hz).
     float lfo = 0.0f;
@@ -241,13 +241,13 @@ float CasioMT40AudioProcessor::renderNextSample()
     const float master = *pMaster;
     // Sum the busses, trim headroom, then soft-clip the master output. The
     // rhythm bus can transiently sum several simultaneous hits above unity;
-    // the tanh stage models the MT-40's analog output saturation and keeps
+    // the tanh stage models the ST-40's analog output saturation and keeps
     // the signal bounded to [-1, 1] instead of clipping harshly.
     const float mix = (mel * 0.45f + rhy * 0.6f) * master;
     return std::tanh (mix);
 }
 
-void CasioMT40AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
+void ST40AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                             juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -302,39 +302,39 @@ void CasioMT40AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
-void CasioMT40AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void ST40AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     if (auto xml = apvts.copyState().createXml())
         copyXmlToBinary (*xml, destData);
 }
 
-void CasioMT40AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void ST40AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
             apvts.replaceState (juce::ValueTree::fromXml (*xml));
 }
 
-void CasioMT40AudioProcessor::injectNoteOn (int note, float velocity)
+void ST40AudioProcessor::injectNoteOn (int note, float velocity)
 {
     auto m = juce::MidiMessage::noteOn (1, note, velocity);
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
     keyboardCollector.addMessageToQueue (m);
 }
 
-void CasioMT40AudioProcessor::injectNoteOff (int note)
+void ST40AudioProcessor::injectNoteOff (int note)
 {
     auto m = juce::MidiMessage::noteOff (1, note);
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
     keyboardCollector.addMessageToQueue (m);
 }
 
-juce::AudioProcessorEditor* CasioMT40AudioProcessor::createEditor()
+juce::AudioProcessorEditor* ST40AudioProcessor::createEditor()
 {
-    return new CasioMT40AudioProcessorEditor (*this);
+    return new ST40AudioProcessorEditor (*this);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new CasioMT40AudioProcessor();
+    return new ST40AudioProcessor();
 }

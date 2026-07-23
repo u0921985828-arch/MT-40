@@ -7,11 +7,11 @@
 #include <cmath>
 
 // ---------------------------------------------------------------------------
-// DCOVoice — a single melodic voice of the MT-40 CV synthesis engine (§3.1).
+// DCOVoice — a single melodic voice of the ST-40 CV synthesis engine (§3.1).
 //
 // Each voice = two multiplexed digital pulse waves (independent phase
 // accumulators) with per-preset duty cycles, summed together. The two pulses
-// carry a small fixed pitch offset (detune) which produces the inherent MT-40
+// carry a small fixed pitch offset (detune) which produces the inherent ST-40
 // chorused fatness. The summed pulses pass through the static analog LPF
 // (§3.2) and are shaped by the two-stage VCA envelope (§3.3).
 //

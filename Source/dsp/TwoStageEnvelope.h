@@ -3,7 +3,7 @@
 #include <cmath>
 
 // ---------------------------------------------------------------------------
-// TwoStageEnvelope — Casio "CV synthesis" VCA envelope (§3.3).
+// TwoStageEnvelope — "CV synthesis" VCA envelope (§3.3).
 //
 // This is NOT a standard ADSR. It has:
 //   * Attack : linear ramp 0 -> 1

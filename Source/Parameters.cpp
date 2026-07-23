@@ -8,7 +8,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     // Human-readable choice lists so the WebView combo boxes populate their
     // option labels directly from the parameter (via properties.choices).
-    // The six rhythms in the order printed on the MT-40 rhythm slider
+    // The six rhythms in the order printed on the ST-40 rhythm slider
     // (left -> right). "Rock" (rightmost) is the original "Sleng Teng".
     StringArray rhythmChoices { "Samba", "Waltz", "Swing", "Slow Rock", "Pops", "Rock" };
     StringArray presetChoices;
@@ -37,8 +37,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (std::make_unique<AudioParameterBool> (
         ParameterID { ParamIDs::sustain, 1 }, "Sustain", false));
 
-    // The MT-40 has no Off/Play/Chord switch: the bass keys are always
-    // Casio-Chord/bass and the main keys always melody, so default to Chord.
+    // The ST-40 has no Off/Play/Chord switch: the bass keys are always
+    // auto-chord/bass and the main keys always melody, so default to Chord.
     // (CC85 can still override to Off/Play per §6.)
     layout.add (std::make_unique<AudioParameterChoice> (
         ParameterID { ParamIDs::kbdMode, 1 }, "Mode",

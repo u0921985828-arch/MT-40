@@ -4,22 +4,22 @@
 #include "Parameters.h"
 #include "dsp/VoiceAllocator.h"
 #include "dsp/RhythmEngine.h"
-#include "dsp/CasioChord.h"
+#include "dsp/AutoChord.h"
 #include "dsp/Presets.h"
 #include <vector>
 
 // ---------------------------------------------------------------------------
-// CasioMT40AudioProcessor — top-level plugin (§1-§7).
+// ST40AudioProcessor — top-level plugin (§1-§7).
 //
 // Wires the APVTS parameters to the DSP engine, handles MIDI (including the
-// split-keyboard / Casio-Chord logic and the CC map from §6), runs the global
+// split-keyboard / auto-chord logic and the CC map from §6), runs the global
 // vibrato LFO, and mixes the melodic pool with the analog rhythm bus.
 // ---------------------------------------------------------------------------
-class CasioMT40AudioProcessor : public juce::AudioProcessor
+class ST40AudioProcessor : public juce::AudioProcessor
 {
 public:
-    CasioMT40AudioProcessor();
-    ~CasioMT40AudioProcessor() override = default;
+    ST40AudioProcessor();
+    ~ST40AudioProcessor() override = default;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -76,7 +76,7 @@ private:
     }
 
     VoiceAllocator melodic;      // right-hand / melody voices
-    VoiceAllocator chordVoices;  // Casio-Chord accompaniment (kept separate so
+    VoiceAllocator chordVoices;  // auto-chord accompaniment (kept separate so
                                  // releasing a chord never steals a melody note)
     RhythmEngine rhythm;
 
@@ -87,7 +87,7 @@ private:
     std::atomic<bool> fillHeldUI      { false };
     std::atomic<bool> startStopPending { false };
 
-    // Casio-Chord accompaniment state.
+    // auto-chord accompaniment state.
     std::vector<int> heldChordZoneNotes;
     std::vector<int> activeChordTones;
 
@@ -106,5 +106,5 @@ private:
     std::atomic<float>* pRhythmIdx = nullptr;
     std::atomic<float>* pPatch   = nullptr;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CasioMT40AudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ST40AudioProcessor)
 };

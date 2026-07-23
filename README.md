@@ -13,7 +13,7 @@ is synthesized in real time from DSP first principles. No samples are used.
 
 * **Melodic CV synthesis (§3)** — 8-voice pool of dual-pulse DCO voices with
   per-preset duty cycles, fixed inter-oscillator detune (chorused fatness), a
-  static 1-pole analog LPF, and Casio's two-stage (linear-attack /
+  static 1-pole analog LPF, and the two-stage (linear-attack /
   exponential-release) VCA envelope. Oldest-note voice stealing.
 * **Analog rhythm section (§4)** — Twin-T resonant kick, parallel body+noise
   snare, and choke-grouped closed/open hi-hats, all driven by a shared LFSR
@@ -21,8 +21,8 @@ is synthesized in real time from DSP first principles. No samples are used.
 * **Sleng Teng engine (§5)** — hardcoded 2-bar / 16-steps-per-bar sequencer,
   free-running clock, dedicated monophonic square-wave bass, and the
   Synchro / Fill-in transport state machine.
-* **Casio Chord (§5, §7)** — one-finger Major / Minor / 7th / Minor-7th
-  detection. See [`docs/CASIO_CHORD_TRUTH_TABLE.md`](docs/CASIO_CHORD_TRUTH_TABLE.md).
+* **Auto-Chord (§5, §7)** — one-finger Major / Minor / 7th / Minor-7th
+  detection. See [`docs/CHORD_TRUTH_TABLE.md`](docs/CHORD_TRUTH_TABLE.md).
 * **APVTS + MIDI CC map (§6)** — all parameters automatable and CC-controllable.
 * **Native WebView GUI** — the control surface is authored in HTML/CSS/JS
   (`ui/index.html`) and rendered in a JUCE 8 `WebBrowserComponent` with native
@@ -85,11 +85,11 @@ Source/
     HiHat.{h,cpp}           hi-hat + choke (§4.3)
     SlengTengBass.{h,cpp}   mono bass (§5.1)
     RhythmEngine.{h,cpp}    sequencer + state machine (§5)
-    CasioChord.{h,cpp}      chord detection (§5, §7)
-    Presets.{h,cpp}         22 melodic patches
+    AutoChord.{h,cpp}       chord detection (§5, §7)
+    Presets.h               the 22 tone presets
 docs/
   ARCHITECTURE.md
-  CASIO_CHORD_TRUTH_TABLE.md
+  CHORD_TRUTH_TABLE.md
 ```
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full signal flow and

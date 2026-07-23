@@ -5,7 +5,7 @@
 // ---------------------------------------------------------------------------
 // TwinT_Resonator — analog kick drum model (§4.1).
 //
-// The original MT-40 kick is a Twin-T oscillator/resonator circuit. We model
+// The original ST-40 kick is a Twin-T oscillator/resonator circuit. We model
 // it as a 2-pole band-pass biquad pushed to a very high Q (near self-
 // oscillation), excited by a 1 ms unit impulse. The high Q gives the ~250 ms
 // resonant decay; a tanh soft-clip at the output stage emulates transistor

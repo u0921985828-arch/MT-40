@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(CasioMT40 VERSION 0.1.0 LANGUAGES C CXX)
+project(ST40 VERSION 0.1.0 LANGUAGES C CXX)
 
 # ---------------------------------------------------------------------------
 # Sleng Teng ST-40 VST/AU emulator
@@ -37,7 +37,7 @@ else()
 endif()
 
 # --- Plugin target ----------------------------------------------------------
-juce_add_plugin(CasioMT40
+juce_add_plugin(ST40
     COMPANY_NAME              "OpenEmu DSP"
     PLUGIN_MANUFACTURER_CODE  Oedp
     PLUGIN_CODE               St40
@@ -49,7 +49,7 @@ juce_add_plugin(CasioMT40
     IS_MIDI_EFFECT            FALSE
     COPY_PLUGIN_AFTER_BUILD   TRUE)
 
-target_sources(CasioMT40 PRIVATE
+target_sources(ST40 PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
     Source/Parameters.cpp
@@ -58,26 +58,26 @@ target_sources(CasioMT40 PRIVATE
     Source/dsp/HiHat.cpp
     Source/dsp/SlengTengBass.cpp
     Source/dsp/RhythmEngine.cpp
-    Source/dsp/CasioChord.cpp)
+    Source/dsp/AutoChord.cpp)
 
 # --- Embed the WebView UI (HTML + JUCE JS frontend) as binary data ----------
 # The GUI is authored in ui/ and served in-process by the editor's resource
 # provider, so the plugin needs no network access and ships as a single binary.
-juce_add_binary_data(CasioMT40Data SOURCES
+juce_add_binary_data(ST40Data SOURCES
     ui/index.html
     ui/js/juce/index.js
     ui/js/juce/check_native_interop.js)
 
-target_compile_definitions(CasioMT40 PUBLIC
+target_compile_definitions(ST40 PUBLIC
     JUCE_WEB_BROWSER=1            # native WebView UI (§ GUI)
     JUCE_USE_CURL=0
     JUCE_USE_WIN_WEBVIEW2=1       # Windows backend (WebView2)
     JUCE_VST3_CAN_REPLACE_VST2=0)
 
-target_include_directories(CasioMT40 PRIVATE Source)
+target_include_directories(ST40 PRIVATE Source)
 
-target_link_libraries(CasioMT40 PRIVATE
-    CasioMT40Data
+target_link_libraries(ST40 PRIVATE
+    ST40Data
     juce::juce_audio_utils
     juce::juce_gui_extra
     juce::juce_dsp

@@ -19,7 +19,7 @@ namespace
     }
 }
 
-bool CasioMT40AudioProcessorEditor::SinglePageBrowser::pageAboutToLoad (const juce::String& url)
+bool ST40AudioProcessorEditor::SinglePageBrowser::pageAboutToLoad (const juce::String& url)
 {
     // Only allow the embedded resource-provider origin (and the initial blank
     // page). There are no external links in the UI, so nothing should ever
@@ -28,7 +28,7 @@ bool CasioMT40AudioProcessorEditor::SinglePageBrowser::pageAboutToLoad (const ju
         || url.startsWith ("about:");
 }
 
-juce::WebBrowserComponent::Options CasioMT40AudioProcessorEditor::makeOptions()
+juce::WebBrowserComponent::Options ST40AudioProcessorEditor::makeOptions()
 {
     using Options = juce::WebBrowserComponent::Options;
     return Options{}
@@ -75,7 +75,7 @@ juce::WebBrowserComponent::Options CasioMT40AudioProcessorEditor::makeOptions()
         .withOptionsFrom (presetRelay);
 }
 
-CasioMT40AudioProcessorEditor::CasioMT40AudioProcessorEditor (CasioMT40AudioProcessor& p)
+ST40AudioProcessorEditor::ST40AudioProcessorEditor (ST40AudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
     webView = std::make_unique<SinglePageBrowser> (makeOptions());
@@ -105,13 +105,13 @@ CasioMT40AudioProcessorEditor::CasioMT40AudioProcessorEditor (CasioMT40AudioProc
     startTimerHz (15); // push transport state to the UI
 }
 
-CasioMT40AudioProcessorEditor::~CasioMT40AudioProcessorEditor()
+ST40AudioProcessorEditor::~ST40AudioProcessorEditor()
 {
     stopTimer();
 }
 
 std::optional<juce::WebBrowserComponent::Resource>
-CasioMT40AudioProcessorEditor::getResource (const juce::String& url) const
+ST40AudioProcessorEditor::getResource (const juce::String& url) const
 {
     const auto name = (url == "/" || url.isEmpty()) ? juce::String ("index.html")
                                                     : basenameOf (url);
@@ -141,23 +141,23 @@ CasioMT40AudioProcessorEditor::getResource (const juce::String& url) const
     return juce::WebBrowserComponent::Resource { toByteVector (data, size), std::move (mime) };
 }
 
-void CasioMT40AudioProcessorEditor::timerCallback()
+void ST40AudioProcessorEditor::timerCallback()
 {
     const int state = static_cast<int> (processor.getTransportState());
     if (state != lastTransport && webView != nullptr)
     {
         lastTransport = state;
         webView->evaluateJavascript (
-            "window.mt40SetTransport && window.mt40SetTransport(" + juce::String (state) + ");");
+            "window.st40SetTransport && window.st40SetTransport(" + juce::String (state) + ");");
     }
 }
 
-void CasioMT40AudioProcessorEditor::paint (juce::Graphics& g)
+void ST40AudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colour (0xff1b1b1f));
 }
 
-void CasioMT40AudioProcessorEditor::resized()
+void ST40AudioProcessorEditor::resized()
 {
     if (webView != nullptr)
         webView->setBounds (getLocalBounds());

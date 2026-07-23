@@ -18,9 +18,9 @@ void RhythmEngine::prepare (double sampleRate) noexcept
     setTempo (bpm);
 
     // -----------------------------------------------------------------
-    // Rhythm 5: "Rock" — the MT-40 pattern that became the "Sleng Teng"
+    // Rhythm 5: "Rock" — the ST-40 pattern that became the "Sleng Teng"
     // riddim (rightmost slider position). Hardcoded 2-bar loop (§5.1). The
-    // bass row holds semitone offsets from the Casio-Chord root; kRest = rest.
+    // bass row holds semitone offsets from the auto-chord root; kRest = rest.
     // -----------------------------------------------------------------
     patterns[5] = {
         "Rock",

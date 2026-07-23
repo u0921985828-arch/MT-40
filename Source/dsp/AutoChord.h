@@ -4,7 +4,7 @@
 #include <array>
 
 // ---------------------------------------------------------------------------
-// CasioChord — "Casio Chord" one-finger chord detection (§2, §5, §7 task 3).
+// AutoChord — "auto chord" one-finger chord detection (§2, §5, §7 task 3).
 //
 // In the split chord/bass zone (keys 0-14) the ROOT of the chord is the
 // highest (right-most) key held. The chord TYPE is selected by how many
@@ -18,10 +18,10 @@
 //              3 (or more)        | Minor Seventh   | 0, 3, 7, 10
 //
 // The dedicated monophonic bass voice plays the ROOT (Highest-Note priority
-// resolves to the root by construction). See docs/CASIO_CHORD_TRUTH_TABLE.md
+// resolves to the root by construction). See docs/CHORD_TRUTH_TABLE.md
 // for the full derivation.
 // ---------------------------------------------------------------------------
-class CasioChord
+class AutoChord
 {
 public:
     enum class Type { None, Major, Minor, Seventh, MinorSeventh };
