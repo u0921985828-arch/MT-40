@@ -6,359 +6,295 @@
   <title>Casio MT-40</title>
   <style>
     :root{
-      --hi:#f0e9d6; --cream:#e5dabf; --lo:#cdbf9d; --edge:#b1a37f; --deep:#9d8f6c;
-      --ink:#2c2820; --print:#4a4436; --printdim:#7c745f;
-      --btn-hi:#e9e4d6; --btn:#cfc7b4; --btn-lo:#a9a08a; --btn-edge:#8b826b;
-      --red:#b23a2c; --red-lo:#8c2a1f;
-      --amber:#d98a2b; --grn:#3f9f66; --led-off:#7a705a;
+      --cream:#efe7d8; --cream-lo:#e6ddc9; --cream-hi:#f4eee1; --edge:#cabd9f; --div:#d4c8ac;
+      --gold:#c39a63; --gold-lo:#b3894f; --bevel:#c9a978;
+      --red:#d8452a; --band:#dc5033; --ink:#463b30; --inkdim:#6f6350;
+      --kface:#d8b982; --kface2:#a97b46; --kskirt1:#6a3d20; --kskirt2:#9a6a3c;
+      --orange:#f0541f; --orange-hi:#f8794a; --orange-lo:#c23f14;
+      --beige:#b7aa89; --beige-hi:#cabe9e; --blue:#93a7b9; --blue-lo:#70889d;
+      --brown:#9c7550; --brown-lo:#7a5836; --dark:#37342e;
+      --wht:#f7f4ed; --wht-lo:#e7e1d3; --blk:#161310;
       font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
     }
     *{ box-sizing:border-box; }
-    html,body{ margin:0; min-height:100%; background:#171410;
-      background-image:radial-gradient(circle at 50% -10%, #2c2720, #0f0d0a 75%); color:var(--ink); }
-    body{ padding:18px; display:flex; justify-content:center; user-select:none; -webkit-user-select:none; }
+    html,body{ margin:0; min-height:100%; background:#141210;
+      background-image:radial-gradient(circle at 50% -10%,#2b2620,#0e0d0b 78%); }
+    body{ padding:16px; display:flex; justify-content:center; user-select:none; -webkit-user-select:none; }
 
-    /* ---------- Casing ---------- */
-    .mt40{ position:relative; width:100%; max-width:900px; padding:14px 16px 18px;
-      background:linear-gradient(158deg,var(--hi),var(--cream) 42%,var(--lo));
-      border:1px solid var(--edge); border-radius:14px;
-      box-shadow:0 24px 64px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.55), inset 0 -3px 8px rgba(0,0,0,.12); }
-    .mt40::after{ content:""; position:absolute; inset:6px; border-radius:10px; pointer-events:none;
-      box-shadow:inset 0 0 0 1px rgba(255,255,255,.25); }
-    .screw{ position:absolute; width:11px; height:11px; border-radius:50%; z-index:5;
-      background:radial-gradient(circle at 35% 30%,#fff,#b7ab8f 55%,#7d7255); box-shadow:inset 0 0 2px rgba(0,0,0,.6); }
-    .screw::after{ content:""; position:absolute; inset:3px; border-top:1.5px solid #6c6046; transform:rotate(40deg); }
-    .screw.tl{top:7px;left:7px} .screw.tr{top:7px;right:7px} .screw.bl{bottom:7px;left:7px} .screw.br{bottom:7px;right:7px}
+    .mt40{ position:relative; width:100%; max-width:1120px; aspect-ratio:100/31;
+      background:linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
+      border:1px solid var(--edge); border-radius:1.4cqw;
+      box-shadow:0 2.4cqw 6cqw rgba(0,0,0,.55), inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.10);
+      container-type:inline-size; overflow:hidden; font-size:1cqw; }
+    .a{ position:absolute; } /* absolute-positioned element; coords set inline in cqw */
 
-    /* ---------- Top: brand + speaker ---------- */
-    .top{ display:flex; align-items:flex-start; gap:14px; padding:4px 6px 12px; }
-    .brand .row1{ display:flex; align-items:baseline; gap:10px; }
-    .casio{ font-weight:800; font-style:italic; font-size:26px; letter-spacing:1px; color:var(--red);
-      text-shadow:0 1px 0 rgba(255,255,255,.6); }
-    .ct{ font-family:"Brush Script MT","Segoe Script",cursive; font-size:22px; color:var(--print); font-style:italic; }
-    .row2{ display:flex; align-items:baseline; gap:8px; margin-top:2px; }
-    .mt{ font-weight:800; font-size:20px; letter-spacing:2px; color:var(--ink); }
-    .tag{ font-size:8.5px; letter-spacing:2px; color:var(--printdim); text-transform:uppercase; }
-    .speaker{ margin-left:auto; width:120px; height:46px; border-radius:6px;
-      background:
-        radial-gradient(circle, rgba(60,52,38,.5) 34%, transparent 36%) 0 0 / 8px 8px,
-        linear-gradient(180deg,#c8bb9c,#b3a582);
-      border:1px solid var(--deep); box-shadow:inset 0 2px 4px rgba(0,0,0,.25); }
+    /* red lines / band */
+    .redline{ position:absolute; background:var(--red); border-radius:.2cqw; }
+    .band{ position:absolute; background:var(--band); display:flex; align-items:center; border-radius:.15cqw; }
+    .band > span{ text-align:center; color:#fff; font-size:1.15cqw; letter-spacing:.12cqw; font-weight:600; }
+    .divl{ position:absolute; width:.14cqw; background:var(--div); }
 
-    /* ---------- Control panel ---------- */
-    .panel{ display:grid; grid-template-columns:1.05fr 1.55fr 1.1fr; gap:12px;
-      background:linear-gradient(180deg,#d7cbac,#c6b997); border:1px solid var(--deep);
-      border-radius:9px; padding:12px; box-shadow:inset 0 2px 5px rgba(0,0,0,.18), 0 1px 0 rgba(255,255,255,.4); }
-    .sec{ background:linear-gradient(180deg,#e0d6bb,#d0c4a3); border:1px solid var(--deep);
-      border-radius:7px; padding:10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.45); }
-    .sec .t{ font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--print);
-      margin:0 0 9px; font-weight:800; }
+    /* speaker */
+    .slot{ position:absolute; border-radius:.25cqw; background:linear-gradient(180deg,#cec1a3,#b6a582);
+      box-shadow:inset 0 .05cqw 0 rgba(255,255,255,.5),0 .05cqw .05cqw rgba(0,0,0,.12); }
 
-    /* faders + knob */
-    .fader{ display:grid; grid-template-columns:46px 1fr 40px; align-items:center; gap:7px; margin:7px 0; }
-    .fader label{ font-size:9.5px; color:var(--print); text-transform:uppercase; letter-spacing:.5px; }
-    .fader .rd{ font-size:10px; color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; }
-    input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:18px; background:transparent; }
-    input[type=range]::-webkit-slider-runnable-track{ height:5px; border-radius:3px; background:linear-gradient(90deg,#8a7f64,#6f6650); box-shadow:inset 0 1px 2px rgba(0,0,0,.5); }
-    input[type=range]::-moz-range-track{ height:5px; border-radius:3px; background:#6f6650; box-shadow:inset 0 1px 2px rgba(0,0,0,.5); }
-    input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; margin-top:-7px; width:13px; height:19px; border-radius:2px; cursor:pointer;
-      background:linear-gradient(180deg,#f3eee2,#b6ac93); border:1px solid #7c7159; box-shadow:0 2px 2px rgba(0,0,0,.4),inset 0 1px 0 #fff; }
-    input[type=range]::-moz-range-thumb{ width:13px; height:19px; border-radius:2px; cursor:pointer; background:linear-gradient(180deg,#f3eee2,#b6ac93); border:1px solid #7c7159; }
+    /* knobs */
+    .knob{ position:absolute; border-radius:50%; }
+    .knob .skirt{ position:absolute; inset:0; border-radius:50%;
+      background:repeating-conic-gradient(from 0deg,var(--kskirt1) 0deg 1.6deg,var(--kskirt2) 1.6deg 3.2deg);
+      box-shadow:0 .3cqw .5cqw rgba(0,0,0,.4),inset 0 0 .3cqw rgba(0,0,0,.4); }
+    .knob .face{ position:absolute; inset:22%; border-radius:50%;
+      background:radial-gradient(circle at 42% 34%,var(--kface),var(--kface2) 66%,#8a5f34);
+      box-shadow:inset 0 .12cqw .3cqw rgba(255,255,255,.4),0 .1cqw .2cqw rgba(0,0,0,.3); }
+    .knob .dial{ position:absolute; inset:0; }
+    .knob .dial::before{ content:""; position:absolute; top:8%; left:50%; width:.5cqw; height:24%;
+      margin-left:-.25cqw; border-radius:.25cqw; background:#f3ecdd; }
+    .txt{ position:absolute; color:var(--ink); }
+    .dim{ position:absolute; color:var(--inkdim); }
+    .dot{ position:absolute; width:.4cqw; height:.4cqw; border-radius:50%; background:#8a7d64; }
 
-    .tempo-row{ display:flex; align-items:center; gap:10px; margin-top:6px; }
-    .knob{ width:50px; height:50px; border-radius:50%; position:relative; cursor:ns-resize; flex:0 0 auto;
-      background:radial-gradient(circle at 40% 34%,#f4eede,#c1b697 66%,#8f8467); border:2px solid #7c7154;
-      box-shadow:0 3px 5px rgba(0,0,0,.35), inset 0 1px 2px rgba(255,255,255,.7); }
-    .knob .ind{ position:absolute; width:3px; height:19px; left:50%; top:4px; margin-left:-1.5px; border-radius:2px;
-      background:#3a3226; transform-origin:50% 21px; }
-    .knob-lab{ font-size:9.5px; color:var(--print); text-transform:uppercase; letter-spacing:.5px; }
-    .knob-lab b{ display:block; font-size:11px; color:var(--ink); font-variant-numeric:tabular-nums; }
+    /* buttons */
+    .sq{ position:absolute; border-radius:.5cqw; cursor:pointer;
+      box-shadow:0 .25cqw .35cqw rgba(0,0,0,.35),inset 0 .18cqw .25cqw rgba(255,255,255,.35),inset 0 -.2cqw .3cqw rgba(0,0,0,.22); }
+    .sq:active{ transform:translateY(.1cqw); }
+    .sq.orange{ background:linear-gradient(180deg,var(--orange-hi),var(--orange) 45%,var(--orange-lo)); }
+    .sq.beige{ background:linear-gradient(180deg,var(--beige-hi),var(--beige) 55%,#998c6d); }
+    .led{ position:absolute; border-radius:50%;
+      background:radial-gradient(circle at 40% 35%,#b02516,#5e150c); box-shadow:inset 0 0 .2cqw #000; }
+    .led.on{ background:radial-gradient(circle at 40% 35%,#ff6a4a,var(--red)); box-shadow:0 0 .8cqw var(--red); }
+    .box{ border:.1cqw solid var(--ink); padding:0 .2cqw; border-radius:.12cqw; }
 
-    /* rhythm + transport */
-    .rrow{ display:flex; gap:5px; }
-    .rb{ flex:1; position:relative; padding:20px 2px 6px; border-radius:5px; cursor:pointer; text-align:center; font-size:8px;
-      letter-spacing:.2px; text-transform:uppercase; color:var(--print); font-weight:700; line-height:1.05;
-      background:linear-gradient(180deg,var(--btn-hi),var(--btn)); border:1px solid var(--btn-edge);
-      box-shadow:0 2px 2px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.6); }
-    .rb:active{ transform:translateY(1px); }
-    .rb .led{ position:absolute; top:5px; left:50%; margin-left:-4px; width:8px; height:8px; border-radius:50%;
-      background:var(--led-off); box-shadow:inset 0 0 2px rgba(0,0,0,.7); }
-    .rb.on{ background:linear-gradient(180deg,#efe9da,#d8cfb8); }
-    .rb.on .led{ background:var(--red); box-shadow:0 0 7px var(--red); }
+    /* rhythm slider */
+    .rtrack{ position:absolute; border-radius:.4cqw; background:linear-gradient(180deg,#efe9db,#dcd2bb);
+      box-shadow:inset 0 .15cqw .35cqw rgba(0,0,0,.28); overflow:hidden; }
+    .rtrack .ln{ position:absolute; left:6%; right:6%; top:50%; height:.35cqw; margin-top:-.17cqw; background:#1b1b1b; border-radius:.2cqw; }
+    .rrange{ position:absolute; -webkit-appearance:none; appearance:none; background:transparent; margin:0; cursor:pointer; }
+    .rrange::-webkit-slider-thumb{ -webkit-appearance:none; width:2.6cqw; height:100%; border-radius:.4cqw;
+      background:linear-gradient(180deg,var(--orange-hi),var(--orange) 50%,var(--orange-lo)); border:.08cqw solid #a23414; }
+    .rrange::-moz-range-thumb{ width:2.6cqw; height:100%; border-radius:.4cqw;
+      background:linear-gradient(180deg,var(--orange-hi),var(--orange) 50%,var(--orange-lo)); border:.08cqw solid #a23414; }
+    .rtick{ position:absolute; width:.4cqw; height:.4cqw; background:#40382c; }
 
-    .transport{ display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-top:8px; }
-    .tbtn{ padding:8px 2px; border-radius:5px; cursor:pointer; text-align:center; font-size:8.5px; font-weight:800;
-      letter-spacing:.4px; text-transform:uppercase; color:var(--print); border:1px solid var(--btn-edge);
-      background:linear-gradient(180deg,var(--btn-hi),var(--btn)); box-shadow:0 2px 2px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.6); }
-    .tbtn:active{ transform:translateY(1px); }
-    .tbtn.start{ color:#fff; background:linear-gradient(180deg,var(--red),var(--red-lo)); border-color:#6f2018; }
-    .tbtn .st{ display:block; font-size:7px; font-weight:600; color:var(--printdim); margin-top:2px; }
-    .tbtn.start .st{ color:#f2cfc9; }
-    .tbtn.hot{ box-shadow:0 0 9px var(--amber), inset 0 1px 0 rgba(255,255,255,.4); }
+    /* slide switches */
+    .swt{ position:absolute; border-radius:.45cqw; cursor:pointer;
+      background:linear-gradient(180deg,#e7dfcd,#d3c8ae); box-shadow:inset 0 .12cqw .3cqw rgba(0,0,0,.25); }
+    .swth{ position:absolute; top:12%; height:76%; border-radius:.35cqw; pointer-events:none;
+      box-shadow:0 .12cqw .25cqw rgba(0,0,0,.4),inset 0 .12cqw .12cqw rgba(255,255,255,.4); transition:left .07s; }
+    .blue .swth{ background:linear-gradient(180deg,#aebfce,var(--blue) 55%,var(--blue-lo)); }
+    .blue .swth::after{ content:""; position:absolute; right:14%; top:24%; width:24%; height:52%; background:#3f4a54; border-radius:.1cqw; }
+    .brownsw .swth{ background:linear-gradient(180deg,#b48f68,var(--brown) 55%,var(--brown-lo)); }
+    .darksw .swth{ background:linear-gradient(180deg,#54524c,var(--dark) 55%,#1f1e1b); }
 
-    /* mode / tone / switches */
-    .seg{ display:flex; border:1px solid var(--btn-edge); border-radius:6px; overflow:hidden; }
-    .seg button{ flex:1; padding:8px 2px; font-size:8.5px; letter-spacing:.4px; text-transform:uppercase; font-weight:700;
-      background:linear-gradient(180deg,var(--btn-hi),var(--btn)); color:var(--print); border:0; border-right:1px solid var(--btn-edge); cursor:pointer; }
-    .seg button:last-child{ border-right:0; }
-    .seg button.on{ background:linear-gradient(180deg,var(--red),var(--red-lo)); color:#fff; }
+    /* CASIO badge */
+    .casio{ position:absolute; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg,#c8bb9e,#a99a78); border:.1cqw solid #8b7d5e; border-radius:.3cqw;
+      box-shadow:inset 0 .1cqw 0 rgba(255,255,255,.5),0 .15cqw .25cqw rgba(0,0,0,.25); }
+    .casio b{ font-weight:800; font-style:italic; letter-spacing:.06cqw; color:#1c1a17; font-size:1.9cqw; }
 
-    .tone{ margin-top:9px; display:flex; align-items:center; gap:7px; padding:6px 7px; border-radius:6px;
-      background:linear-gradient(180deg,#efe9da,#dcd2b9); border:1px solid var(--btn-edge); box-shadow:inset 0 1px 3px rgba(0,0,0,.15); }
-    .tone .num{ font-size:17px; font-weight:800; min-width:26px; color:var(--red); font-variant-numeric:tabular-nums; }
-    .tone .nm{ flex:1; font-size:10.5px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:var(--ink);
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .tone .nav{ display:flex; gap:3px; }
-    .tone .nav b{ cursor:pointer; width:20px; height:20px; border-radius:4px; display:grid; place-items:center; font-size:10px;
-      background:linear-gradient(180deg,var(--btn-hi),var(--btn)); border:1px solid var(--btn-edge); color:var(--print); }
-    .tone .nav b:active{ transform:translateY(1px); }
+    /* tone strip */
+    .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; }
+    .tcell .n{ font-size:1cqw; color:var(--red); font-weight:700; display:block; line-height:1; }
+    .tcell .nm{ font-size:.82cqw; color:var(--ink); display:block; line-height:1.1; margin-top:.1cqw; }
+    .tcell.sel{ background:rgba(216,69,42,.15); }
+    .tcell.sel .nm{ font-weight:700; }
 
-    .rockers{ display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
-    .rocker{ display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 3px; border-radius:6px;
-      background:linear-gradient(180deg,#e0d6bb,#d0c4a3); border:1px solid var(--deep); }
-    .rocker span{ font-size:8.5px; color:var(--print); text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
-    .sw{ position:relative; width:40px; height:20px; cursor:pointer; }
-    .sw input{ opacity:0; width:0; height:0; }
-    .sw .k{ position:absolute; inset:0; background:#8a7f64; border:1px solid #5f5643; border-radius:20px; transition:.12s; box-shadow:inset 0 1px 2px rgba(0,0,0,.4); }
-    .sw .k::before{ content:""; position:absolute; width:15px; height:15px; top:2px; left:2px; border-radius:50%;
-      background:linear-gradient(180deg,#f3eee2,#c3b9a1); transition:.12s; box-shadow:0 1px 1px rgba(0,0,0,.35); }
-    .sw input:checked + .k{ background:linear-gradient(180deg,#4bb87c,var(--grn)); }
-    .sw input:checked + .k::before{ transform:translateX(19px); }
-
-    /* ---------- Keyboards (dual manual) ---------- */
-    .manuals{ display:flex; gap:10px; margin-top:12px; align-items:flex-end; }
-    .manual{ position:relative; }
-    .manual .zl{ font-size:8px; letter-spacing:2px; text-transform:uppercase; margin:0 2px 4px; font-weight:800; }
-    .bassM{ flex:0 0 27%; }
-    .bassM .zl{ color:var(--red); }
-    .mainM{ flex:1; }
-    .mainM .zl{ color:var(--printdim); text-align:right; }
-    .keys{ position:relative; display:flex; padding:6px 6px 0; border:1px solid #17140f; border-radius:6px 6px 9px 9px;
-      background:linear-gradient(180deg,#2a2622,#1a1714); box-shadow:inset 0 3px 8px rgba(0,0,0,.6); }
-    .keys.main{ height:128px; }
-    .keys.bass{ height:96px; }
-    .wkey{ position:relative; flex:1; margin:0 1px; border-radius:0 0 3px 3px; cursor:pointer; touch-action:none;
-      background:linear-gradient(180deg,#fdfcf8,#e2ddd0); border:1px solid #b7b0a0; border-top:0; box-shadow:inset 0 -5px 7px rgba(0,0,0,.05); }
-    .wkey.down{ background:linear-gradient(180deg,#e8e2d3,#d2cab6); box-shadow:inset 0 4px 8px rgba(0,0,0,.25); }
-    .wkey .lab{ position:absolute; bottom:4px; left:0; right:0; text-align:center; font-size:7px; color:#a79f8d; pointer-events:none; }
-    .bass .wkey{ background:linear-gradient(180deg,#fff0ea,#f0d6cc); border-color:#d3a99b; }
-    .bass .wkey.down{ background:linear-gradient(180deg,#f0d8cf,#e0bcae); }
-    .bkey{ position:absolute; top:0; width:3.4%; height:60%; border-radius:0 0 2px 2px; cursor:pointer; z-index:3; touch-action:none;
-      background:linear-gradient(180deg,#494540,#161310); border:1px solid #000; box-shadow:0 3px 4px rgba(0,0,0,.5); }
-    .bkey.down{ background:linear-gradient(180deg,#2a2723,#000); height:58%; }
-
-    .hint{ margin-top:9px; color:var(--printdim); font-size:10px; line-height:1.5; padding:0 4px; }
-    .warn{ color:var(--red); font-weight:700; }
-    @media (max-width:660px){ .panel{ grid-template-columns:1fr; } .manuals{ flex-direction:column; align-items:stretch; } .bassM,.mainM{ flex:auto; } }
+    /* keyboard */
+    .board{ position:absolute; background:linear-gradient(180deg,var(--bevel),var(--gold-lo)); }
+    .brand{ position:absolute; color:#5c4636; }
+    .brand .c{ font-size:1.7cqw; } .brand .m{ font-size:1.9cqw; font-weight:800; letter-spacing:.08cqw; }
+    .ul{ position:absolute; height:.1cqw; background:#5c4636; }
+    .wkey{ position:absolute; background:linear-gradient(180deg,#fdfcf8,var(--wht-lo));
+      border:.08cqw solid #b8b09e; border-radius:0 0 .3cqw .3cqw; cursor:pointer; touch-action:none; }
+    .wkey.down{ background:linear-gradient(180deg,#ece6d7,#d6cebb); }
+    .bkey{ position:absolute; background:linear-gradient(180deg,#4a4640,var(--blk)); border-radius:0 0 .28cqw .28cqw;
+      cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .25cqw .3cqw rgba(0,0,0,.5); }
+    .bkey.down{ background:linear-gradient(180deg,#2a2723,#000); }
+    .bwk{ position:absolute; background:linear-gradient(180deg,#fdfcf8,#e9e3d4); border:.08cqw solid #b8b09e;
+      border-radius:.2cqw; cursor:pointer; touch-action:none; }
+    .bwk.down{ background:linear-gradient(180deg,#ece6d7,#d6cebb); }
+    .bbk{ position:absolute; background:linear-gradient(180deg,#4a4640,var(--blk)); border-radius:.18cqw;
+      cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .2cqw .3cqw rgba(0,0,0,.5); }
+    .bbk.down{ background:linear-gradient(180deg,#2a2723,#000); }
+    .bklab{ position:absolute; text-align:center; font-size:.85cqw; color:#5c4636; pointer-events:none; }
+    .warn{ position:absolute; left:3cqw; bottom:.4cqw; color:var(--red); font-size:1cqw; font-weight:700; display:none; }
   </style>
 </head>
 <body>
-  <div class="mt40">
-    <div class="screw tl"></div><div class="screw tr"></div><div class="screw bl"></div><div class="screw br"></div>
-
-    <div class="top">
-      <div class="brand">
-        <div class="row1"><span class="casio">CASIO</span><span class="ct">Casiotone</span></div>
-        <div class="row2"><span class="mt">MT-40</span><span class="tag">Electronic Musical Instrument</span></div>
-      </div>
-      <div class="speaker"></div>
-    </div>
-
-    <div class="panel">
-      <!-- Volume + Tempo -->
-      <div class="sec">
-        <p class="t">Volume · Tempo</p>
-        <div class="fader"><label>Main</label><input type="range" id="master" min="0" max="1" step="0.001"><span class="rd" id="masterVal">–</span></div>
-        <div class="fader"><label>Rhythm</label><input type="range" id="rhythm" min="0" max="1" step="0.001"><span class="rd" id="rhythmVal">–</span></div>
-        <div class="fader"><label>Bass</label><input type="range" id="bass" min="0" max="1" step="0.001"><span class="rd" id="bassVal">–</span></div>
-        <div class="tempo-row">
-          <div class="knob" id="tempoKnob"><span class="ind"></span></div>
-          <div class="knob-lab">Tempo<b id="tempoVal">–</b></div>
-        </div>
-      </div>
-
-      <!-- Rhythm -->
-      <div class="sec">
-        <p class="t">Rhythm</p>
-        <div class="rrow" id="rhythmGrid"></div>
-        <div class="transport">
-          <div class="tbtn start" id="btnStart">Start / Stop<span class="st" id="startState">stopped</span></div>
-          <div class="tbtn" id="btnSync">Synchro<span class="st">start</span></div>
-          <div class="tbtn" id="btnFill">Fill-in<span class="st">hold</span></div>
-        </div>
-      </div>
-
-      <!-- Mode / Tone / switches -->
-      <div class="sec">
-        <p class="t">Mode</p>
-        <div class="seg" id="modeSeg"></div>
-        <p class="t" style="margin:10px 0 0">Tone</p>
-        <div class="tone">
-          <span class="num" id="toneNum">1</span>
-          <span class="nm" id="toneName">–</span>
-          <span class="nav"><b id="tonePrev">◀</b><b id="toneNext">▶</b></span>
-        </div>
-        <div class="rockers">
-          <label class="rocker"><span>Vibrato</span><span class="sw"><input type="checkbox" id="vibrato"><span class="k"></span></span></label>
-          <label class="rocker"><span>Sustain</span><span class="sw"><input type="checkbox" id="sustain"><span class="k"></span></span></label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dual-manual keyboard: 15 bass/chord keys + 37 melody keys -->
-    <div class="manuals">
-      <div class="manual bassM">
-        <div class="zl">Chord / Bass</div>
-        <div class="keys bass" id="bassKeys"></div>
-      </div>
-      <div class="manual mainM">
-        <div class="zl">Melody</div>
-        <div class="keys main" id="mainKeys"></div>
-      </div>
-    </div>
-
-    <div class="hint" id="hint">
-      In <b>Chord</b> mode the small keys play Casio-Chord + bass and start the rhythm; the large keys play the melody.
-      The <b>Rock</b> rhythm is the original “Sleng Teng”. Press <b>Start/Stop</b> or a chord key to run it.
-    </div>
-  </div>
+  <div class="mt40" id="mt40"></div>
 
   <script type="module">
     import * as Juce from "./js/juce/index.js";
+    const root=document.getElementById("mt40");
 
-    let noteOn, noteOff, synchro, setFill, startStop;
-    try {
-      noteOn=Juce.getNativeFunction("noteOn"); noteOff=Juce.getNativeFunction("noteOff");
+    // ---- native functions ----
+    let noteOn,noteOff,synchro,setFill,startStop;
+    try{ noteOn=Juce.getNativeFunction("noteOn"); noteOff=Juce.getNativeFunction("noteOff");
       synchro=Juce.getNativeFunction("synchro"); setFill=Juce.getNativeFunction("setFill");
-      startStop=Juce.getNativeFunction("startStop");
-    } catch(e){}
+      startStop=Juce.getNativeFunction("startStop"); }catch(e){}
 
-    window.mt40SetTransport = (state) => {
-      const t=["stopped","armed","playing"][state]??"stopped";
-      const el=document.getElementById("startState"); if(el) el.textContent=t;
-      const b=document.getElementById("btnStart"); if(b) b.classList.toggle("hot", state===2);
-    };
-
-    // ---- sliders ----
-    function bindSlider(name,elId,valId,fmt){
-      const s=Juce.getSliderState(name), el=document.getElementById(elId), v=document.getElementById(valId);
-      const r=()=>{ el.value=s.getNormalisedValue(); v.textContent=fmt(s.getScaledValue()); };
-      s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
-      el.addEventListener("input",()=>s.setNormalisedValue(parseFloat(el.value)));
-      el.addEventListener("pointerdown",()=>s.sliderDragStarted());
-      el.addEventListener("pointerup",()=>s.sliderDragEnded());
-      r();
+    // ---- placement helper: coords in cqw (1cqw = 1% of case width) ----
+    function P(cls, x, y, w, h, html){
+      const d=document.createElement("div"); d.className=cls;
+      d.style.cssText=`left:${x}cqw;top:${y}cqw;`+(w!=null?`width:${w}cqw;`:"")+(h!=null?`height:${h}cqw;`:"");
+      if(html!=null) d.innerHTML=html; root.appendChild(d); return d;
     }
-    const pct=v=>Math.round(v*100)+"%";
-    const bpm=v=>Math.round(v)+" bpm";
+    function T(x,y,txt,size=1.1,cls="txt",w){ const d=P(cls,x,y,w); d.style.fontSize=size+"cqw";
+      d.style.textAlign="center"; if(w) d.style.marginLeft="0"; d.innerHTML=txt; return d; }
 
-    // ---- rotary knob bound to a slider state ----
-    function bindKnob(name, knobId, valId, fmt){
-      const s=Juce.getSliderState(name), knob=document.getElementById(knobId);
-      const ind=knob.querySelector(".ind"), v=document.getElementById(valId);
-      const r=()=>{ const n=s.getNormalisedValue(); ind.style.transform=`rotate(${-135+n*270}deg)`;
-        v.textContent=fmt(s.getScaledValue()); };
-      s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
-      let startY=0, startV=0, active=false;
-      knob.addEventListener("pointerdown",e=>{ active=true; startY=e.clientY; startV=s.getNormalisedValue();
-        knob.setPointerCapture(e.pointerId); s.sliderDragStarted(); });
-      knob.addEventListener("pointermove",e=>{ if(!active)return; const d=(startY-e.clientY)/160;
-        s.setNormalisedValue(Math.max(0,Math.min(1,startV+d))); });
-      const end=()=>{ if(active){ active=false; s.sliderDragEnded(); } };
-      knob.addEventListener("pointerup",end); knob.addEventListener("pointercancel",end);
-      r();
+    // ================= PANEL FRAME =================
+    P("redline",14.5,1.5,82.7,0.32);                 // top red line
+    [14.5,22,50,66,81,97.2].forEach(x=>P("divl",x,1.5,null,8.6));  // section dividers
+    const band=P("band",14.5,9.9,82.7,1.7);
+    band.innerHTML='<span style="width:7.5cqw">volume</span><span style="width:28cqw">rhythm</span>'+
+      '<span style="width:16cqw">tone</span><span style="width:15cqw">effect</span><span style="flex:1">power</span>';
+
+    // speaker louvers
+    for(let i=0;i<11;i++) P("slot",3,2.1+i*0.62,10.4,0.34);
+
+    // ================= KNOBS =================
+    function knob(cx,cy,d){ const k=P("knob",cx-d/2,cy-d/2,d,d,'<div class="skirt"></div><div class="face"></div><div class="dial"></div>');
+      P("dot",cx-d/2-0.5,cy+d*0.32,null,null); P("dot",cx+d/2+0.1,cy+d*0.32,null,null);
+      return k.querySelector(".dial"); }
+    const D=3.2;
+    const volDial=knob(18.2,3.5,D);
+    T(15.2,5.3,"min",0.9,"dim"); T(19.6,5.3,"max",0.9,"dim");
+    const tempoDial=knob(30,3.3,D);
+    T(25.8,5.1,"slow",0.9,"dim"); T(31.8,5.1,"fast",0.9,"dim"); T(28,5.9,"tempo",1.0,"txt",4);
+    const rbvDial=knob(41,3.3,D);
+    T(36.9,5.1,"min",0.9,"dim"); T(42.8,5.1,"max",0.9,"dim");
+    T(38.3,5.75,"<b>rhythm/bass</b>",0.82,"txt",5.4); T(39.5,6.5,"volume",0.82,"txt",3);
+
+    // ================= RHYTHM buttons + LED + slider =================
+    const beatLed=P("led",29.5,5.2,0.9,0.9);
+    P("redline",26.6,6.0,7.6,0.09).style.background="#b6a888";  // bracket line
+    const orange=P("sq orange",26.6,6.5,2.3,2.3);
+    T(25.0,9.0,"<b>casio bass</b>",0.78,"txt",6);
+    T(25.0,9.65,'synchro/<span class="box">fill in</span>',0.78,"txt",6);
+    const beige=P("sq beige",30.3,6.5,2.3,2.3);
+    T(29.8,9.1,"start/stop",0.82,"txt",4.6);
+    // rhythm slider
+    const RHY=["samba","waltz","swing","slow rock","pops","rock"];
+    P("rtrack",37.6,6.6,10.4,2.2,'<div class="ln"></div>');
+    const rrange=document.createElement("input"); rrange.type="range"; rrange.min=0; rrange.max=5; rrange.step=1;
+    rrange.className="rrange a"; rrange.style.cssText="left:37.6cqw;top:6.6cqw;width:10.4cqw;height:2.2cqw;";
+    root.appendChild(rrange);
+    T(41.0,9.05,"rhythm",0.92,"txt",4);
+    const zig=[0,0.75,0,0,0,0.75];
+    RHY.forEach((nm,i)=>{ const fx=38.3+i*(9.3/5);
+      P("rtick",fx,5.95,null,null); T(fx-1.7,5.1+zig[i],nm,0.78,"txt",3.5); });
+
+    // ================= TONE (memory / mode) =================
+    function slideSwitch(x,y,w,h,cls,positions,labels,label){
+      const t=P("swt "+cls,x,y,w,h); const thw=Math.min(w/positions*1.5,w/positions*1.5);
+      const th=document.createElement("div"); th.className="swth"; th.style.width=(w/positions*1.4)+"cqw"; t.appendChild(th);
+      labels.forEach((tl,i)=>{ T(x+w*(i+0.5)/positions-1.2,y-1.5,tl,0.9,"txt",2.4);
+        P("dot",x+w*(i+0.5)/positions-0.2,y-0.5,null,null).style.background="#6b5f4a"; });
+      if(label) T(x-1,y+h+0.3,label,0.95,"txt",w+2);
+      let idx=0;
+      const setThumb=()=>{ const seg=(t.clientWidth-th.clientWidth)/(positions-1); th.style.left=(idx*seg)+"px"; };
+      t.addEventListener("click",()=>{ idx=(idx+1)%positions; setThumb(); t.dispatchEvent(new CustomEvent("chg",{detail:idx})); });
+      requestAnimationFrame(setThumb); window.addEventListener("resize",setThumb);
+      return { set:i=>{idx=i;setThumb();}, get:()=>idx, on:f=>t.addEventListener("chg",e=>f(e.detail)) };
     }
+    const memSw =slideSwitch(51.5,4.7,9.3,2.7,"blue",4,["1","2","3","4"],"tone memory");
+    const modeSw=slideSwitch(61.8,4.7,3.6,2.7,"blue",2,["play","set"],"mode");
 
-    // ---- toggles ----
-    function bindToggle(name,elId){
-      const s=Juce.getToggleState(name), el=document.getElementById(elId);
-      const r=()=>{ el.checked=s.getValue(); };
-      s.valueChangedEvent.addListener(r);
-      el.addEventListener("change",()=>s.setValue(el.checked)); r();
-    }
+    // ================= EFFECT =================
+    const susSw=slideSwitch(67.6,4.7,5.4,2.7,"brownsw",2,["off","on"],"sustain");
+    const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
 
-    // ---- button-bank / segmented combos ----
-    function bindButtons(name, containerId, mk){
-      const s=Juce.getComboBoxState(name), box=document.getElementById(containerId);
-      const build=()=>{ const c=s.properties.choices||[]; box.innerHTML="";
-        c.forEach((label,i)=>{ const el=mk(label,i); el.dataset.i=i;
-          el.addEventListener("click",()=>s.setChoiceIndex(i)); box.appendChild(el); }); mark(); };
-      const mark=()=>{ const idx=s.getChoiceIndex();
-        [...box.children].forEach(c=>c.classList.toggle("on",+c.dataset.i===idx)); };
-      s.propertiesChangedEvent.addListener(build); s.valueChangedEvent.addListener(mark); build();
-    }
-    const mkRhythm=(label)=>{ const d=document.createElement("div"); d.className="rb";
-      d.innerHTML=`<span class="led"></span>${label}`; return d; };
-    const mkSeg=(label)=>{ const b=document.createElement("button"); b.textContent=label; return b; };
+    // ================= POWER + CASIO =================
+    P("casio",89.6,1.9,7.2,2.9,'<b>CASIO</b>');
+    P("led",84.9,4.0,0.9,0.9);
+    const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
 
-    // ---- tone selector ----
-    function bindTone(name){
-      const s=Juce.getComboBoxState(name);
-      const num=document.getElementById("toneNum"), nm=document.getElementById("toneName");
-      const r=()=>{ const i=s.getChoiceIndex(), c=s.properties.choices||[];
-        num.textContent=String(i+1).padStart(2,"0"); nm.textContent=c[i]||"–"; };
-      s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
-      const step=d=>{ const n=(s.properties.choices||[]).length||1;
-        s.setChoiceIndex(Math.max(0,Math.min(n-1,s.getChoiceIndex()+d))); };
-      document.getElementById("tonePrev").addEventListener("click",()=>step(-1));
-      document.getElementById("toneNext").addEventListener("click",()=>step(1));
-      r();
-    }
+    // ================= TONE STRIP =================
+    const TONE=["electric piano","banjo","guitar","harpsichord","xylophone","celesta","glockenspiel","organ",
+      "accordion","pipe organ","oriental pipe","brass","cello","synth fuzz","violin","trumpet","funny fuzz",
+      "st. ensemble","clarinet","flute","recorder","folk flute"];
+    const stripL=3, stripR=97.2, stripW=stripR-stripL, cw=stripW/22;
+    let patchState=null, memSlots=[0,7,14,19], curSlot=0;
+    const tcells=[];
+    TONE.forEach((nm,i)=>{ const c=P("tcell",stripL+i*cw,11.9,cw,3.2,`<span class="n">${i+1}</span><span class="nm">${nm}</span>`);
+      c.dataset.i=i; c.addEventListener("click",()=>{ if(patchState){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } });
+      tcells.push(c); });
+    function markTones(){ if(!patchState)return; const idx=patchState.getChoiceIndex();
+      tcells.forEach(c=>c.classList.toggle("sel",+c.dataset.i===idx)); }
 
-    // ---- transport buttons ----
-    document.getElementById("btnStart").addEventListener("click",()=>startStop&&startStop());
-    document.getElementById("btnSync").addEventListener("click",()=>synchro&&synchro());
-    const fill=document.getElementById("btnFill");
-    const fDown=()=>{ fill.classList.add("hot"); setFill&&setFill(true); };
-    const fUp=()=>{ fill.classList.remove("hot"); setFill&&setFill(false); };
-    fill.addEventListener("pointerdown",fDown);
-    fill.addEventListener("pointerup",fUp); fill.addEventListener("pointerleave",fUp); fill.addEventListener("pointercancel",fUp);
+    // ================= KEYBOARD =================
+    const boardY=15.3, boardB=30.4;
+    P("board",0,boardY,100,boardB-boardY);
+    // brand + bass block
+    const bx=3.2;
+    P("brand",bx,boardY+0.5,20,null,'<span class="c">Casiotone </span><span class="m">MT-40</span>');
+    P("ul",bx,boardY+3.0,17); P("ul",bx,boardY+3.3,17);
+    T(bx+5.5,boardB-2.0,"bass",1.1,"txt",6).style.color="#5c4636";
 
-    // ---- keyboard manuals ----
-    const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-    const isBlack=n=>[1,3,6,8,10].includes(((n%12)+12)%12);
+    const NN=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const FLAT={1:"C#",3:"E♭",6:"F#",8:"A♭",10:"B♭"};
+    const isB=n=>[1,3,6,8,10].includes(((n%12)+12)%12);
     function press(el,n){ if(el.classList.contains("down"))return; el.classList.add("down"); noteOn&&noteOn(n,0.85); }
-    function release(el,n){ if(!el.classList.contains("down"))return; el.classList.remove("down"); noteOff&&noteOff(n); }
-    function attach(el,n){
-      el.addEventListener("pointerdown",e=>{ el.setPointerCapture(e.pointerId); press(el,n); });
-      el.addEventListener("pointerup",()=>release(el,n));
-      el.addEventListener("pointercancel",()=>release(el,n));
-      el.addEventListener("pointerleave",e=>{ if(e.buttons) release(el,n); });
-    }
-    function buildManual(containerId, low, high, labelCs){
-      const keys=document.getElementById(containerId);
-      const whites=new Map(), blacks=[];
-      for(let n=low;n<=high;n++){ if(isBlack(n))continue;
-        const k=document.createElement("div"); k.className="wkey";
-        const nm=NAMES[((n%12)+12)%12], oct=Math.floor(n/12)-1;
-        if(labelCs && nm==="C") k.innerHTML=`<span class="lab">${nm}${oct}</span>`;
-        keys.appendChild(k); whites.set(n,k); attach(k,n);
-      }
-      for(let n=low;n<=high;n++){ if(!isBlack(n))continue;
-        const b=document.createElement("div"); b.className="bkey"; keys.appendChild(b); blacks.push({n,b}); attach(b,n);
-      }
-      const layout=()=>blacks.forEach(({n,b})=>{ const l=whites.get(n-1); if(!l)return;
-        const w=l.offsetWidth*0.62; b.style.width=w+"px"; b.style.left=(l.offsetLeft+l.offsetWidth-w/2)+"px"; });
-      requestAnimationFrame(layout); window.addEventListener("resize",layout);
-    }
-    // 15 bass/chord keys: C2..D#3 (36..50)  |  37 melody keys: F3..F6 (53..89)
-    buildManual("bassKeys", 36, 50, true);
-    buildManual("mainKeys", 53, 89, true);
+    function rel(el,n){ if(!el.classList.contains("down"))return; el.classList.remove("down"); noteOff&&noteOff(n); }
+    function att(el,n){ el.addEventListener("pointerdown",e=>{el.setPointerCapture(e.pointerId);press(el,n);});
+      el.addEventListener("pointerup",()=>rel(el,n)); el.addEventListener("pointercancel",()=>rel(el,n));
+      el.addEventListener("pointerleave",e=>{ if(e.buttons) rel(el,n); }); }
 
-    // ---- wire params ----
-    try {
-      bindSlider("master_vca_gain","master","masterVal",pct);
-      bindSlider("rhythm_bus_gain","rhythm","rhythmVal",pct);
-      bindSlider("bass_osc_gain","bass","bassVal",pct);
-      bindKnob("host_bpm","tempoKnob","tempoVal",bpm);
-      bindToggle("global_lfo_on","vibrato");
-      bindToggle("env_release_mult","sustain");
-      bindButtons("active_rhythm_idx","rhythmGrid",mkRhythm);
-      bindButtons("kbd_mode","modeSeg",mkSeg);
-      bindTone("active_patch_idx");
-    } catch(e){
-      document.getElementById("hint").innerHTML='<span class="warn">Native bridge unavailable — open this UI inside the plugin host.</span>';
+    // main manual 53..89 (F3..F6), area x=22..97.2, y=boardY+1..boardB-0.6
+    (function(){ const low=53,high=89, X0=22, X1=97.2, Y0=boardY+1.0, Y1=boardB-0.6;
+      const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
+      const w=(X1-X0)/whites.length; const wm=new Map();
+      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,w-0.12,Y1-Y0); wm.set(n,k); att(k,n); });
+      for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
+        const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); att(root.lastChild,n); }
+    })();
+    // bass manual 36..50, discrete keys, x=bx..20.5
+    (function(){ const low=36,high=50, X0=bx, X1=20.8, Y0=boardY+4.2, Y1=boardB-2.3;
+      const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
+      const gap=0.4, w=((X1-X0)-gap*(whites.length-1))/whites.length; const wm=new Map();
+      whites.forEach((n,i)=>{ const x=X0+i*(w+gap); const k=P("bwk",x,Y0,w,(Y1-Y0)*0.62); wm.set(n,k); att(k,n);
+        T(x,Y1-1.0,NN[((n%12)+12)%12],0.85,"bklab",w); });
+      for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
+        const x=X0+(idx+1)*(w+gap)-w*0.75/2 -gap/2; const bw=w*0.75;
+        P("bbk",x,Y0,bw,(Y1-Y0)*0.42); att(root.lastChild,n);
+        T(x,Y0-1.1,FLAT[((n%12)+12)%12],0.8,"bklab",bw); }
+    })();
+
+    P("warn",0,0).id="warn"; const warn=root.lastChild; warn.className="warn"; warn.textContent="Native bridge unavailable — open inside the plugin host.";
+
+    // ================= BINDINGS =================
+    window.mt40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2); };
+    function bindKnob(dial,states){ const s0=states[0];
+      const r=()=>{ dial.style.transform=`rotate(${-140+s0.getNormalisedValue()*280}deg)`; };
+      s0.valueChangedEvent.addListener(r); s0.propertiesChangedEvent.addListener(r);
+      const knob=dial.parentElement; let sy=0,sv=0,act=false;
+      knob.addEventListener("pointerdown",e=>{act=true;sy=e.clientY;sv=s0.getNormalisedValue();knob.setPointerCapture(e.pointerId);states.forEach(s=>s.sliderDragStarted&&s.sliderDragStarted());});
+      knob.addEventListener("pointermove",e=>{ if(!act)return; const v=Math.max(0,Math.min(1,sv+(sy-e.clientY)/180)); states.forEach(s=>s.setNormalisedValue(v)); });
+      const end=()=>{ if(act){act=false;states.forEach(s=>s.sliderDragEnded&&s.sliderDragEnded());} };
+      knob.addEventListener("pointerup",end); knob.addEventListener("pointercancel",end); r();
     }
+    function bindToggleSwitch(sw,name){ const s=Juce.getToggleState(name);
+      const r=()=>sw.set(s.getValue()?1:0); s.valueChangedEvent.addListener(r); sw.on(i=>s.setValue(i===1)); r(); }
+    function bindRhythm(name){ const s=Juce.getComboBoxState(name);
+      const r=()=>{ rrange.value=s.getChoiceIndex(); }; s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
+      rrange.addEventListener("input",()=>s.setChoiceIndex(parseInt(rrange.value,10))); r(); }
+    function bindTone(name){ patchState=Juce.getComboBoxState(name);
+      patchState.valueChangedEvent.addListener(markTones); patchState.propertiesChangedEvent.addListener(markTones);
+      memSw.on(slot=>{ curSlot=slot; patchState.setChoiceIndex(memSlots[slot]); }); markTones(); }
+
+    orange.addEventListener("pointerdown",()=>{ synchro&&synchro(); setFill&&setFill(true); });
+    const oUp=()=>setFill&&setFill(false);
+    orange.addEventListener("pointerup",oUp); orange.addEventListener("pointerleave",oUp); orange.addEventListener("pointercancel",oUp);
+    beige.addEventListener("click",()=>startStop&&startStop());
+
+    try{
+      bindKnob(volDial,[Juce.getSliderState("master_vca_gain")]);
+      bindKnob(tempoDial,[Juce.getSliderState("host_bpm")]);
+      bindKnob(rbvDial,[Juce.getSliderState("rhythm_bus_gain"),Juce.getSliderState("bass_osc_gain")]);
+      bindToggleSwitch(susSw,"env_release_mult");
+      bindToggleSwitch(vibSw,"global_lfo_on");
+      bindRhythm("active_rhythm_idx");
+      bindTone("active_patch_idx");
+    }catch(e){ warn.style.display="block"; }
   </script>
 </body>
 </html>

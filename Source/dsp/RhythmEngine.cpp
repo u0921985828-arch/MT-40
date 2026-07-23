@@ -18,11 +18,11 @@ void RhythmEngine::prepare (double sampleRate) noexcept
     setTempo (bpm);
 
     // -----------------------------------------------------------------
-    // Rhythm 0: "Rock" — the MT-40 pattern that became the "Sleng Teng"
-    // riddim. Hardcoded 2-bar loop (§5.1). The bass row holds semitone
-    // offsets from the Casio-Chord root; kRest = no bass note on that step.
+    // Rhythm 5: "Rock" — the MT-40 pattern that became the "Sleng Teng"
+    // riddim (rightmost slider position). Hardcoded 2-bar loop (§5.1). The
+    // bass row holds semitone offsets from the Casio-Chord root; kRest = rest.
     // -----------------------------------------------------------------
-    patterns[0] = {
+    patterns[5] = {
         "Rock",
         //         1 . . . 2 . . . 3 . . . 4 . . . | bar 2 ...
         { X,_,_,_, _,_,X,_, X,_,_,_, _,_,_,_,   X,_,_,_, _,_,X,_, X,_,_,_, _,_,X,_ }, // kick
@@ -34,7 +34,7 @@ void RhythmEngine::prepare (double sampleRate) noexcept
           0,kRest,0,kRest, 7,kRest,0,kRest, 0,kRest,3,kRest, 5,kRest,3,kRest }
     };
 
-    // Rhythm 3: "Slow Rock"
+    // Rhythm 3: "Slow Rock" (unchanged position)
     patterns[3] = {
         "Slow Rock",
         { X,_,_,_, _,_,_,_, X,_,_,_, _,_,_,_,   X,_,_,_, _,_,_,_, X,_,_,_, _,_,_,_ },
@@ -45,8 +45,8 @@ void RhythmEngine::prepare (double sampleRate) noexcept
           0,kRest,kRest,kRest, 0,kRest,kRest,kRest, 7,kRest,kRest,kRest, 3,kRest,kRest,kRest }
     };
 
-    // Rhythm 5: "Pops"
-    patterns[5] = {
+    // Rhythm 4: "Pops"
+    patterns[4] = {
         "Pops",
         { X,_,_,_, _,_,X,_, _,_,X,_, _,_,_,_,   X,_,_,_, _,_,X,_, _,_,X,_, _,_,_,_ },
         { _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_,   _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,X },
@@ -67,8 +67,8 @@ void RhythmEngine::prepare (double sampleRate) noexcept
           0,kRest,kRest,kRest, 3,kRest,kRest,kRest, 5,kRest,kRest,kRest, 7,kRest,kRest,kRest }
     };
 
-    // Rhythm 1: "Samba"
-    patterns[1] = {
+    // Rhythm 0: "Samba" (leftmost slider position)
+    patterns[0] = {
         "Samba",
         { X,_,_,_, _,_,X,_, _,_,_,_, X,_,_,_,   _,_,X,_, _,_,_,_, X,_,_,_, _,_,X,_ },
         { _,_,X,_, _,_,_,_, X,_,_,_, _,_,X,_,   _,_,_,_, X,_,_,_, _,_,X,_, _,_,_,_ },
@@ -78,8 +78,8 @@ void RhythmEngine::prepare (double sampleRate) noexcept
           kRest,kRest,3,kRest, kRest,kRest,kRest,kRest, 0,kRest,kRest,kRest, kRest,kRest,7,kRest }
     };
 
-    // Rhythm 4: "Waltz" (3/4 feel over the 16-step grid, first 12 steps used)
-    patterns[4] = {
+    // Rhythm 1: "Waltz" (3/4 feel over the 16-step grid, first 12 steps used)
+    patterns[1] = {
         "Waltz",
         { X,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_,   X,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_ },
         { _,_,_,_, X,_,_,_, X,_,_,_, _,_,_,_,   _,_,_,_, X,_,_,_, X,_,_,_, _,_,_,_ },
