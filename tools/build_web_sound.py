@@ -18,19 +18,33 @@ OUT = os.path.join(SCR, "st40-emulator-sound.html")
 # Pure-JS DSP: identical text is embedded in the worklet realm AND the page
 # realm (worklets run in a separate realm, so the code must exist in both).
 CORE = r'''
+// [duty1,duty2,detuneCents,lpfHz,attack,decay,sustain,release,gain]
+// Percussive tones use sustain 0 (they ring out and die while held);
+// sustained tones hold at their sustain level until the key is released.
 const PRESETS=[
-[0.50,0.25,6,3000,0.002,0.35,0.85],[0.20,0.12,7,3600,0.001,0.16,0.80],
-[0.40,0.20,6,2800,0.001,0.30,0.82],[0.25,0.15,6,4000,0.001,0.22,0.80],
-[0.50,0.50,4,3200,0.001,0.28,0.74],[0.50,0.33,5,2800,0.001,0.45,0.74],
-[0.30,0.30,5,3800,0.001,0.40,0.72],[0.50,0.50,4,2600,0.004,0.12,0.84],
-[0.40,0.40,10,2600,0.012,0.18,0.80],[0.50,0.50,3,3600,0.004,0.10,0.85],
-[0.33,0.33,6,2200,0.010,0.16,0.80],[0.35,0.20,7,3600,0.010,0.22,0.82],
-[0.125,0.20,9,1600,0.045,0.40,0.74],[0.15,0.30,14,3200,0.006,0.30,0.72],
-[0.125,0.125,8,3000,0.040,0.35,0.74],[0.35,0.20,7,4000,0.008,0.22,0.82],
-[0.12,0.35,16,2600,0.006,0.34,0.70],[0.125,0.125,12,2800,0.060,0.55,0.72],
-[0.50,0.50,5,2000,0.010,0.28,0.80],[0.50,0.50,4,1200,0.030,0.30,0.80],
-[0.50,0.45,3,1600,0.020,0.24,0.78],[0.50,0.40,5,1400,0.030,0.32,0.76]
-].map(a=>({d1:a[0],d2:a[1],det:a[2],lpf:a[3],atk:a[4],rel:a[5],gain:a[6]}));
+[0.50,0.25,6,3000,0.002,1.60,0.00,0.35,0.85], // 1 electric piano  (struck, long decay)
+[0.20,0.12,7,3600,0.001,0.35,0.00,0.14,0.80], // 2 banjo           (plucked, short)
+[0.40,0.20,6,2800,0.001,0.90,0.00,0.22,0.82], // 3 guitar          (plucked)
+[0.25,0.15,6,4000,0.001,0.60,0.00,0.18,0.80], // 4 harpsichord     (plucked)
+[0.50,0.50,4,3200,0.001,0.45,0.00,0.15,0.74], // 5 xylophone       (mallet ping)
+[0.50,0.33,5,2800,0.001,0.90,0.00,0.20,0.74], // 6 celesta         (bell)
+[0.30,0.30,5,3800,0.001,1.40,0.00,0.25,0.72], // 7 glockenspiel    (bell, long)
+[0.50,0.50,4,2600,0.004,0.05,1.00,0.10,0.84], // 8 organ           (sustained)
+[0.40,0.40,10,2600,0.012,0.08,0.95,0.16,0.80],// 9 accordion
+[0.50,0.50,3,3600,0.004,0.05,1.00,0.09,0.85], //10 pipe organ
+[0.33,0.33,6,2200,0.010,0.10,0.90,0.16,0.80], //11 oriental pipe
+[0.35,0.20,7,3600,0.030,0.12,0.90,0.20,0.82], //12 brass          (slow-ish onset)
+[0.125,0.20,9,1600,0.060,0.15,0.90,0.30,0.74],//13 cello          (bowed)
+[0.15,0.30,14,3200,0.006,0.10,0.95,0.22,0.72],//14 synth fuzz
+[0.125,0.125,8,3000,0.070,0.15,0.90,0.28,0.74],//15 violin         (bowed)
+[0.35,0.20,7,4000,0.010,0.10,0.92,0.20,0.82], //16 trumpet
+[0.12,0.35,16,2600,0.006,0.10,0.90,0.30,0.70],//17 funny fuzz
+[0.125,0.125,12,2800,0.090,0.20,0.90,0.40,0.72],//18 st. ensemble  (slow swell)
+[0.50,0.50,5,2000,0.030,0.08,0.95,0.24,0.80], //19 clarinet
+[0.50,0.50,4,1200,0.050,0.10,0.90,0.26,0.80], //20 flute
+[0.50,0.45,3,1600,0.035,0.08,0.92,0.22,0.78], //21 recorder
+[0.50,0.40,5,1400,0.050,0.10,0.90,0.28,0.76]  //22 folk flute
+].map(a=>({d1:a[0],d2:a[1],det:a[2],lpf:a[3],atk:a[4],dec:a[5],sus:a[6],rel:a[7],gain:a[8]}));
 
 const REST=-128;
 // 6 rhythm patterns (index: 0 Samba,1 Waltz,2 Swing,3 Slow Rock,4 Pops,5 Rock)
@@ -68,7 +82,7 @@ const PAT=[
   s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
   hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
   ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
-  b:[0,REST,0,REST,0,REST,3,REST,5,REST,5,REST,7,REST,5,REST,0,REST,0,REST,0,REST,3,REST,5,REST,7,REST,5,REST,3,REST]}
+  b:[0,REST,REST,0,REST,REST,3,REST,5,REST,REST,5,REST,7,REST,REST,0,REST,REST,0,REST,REST,3,REST,5,REST,7,REST,5,REST,3,REST]}
 ];
 
 class Biquad{constructor(){this.b0=1;this.b1=0;this.b2=0;this.a1=0;this.a2=0;this.x1=0;this.x2=0;this.y1=0;this.y2=0;}
@@ -80,17 +94,23 @@ class Biquad{constructor(){this.b0=1;this.b1=0;this.b2=0;this.a1=0;this.a2=0;thi
 class OnePole{constructor(fs){this.fs=fs;this.a=0;this.b=1;this.z=0;this.set(4000);}
  set(fc){this.a=Math.exp(-2*Math.PI*fc/this.fs);this.b=1-this.a;} reset(){this.z=0;} p(x){this.z=this.b*x+this.a*this.z;return this.z;}}
 class LFSR{constructor(s){this.s=(s||0xACE1)>>>0;} next(){let lsb=this.s&1;this.s>>>=1;if(lsb)this.s^=0x80200003;this.s>>>=0;return (this.s&0xFFFFFF)/8388608-1;}}
-class Env2{constructor(fs){this.fs=fs;this.atk=0.005;this.rel=0.3;this.mult=1;this.ai=0.01;this.rc=0.999;this.lvl=0;this.st=0;}
- times(a,r){this.atk=a;this.rel=r;this.ai=(a*this.fs>1)?1/(a*this.fs):1;this.rcf();}
+// Attack-Decay-Sustain-Release. Percussive MT-40 tones (sus=0) decay to
+// silence while held (xylophone/harpsichord/banjo ping); sustained tones
+// (sus~0.9-1) hold until release. States: 1 atk, 2 dec, 3 sus, 4 rel.
+class Env2{constructor(fs){this.fs=fs;this.atk=0.005;this.dec=0.1;this.sus=1;this.rel=0.3;this.mult=1;this.ai=0.01;this.dc=0.999;this.rc=0.999;this.lvl=0;this.st=0;}
+ times(a,d,s,r){this.atk=a;this.dec=d;this.sus=s;this.rel=r;this.ai=(a*this.fs>1)?1/(a*this.fs):1;this.dc=d>0?Math.exp(-6.9077553/(d*this.fs)):0;this.rcf();}
  setMult(m){this.mult=m;this.rcf();} rcf(){const t=this.rel*this.mult;this.rc=t>0?Math.exp(-6.9077553/(t*this.fs)):0;}
- on(){this.st=1;} off(){if(this.st)this.st=3;} reset(){this.lvl=0;this.st=0;} active(){return this.st!==0;}
- n(){if(this.st===1){this.lvl+=this.ai;if(this.lvl>=1){this.lvl=1;this.st=2;}}else if(this.st===3){this.lvl*=this.rc;if(this.lvl<=1e-4){this.lvl=0;this.st=0;}}return this.lvl;}}
+ on(){this.st=1;} off(){if(this.st!==0)this.st=4;} reset(){this.lvl=0;this.st=0;} active(){return this.st!==0;}
+ n(){if(this.st===1){this.lvl+=this.ai;if(this.lvl>=1){this.lvl=1;this.st=2;}}
+  else if(this.st===2){this.lvl=this.sus+(this.lvl-this.sus)*this.dc;if(this.lvl-this.sus<=1e-4){this.lvl=this.sus;this.st=(this.sus<=1e-4)?0:3;}}
+  else if(this.st===4){this.lvl*=this.rc;if(this.lvl<=1e-4){this.lvl=0;this.st=0;}}
+  return this.lvl;}}
 class Exp{constructor(fs){this.fs=fs;this.dec=0.1;this.c=0.999;this.lvl=0;}
  set(d){this.dec=d;this.c=d>0?Math.exp(-6.9077553/(d*this.fs)):0;} trig(){this.lvl=1;} choke(){this.lvl=0;} active(){return this.lvl>1e-4;}
  n(){const o=this.lvl;this.lvl*=this.c;if(this.lvl<1e-5)this.lvl=0;return o;}}
 class Voice{constructor(fs){this.fs=fs;this.lpf=new OnePole(fs);this.env=new Env2(fs);this.p1=0;this.p2=0;this.f=440;this.vel=1;this.note=-1;this.act=false;this.age=0;this.pr=PRESETS[0];}
- setPreset(p){this.pr=p;this.lpf.set(p.lpf);this.env.times(p.atk,p.rel);} setMult(m){this.env.setMult(m);}
- on(n,v){this.note=n;this.vel=v;this.f=440*Math.pow(2,(n-69)/12);this.p1=0;this.p2=0;this.lpf.reset();this.env.times(this.pr.atk,this.pr.rel);this.env.on();this.act=true;this.age=0;}
+ setPreset(p){this.pr=p;this.lpf.set(p.lpf);this.env.times(p.atk,p.dec,p.sus,p.rel);} setMult(m){this.env.setMult(m);}
+ on(n,v){this.note=n;this.vel=v;this.f=440*Math.pow(2,(n-69)/12);this.p1=0;this.p2=0;this.lpf.reset();this.env.times(this.pr.atk,this.pr.dec,this.pr.sus,this.pr.rel);this.env.on();this.act=true;this.age=0;}
  off(){this.env.off();}
  render(lfo,depth){if(!this.act)return 0;const det=Math.pow(2,this.pr.det/1200),vib=Math.pow(2,(lfo*depth)/12);
   const i1=this.f*vib/this.fs,i2=this.f*det*vib/this.fs;const a=(this.p1<this.pr.d1)?1:-1,b=(this.p2<this.pr.d2)?1:-1;
