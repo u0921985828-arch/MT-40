@@ -11,8 +11,8 @@
 // RhythmEngine — analog rhythm section sequencer + mono bass line, with
 // the Synchro / Fill-in state machine (§4, §5).
 //
-//   * 6 rhythm patterns (§6, active_rhythm_idx 0-5). Index 0 is the "Sleng
-//     Teng" Rock rhythm — a hardcoded 2-bar / 16-step-per-bar loop (§5.1).
+//   * 6 rhythm patterns (§6, active_rhythm_idx 0-5). Index 5 is the "Rock"
+//     rhythm — a hardcoded 2-bar / 16-step-per-bar loop (§5.1).
 //   * Free-running clock at the current BPM (default ~90), 1/16-note grid.
 //   * Transport state machine: STOPPED -> ARMED -> PLAYING (§5.2).
 //   * Fill-in logic: hold = 1/4 kicks; double-tap & hold = 1/8 snares (§5.2).
