@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artifacts ST-40 — Emulator (sound)</title>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Artifacts ST-40</title>
+  <style>
+    :root{
+      --cream:#efe7d8; --cream-lo:#e6ddc9; --cream-hi:#f4eee1; --edge:#cabd9f; --div:#d4c8ac;
+      --gold:#c39a63; --gold-lo:#b3894f; --bevel:#c9a978;
+      --red:#d8452a; --band:#dc5033; --ink:#463b30; --inkdim:#6f6350;
+      --kface:#d8b982; --kface2:#a97b46; --kskirt1:#6a3d20; --kskirt2:#9a6a3c;
+      --orange:#f0541f; --orange-hi:#f8794a; --orange-lo:#c23f14;
+      --beige:#b7aa89; --beige-hi:#cabe9e; --blue:#93a7b9; --blue-lo:#70889d;
+      --brown:#9c7550; --brown-lo:#7a5836; --dark:#37342e;
+      --wht:#f7f4ed; --wht-lo:#e7e1d3; --blk:#161310;
+      font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
+    }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
+    html,body{ margin:0; min-height:100%; background:#141210;
+      background-image:radial-gradient(circle at 50% -10%,#2b2620,#0e0d0b 78%); }
+    body{ padding:2.2vw 2vw; display:flex; justify-content:center; align-items:flex-start; user-select:none; -webkit-user-select:none; }
+
+    /* ============ PREMIUM PLUGIN CHASSIS (UA-style frame) ============ */
+    /* The faithful MT-40 instrument (.st40) is preserved and recessed inside a
+       machined graphite chassis with header, footer, screws and depth. */
+    .chassis{ position:relative; width:100%; max-width:1240px; margin:auto; container-type:inline-size;
+      padding:1.5cqw 1.7cqw 1.1cqw; border-radius:1.7cqw; isolation:isolate;
+      background:
+        linear-gradient(180deg,#43474d 0%,#2c2f34 10%,#212327 50%,#191b1e 90%,#111214 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.03) 1px 2.5px);
+      border:.08cqw solid #0a0b0c;
+      box-shadow:
+        0 3.4cqw 7cqw rgba(0,0,0,.72), 0 .7cqw 1.6cqw rgba(0,0,0,.55),
+        inset 0 .16cqw 0 rgba(255,255,255,.16), inset 0 -.6cqw 1.3cqw rgba(0,0,0,.55),
+        inset 0 0 0 .12cqw rgba(0,0,0,.55); }
+    .chassis::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:5;
+      background:radial-gradient(130% 70% at 50% -8%, rgba(255,255,255,.07), transparent 55%); }
+
+    .screw{ position:absolute; z-index:6; width:1.25cqw; height:1.25cqw; border-radius:50%;
+      background:radial-gradient(circle at 38% 32%, #7c8085, #45484d 52%, #1b1c1e 100%);
+      box-shadow: inset 0 .07cqw .1cqw rgba(255,255,255,.4), inset 0 -.07cqw .14cqw rgba(0,0,0,.75), 0 .07cqw .16cqw rgba(0,0,0,.6); }
+    .screw::after{ content:""; position:absolute; inset:34% 14%; border-radius:.05cqw;
+      background:linear-gradient(90deg,transparent 43%, rgba(0,0,0,.6) 43% 57%, transparent 57%); transform:rotate(34deg); }
+    .screw.tl{ top:.85cqw; left:.85cqw } .screw.tr{ top:.85cqw; right:.85cqw }
+    .screw.bl{ bottom:.75cqw; left:.85cqw } .screw.br{ bottom:.75cqw; right:.85cqw }
+
+    .uhead{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between;
+      padding:.15cqw 1.6cqw .95cqw; }
+    .brandU{ display:flex; align-items:baseline; gap:.7cqw; }
+    .brandU .logo{ font:800 2.4cqw/1 "Helvetica Neue",system-ui,sans-serif; letter-spacing:.22cqw; color:#eee7d6;
+      text-shadow:0 .09cqw .05cqw rgba(0,0,0,.85), 0 -.05cqw 0 rgba(255,255,255,.14); }
+    .brandU .model{ font:600 1.35cqw/1 "Helvetica Neue",system-ui; color:#d79441; letter-spacing:.12cqw;
+      text-shadow:0 .06cqw 0 rgba(0,0,0,.7), 0 0 .5cqw rgba(215,148,65,.35); }
+    .brandU .sub{ font:600 .92cqw/1 system-ui; color:#8b877b; letter-spacing:.4cqw; text-transform:uppercase; margin-left:.5cqw;
+      padding-left:.8cqw; border-left:.08cqw solid rgba(255,255,255,.12); }
+    .rightU{ display:flex; align-items:center; gap:1.1cqw; }
+    .plateU{ font:600 .86cqw/1 system-ui; color:#9a9488; letter-spacing:.34cqw; text-transform:uppercase;
+      padding:.5cqw .8cqw; border-radius:.4cqw; background:linear-gradient(180deg,#2a2c30,#1b1d20);
+      box-shadow:inset 0 .08cqw 0 rgba(255,255,255,.08), inset 0 -.08cqw .1cqw rgba(0,0,0,.6), 0 .05cqw 0 rgba(255,255,255,.05); }
+    .pwrLed{ width:.95cqw; height:.95cqw; border-radius:50%;
+      background:radial-gradient(circle at 40% 34%, #ffe0a2, #f0850f 58%, #7a3d06 100%);
+      box-shadow:0 0 1.1cqw #ff9d2e, 0 0 .35cqw #ffcf85, inset 0 0 .12cqw rgba(0,0,0,.4); }
+
+    .stage{ position:relative; z-index:4; border-radius:1.15cqw; padding:.55cqw;
+      background:linear-gradient(180deg,#0e0f11,#070808);
+      box-shadow: inset 0 .34cqw 1cqw rgba(0,0,0,.85), inset 0 -.16cqw .4cqw rgba(255,255,255,.05),
+        inset 0 0 0 .1cqw rgba(0,0,0,.7), 0 .12cqw 0 rgba(255,255,255,.05); }
+
+    .ufoot{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between; padding:.85cqw 1.6cqw .1cqw; }
+    .ufoot .l,.ufoot .r{ font:600 .86cqw/1 system-ui; letter-spacing:.3cqw; text-transform:uppercase; color:#6c675c;
+      text-shadow:0 .05cqw 0 rgba(0,0,0,.6); }
+    .ufoot .l::before{ content:""; display:inline-block; width:.55cqw; height:.55cqw; margin-right:.5cqw; border-radius:50%;
+      background:radial-gradient(circle,#7ad08a,#2f7a3f); box-shadow:0 0 .5cqw #4fbf6a; vertical-align:middle; }
+
+    /* instrument recessed in the well: trade the big float shadow for an inset look */
+    .chassis .st40{ max-width:none; border-radius:1cqw;
+      box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.12),
+        0 .25cqw .6cqw rgba(0,0,0,.45), 0 0 0 .12cqw rgba(0,0,0,.5); }
+
+    .st40{ position:relative; width:100%; max-width:1120px; aspect-ratio:100/31;
+      background:linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
+      border:1px solid var(--edge); border-radius:1.4cqw;
+      box-shadow:0 2.4cqw 6cqw rgba(0,0,0,.55), inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.10);
+      container-type:inline-size; overflow:hidden; font-size:1cqw; }
+    .a{ position:absolute; } /* absolute-positioned element; coords set inline in cqw */
+
+    /* red lines / band */
+    .redline{ position:absolute; background:var(--red); border-radius:.2cqw; }
+    .band{ position:absolute; background:var(--band); display:flex; align-items:center; border-radius:.15cqw; }
+    .band > span{ text-align:center; color:#fff; font-size:1.15cqw; letter-spacing:.12cqw; font-weight:600; }
+    .divl{ position:absolute; width:.14cqw; background:var(--div); }
+
+    /* speaker */
+    .slot{ position:absolute; border-radius:.25cqw; background:linear-gradient(180deg,#cec1a3,#b6a582);
+      box-shadow:inset 0 .05cqw 0 rgba(255,255,255,.5),0 .05cqw .05cqw rgba(0,0,0,.12); }
+
+    /* knobs */
+    .knob{ position:absolute; border-radius:50%; }
+    .knob .skirt{ position:absolute; inset:0; border-radius:50%;
+      background:repeating-conic-gradient(from 0deg,var(--kskirt1) 0deg 1.6deg,var(--kskirt2) 1.6deg 3.2deg);
+      box-shadow:0 .3cqw .5cqw rgba(0,0,0,.4),inset 0 0 .3cqw rgba(0,0,0,.4); }
+    .knob .face{ position:absolute; inset:22%; border-radius:50%;
+      background:radial-gradient(circle at 42% 34%,var(--kface),var(--kface2) 66%,#8a5f34);
+      box-shadow:inset 0 .12cqw .3cqw rgba(255,255,255,.4),0 .1cqw .2cqw rgba(0,0,0,.3); }
+    .knob .dial{ position:absolute; inset:0; }
+    .knob .dial::before{ content:""; position:absolute; top:8%; left:50%; width:.5cqw; height:24%;
+      margin-left:-.25cqw; border-radius:.25cqw; background:#f3ecdd; }
+    .txt{ position:absolute; color:var(--ink); }
+    .dim{ position:absolute; color:var(--inkdim); }
+    .dot{ position:absolute; width:.4cqw; height:.4cqw; border-radius:50%; background:#8a7d64; }
+
+    /* buttons */
+    .sq{ position:absolute; border-radius:.5cqw; cursor:pointer;
+      box-shadow:0 .25cqw .35cqw rgba(0,0,0,.35),inset 0 .18cqw .25cqw rgba(255,255,255,.35),inset 0 -.2cqw .3cqw rgba(0,0,0,.22); }
+    .sq:active{ transform:translateY(.1cqw); }
+    .sq.orange{ background:linear-gradient(180deg,var(--orange-hi),var(--orange) 45%,var(--orange-lo)); }
+    .sq.beige{ background:linear-gradient(180deg,var(--beige-hi),var(--beige) 55%,#998c6d); }
+    .led{ position:absolute; border-radius:50%;
+      background:radial-gradient(circle at 40% 35%,#b02516,#5e150c); box-shadow:inset 0 0 .2cqw #000; }
+    .led.on{ background:radial-gradient(circle at 40% 35%,#ff6a4a,var(--red)); box-shadow:0 0 .8cqw var(--red); }
+    .box{ border:.1cqw solid var(--ink); padding:0 .2cqw; border-radius:.12cqw; }
+
+    /* rhythm slider */
+    .rtrack{ position:absolute; border-radius:.4cqw; background:linear-gradient(180deg,#efe9db,#dcd2bb);
+      box-shadow:inset 0 .15cqw .35cqw rgba(0,0,0,.28); overflow:hidden; }
+    .rtrack .ln{ position:absolute; left:6%; right:6%; top:50%; height:.35cqw; margin-top:-.17cqw; background:#1b1b1b; border-radius:.2cqw; }
+    .rrange{ position:absolute; -webkit-appearance:none; appearance:none; background:transparent; margin:0; cursor:pointer; }
+    .rrange::-webkit-slider-thumb{ -webkit-appearance:none; width:2.6cqw; height:100%; border-radius:.4cqw;
+      background:linear-gradient(180deg,var(--orange-hi),var(--orange) 50%,var(--orange-lo)); border:.08cqw solid #a23414; }
+    .rrange::-moz-range-thumb{ width:2.6cqw; height:100%; border-radius:.4cqw;
+      background:linear-gradient(180deg,var(--orange-hi),var(--orange) 50%,var(--orange-lo)); border:.08cqw solid #a23414; }
+    .rtick{ position:absolute; width:.4cqw; height:.4cqw; background:#40382c; }
+
+    /* slide switches */
+    .swt{ position:absolute; border-radius:.45cqw; cursor:pointer;
+      background:linear-gradient(180deg,#e7dfcd,#d3c8ae); box-shadow:inset 0 .12cqw .3cqw rgba(0,0,0,.25); }
+    .swth{ position:absolute; top:12%; height:76%; border-radius:.35cqw; pointer-events:none;
+      box-shadow:0 .12cqw .25cqw rgba(0,0,0,.4),inset 0 .12cqw .12cqw rgba(255,255,255,.4); transition:left .07s; }
+    .blue .swth{ background:linear-gradient(180deg,#aebfce,var(--blue) 55%,var(--blue-lo)); }
+    .blue .swth::after{ content:""; position:absolute; right:14%; top:24%; width:24%; height:52%; background:#3f4a54; border-radius:.1cqw; }
+    .brownsw .swth{ background:linear-gradient(180deg,#b48f68,var(--brown) 55%,var(--brown-lo)); }
+    .darksw .swth{ background:linear-gradient(180deg,#54524c,var(--dark) 55%,#1f1e1b); }
+
+    /* brand badge */
+    .badge{ position:absolute; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg,#c8bb9e,#a99a78); border:.1cqw solid #8b7d5e; border-radius:.3cqw;
+      box-shadow:inset 0 .1cqw 0 rgba(255,255,255,.5),0 .15cqw .25cqw rgba(0,0,0,.25); }
+    .badge b{ font-weight:800; font-style:italic; letter-spacing:.05cqw; color:#1c1a17; font-size:1.5cqw; }
+
+    /* tone strip */
+    .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; overflow:hidden; }
+    .tcell .n{ font-size:.95cqw; color:var(--red); font-weight:700; display:block; line-height:1; }
+    .tcell .nm{ font-size:.76cqw; color:var(--ink); display:block; line-height:1.05; margin-top:.08cqw; }
+    .tcell.sel{ background:rgba(216,69,42,.15); }
+    .tcell.sel .nm{ font-weight:700; }
+    /* SET mode: the tone strip + melody keys read as selectors */
+    .setmode .tcell{ background:rgba(216,69,42,.10); }
+    .setmode .tcell.sel{ background:rgba(216,69,42,.24); }
+    .setmode .wkey{ background:linear-gradient(180deg,#fff2ec,#f0dbd1); }
+
+    /* keyboard */
+    .board{ position:absolute; background:linear-gradient(180deg,var(--bevel),var(--gold-lo)); }
+    .brand{ position:absolute; color:#5c4636; }
+    .brand .c{ font-size:1.7cqw; } .brand .m{ font-size:1.9cqw; font-weight:800; letter-spacing:.08cqw; }
+    .ul{ position:absolute; height:.1cqw; background:#5c4636; }
+    .wkey{ position:absolute; background:linear-gradient(180deg,#fdfcf8,var(--wht-lo));
+      border:.08cqw solid #b8b09e; border-radius:0 0 .3cqw .3cqw; cursor:pointer; touch-action:none; }
+    .wkey.down{ background:linear-gradient(180deg,#f1e0c1,#e1cba3); box-shadow:inset 0 .3cqw .55cqw rgba(95,65,25,.30); }
+    .bkey{ position:absolute; background:linear-gradient(180deg,#4a4640,var(--blk)); border-radius:0 0 .28cqw .28cqw;
+      cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .25cqw .3cqw rgba(0,0,0,.5); }
+    .bkey.down{ background:linear-gradient(180deg,#2a2723,#000); }
+    .bwk{ position:absolute; background:linear-gradient(180deg,#fdfcf8,#e9e3d4); border:.08cqw solid #b8b09e;
+      border-radius:.2cqw; cursor:pointer; touch-action:none; }
+    .bwk.down{ background:linear-gradient(180deg,#f1e0c1,#e1cba3); box-shadow:inset 0 .3cqw .55cqw rgba(95,65,25,.30); }
+    .bbk{ position:absolute; background:linear-gradient(180deg,#4a4640,var(--blk)); border-radius:.18cqw;
+      cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .2cqw .3cqw rgba(0,0,0,.5); }
+    .bbk.down{ background:linear-gradient(180deg,#2a2723,#000); }
+    .bklab{ position:absolute; text-align:center; font-size:.85cqw; color:#5c4636; pointer-events:none; }
+    .bassdiv{ position:absolute; width:.1cqw; background:#8a7250; opacity:.45; border-radius:.05cqw; }
+    .warn{ position:absolute; left:3cqw; bottom:.4cqw; color:var(--red); font-size:1cqw; font-weight:700; display:none; }
+
+    /* ================= realism pass — material, light & depth ================= */
+    .st40{
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+        radial-gradient(130% 92% at 50% -14%, rgba(255,255,255,.34), transparent 56%),
+        linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
+      background-blend-mode: soft-light, screen, normal;
+      box-shadow:
+        0 3cqw 7cqw rgba(0,0,0,.6), 0 .7cqw 1.4cqw rgba(0,0,0,.34),
+        inset 0 .16cqw 0 rgba(255,255,255,.75),
+        inset 0 -.5cqw 1.2cqw rgba(60,40,15,.14),
+        inset 0 0 2.4cqw rgba(70,45,18,.10); }
+    /* speaker louvers become carved grooves */
+    .slot{ background:linear-gradient(180deg,#b3a37f,#cabd9c);
+      box-shadow: inset 0 .12cqw .2cqw rgba(0,0,0,.42), 0 .09cqw 0 rgba(255,255,255,.6); }
+    /* knobs: cast shadow + specular hit */
+    .knob{ filter:drop-shadow(0 .36cqw .42cqw rgba(0,0,0,.42)); }
+    .knob .face::after{ content:""; position:absolute; top:11%; left:14%; width:38%; height:30%;
+      border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.62),transparent 70%); pointer-events:none; }
+    /* square buttons: gloss highlight + seated well */
+    .sq{ box-shadow:0 .42cqw .5cqw rgba(0,0,0,.4), 0 0 0 .1cqw rgba(0,0,0,.10),
+      inset 0 .2cqw .3cqw rgba(255,255,255,.45), inset 0 -.3cqw .42cqw rgba(0,0,0,.3); }
+    .sq::after{ content:""; position:absolute; left:12%; right:12%; top:9%; height:36%; border-radius:.42cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.55),transparent); pointer-events:none; }
+    /* slide switches: glossier thumb, deeper track */
+    .swt{ box-shadow:inset 0 .16cqw .34cqw rgba(0,0,0,.34), inset 0 -.05cqw 0 rgba(255,255,255,.5); }
+    .swth{ box-shadow:0 .18cqw .3cqw rgba(0,0,0,.45), inset 0 .18cqw .14cqw rgba(255,255,255,.55),
+      inset 0 -.14cqw .2cqw rgba(0,0,0,.28); }
+    /* white keys: glossy with sheen + separation shadow */
+    .wkey{ background:linear-gradient(180deg,#ffffff,#fbf9f2 14%,#eae4d5 86%,#dbd3c1);
+      box-shadow: inset 0 .16cqw 0 rgba(255,255,255,.95), inset -.12cqw 0 .16cqw rgba(0,0,0,.07),
+        0 .4cqw .5cqw rgba(0,0,0,.14); }
+    .bwk{ background:linear-gradient(180deg,#ffffff,#f4eee0 58%,#e3dcc9);
+      box-shadow: inset 0 .14cqw 0 rgba(255,255,255,.92), 0 .3cqw .4cqw rgba(0,0,0,.18); }
+    /* black keys: glossy body + specular streak */
+    .bkey{ background:linear-gradient(180deg,#5b564e 0%,#2c2925 20%,#141210 100%); box-shadow:0 .42cqw .5cqw rgba(0,0,0,.55); }
+    .bbk{ background:linear-gradient(180deg,#5b564e,#2c2925 22%,#141210); }
+    .bkey::after,.bbk::after{ content:""; position:absolute; left:16%; right:16%; top:6%; height:24%;
+      border-radius:.2cqw; background:linear-gradient(180deg,rgba(255,255,255,.28),transparent); pointer-events:none; }
+    /* keybed + red band: subtle sheen */
+    .board{ box-shadow: inset 0 .3cqw .6cqw rgba(255,255,255,.12), inset 0 -.4cqw 1cqw rgba(0,0,0,.2); }
+    .band{ box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.22), inset 0 -.12cqw .2cqw rgba(0,0,0,.2); }
+
+    /* ================= realism pass 2 — finer materials, light & carved detail ================= */
+    .st40{
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"),
+        radial-gradient(70% 55% at 26% 6%, rgba(255,255,255,.30), transparent 60%),
+        radial-gradient(140% 100% at 50% -16%, rgba(255,255,255,.30), transparent 55%),
+        linear-gradient(168deg,#f6f0e4 0%,#efe7d8 42%,#e5dbc6 82%,#dccfb6 100%);
+      background-blend-mode: soft-light, screen, screen, normal;
+      border:1px solid #c3b596;
+      box-shadow:
+        0 3.2cqw 7.5cqw rgba(0,0,0,.62), 0 .9cqw 1.8cqw rgba(0,0,0,.36),
+        inset 0 .24cqw .05cqw rgba(255,255,255,.9),
+        inset .18cqw 0 .12cqw rgba(255,255,255,.4), inset -.18cqw 0 .12cqw rgba(0,0,0,.12),
+        inset 0 -.8cqw 1.5cqw rgba(55,36,14,.2), inset 0 0 3cqw rgba(70,45,18,.10); }
+    /* speaker recess + carved louvers */
+    .spk{ position:absolute; border-radius:.6cqw; background:linear-gradient(180deg,#d6caac,#c4b791);
+      box-shadow: inset 0 .3cqw .5cqw rgba(0,0,0,.28), inset 0 -.15cqw .2cqw rgba(255,255,255,.4), 0 .1cqw 0 rgba(255,255,255,.5); }
+    .slot{ background:linear-gradient(180deg,#a99a76,#c2b48f); border-radius:.18cqw;
+      box-shadow: inset 0 .12cqw .16cqw rgba(0,0,0,.5), 0 .1cqw 0 rgba(255,255,255,.55); }
+    /* engraved section dividers (dark groove + light edge) */
+    .divl{ background:#b3a67f; width:.12cqw; box-shadow:.1cqw 0 0 rgba(255,255,255,.5); }
+    /* knobs: finer knurl, caramel face, specular gloss, crisp pointer, cast shadow */
+    .knob{ filter:drop-shadow(0 .34cqw .4cqw rgba(0,0,0,.4)); }
+    .knob .skirt{ background:repeating-conic-gradient(from 0deg,#5e3618 0deg 1.4deg,#8a5a30 1.4deg 2.8deg,#a5713d 2.8deg 4.2deg);
+      box-shadow:0 .22cqw .35cqw rgba(0,0,0,.38), inset 0 0 .4cqw rgba(0,0,0,.5), inset 0 .1cqw .1cqw rgba(255,255,255,.25); }
+    .knob .face{ inset:20%; background:radial-gradient(circle at 40% 32%,#e3c58f,#c69c60 55%,#9a6f3c 100%);
+      box-shadow:inset 0 .14cqw .3cqw rgba(255,255,255,.5), inset 0 -.14cqw .25cqw rgba(0,0,0,.35), 0 .08cqw .15cqw rgba(0,0,0,.3); }
+    .knob .face::after{ background:radial-gradient(circle,rgba(255,255,255,.7),transparent 68%); }
+    .knob .gloss{ position:absolute; inset:20%; border-radius:50%; pointer-events:none;
+      background:linear-gradient(135deg,rgba(255,255,255,.45) 0%,transparent 42%,transparent 72%,rgba(0,0,0,.18) 100%); }
+    .knob .dial::before{ width:.55cqw; height:30%; top:6%; margin-left:-.27cqw; border-radius:.3cqw; background:#fbf6ea;
+      box-shadow:0 0 .15cqw rgba(0,0,0,.4); }
+    .ktick{ position:absolute; border-radius:50%; background:#6f5d3e; opacity:.5; }
+    /* square buttons: recessed well + glossy dome */
+    .sq.orange{ background:linear-gradient(180deg,#ff7a4d 0%,#f0541f 42%,#c8400f 100%); }
+    .sq.beige{ background:linear-gradient(180deg,#d0c4a4 0%,#b7aa89 52%,#948868 100%); }
+    .sq{ box-shadow:0 .45cqw .55cqw rgba(0,0,0,.42), 0 0 0 .12cqw rgba(90,60,25,.14),
+      inset 0 .24cqw .3cqw rgba(255,255,255,.5), inset 0 -.34cqw .45cqw rgba(0,0,0,.32); }
+    .sq::after{ top:8%; height:40%; left:14%; right:14%; border-radius:.5cqw .5cqw .8cqw .8cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.05)); }
+    /* slide switches: deep track + glossy thumb */
+    .swt{ background:linear-gradient(180deg,#ded4bd,#efe8d7);
+      box-shadow:inset 0 .2cqw .38cqw rgba(0,0,0,.36), inset 0 -.06cqw 0 rgba(255,255,255,.55); }
+    .swth{ box-shadow:0 .2cqw .3cqw rgba(0,0,0,.48), inset 0 .2cqw .16cqw rgba(255,255,255,.6), inset 0 -.16cqw .22cqw rgba(0,0,0,.3); }
+    /* rhythm slider: deep channel + chunky glossy cap */
+    .rtrack{ background:linear-gradient(180deg,#e6dfcd,#d2c8b0);
+      box-shadow:inset 0 .2cqw .4cqw rgba(0,0,0,.3), inset 0 -.06cqw 0 rgba(255,255,255,.5); }
+    .rrange::-webkit-slider-thumb{ box-shadow:0 .3cqw .4cqw rgba(0,0,0,.45), inset 0 .2cqw .16cqw rgba(255,255,255,.55), inset 0 -.2cqw .25cqw rgba(0,0,0,.3); }
+    /* white keys: glossy with a soft top reflection + crisp separation */
+    .wkey{ background:linear-gradient(180deg,#ffffff 0%,#fdfbf5 10%,#f0ebdd 55%,#e6dfcd 88%,#d8d0bd 100%);
+      box-shadow: inset 0 .18cqw 0 rgba(255,255,255,1), inset -.14cqw 0 .18cqw rgba(0,0,0,.09), inset .06cqw 0 0 rgba(255,255,255,.6), 0 .45cqw .55cqw rgba(0,0,0,.15); }
+    .wkey::after{ content:""; position:absolute; left:0; right:0; top:0; height:26%; border-radius:0 0 .5cqw .5cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.7),transparent); pointer-events:none; }
+    .bwk{ background:linear-gradient(180deg,#ffffff 0%,#f6f0e2 55%,#e6dfcc 100%);
+      box-shadow: inset 0 .14cqw 0 rgba(255,255,255,.95), 0 .3cqw .4cqw rgba(0,0,0,.2); }
+    /* black keys: glossy, specular streak + rounded front lip + shadow on whites */
+    .bkey,.bbk{ box-shadow:0 .5cqw .55cqw rgba(0,0,0,.6); }
+    .bkey{ background:linear-gradient(178deg,#6a645b 0%,#332f2a 16%,#181613 70%,#0c0b09 100%); }
+    .bbk{ background:linear-gradient(178deg,#6a645b,#332f2a 18%,#181613 72%,#0c0b09); }
+    .bkey::before,.bbk::before{ content:""; position:absolute; left:0; right:0; bottom:0; height:12%;
+      border-radius:0 0 .26cqw .26cqw; background:linear-gradient(180deg,transparent,rgba(255,255,255,.14)); pointer-events:none; }
+    .bkey::after,.bbk::after{ left:18%; right:18%; top:5%; height:22%; background:linear-gradient(180deg,rgba(255,255,255,.35),transparent); }
+    /* keybed depth + brushed-metal badge + crisper band/LEDs */
+    .board{ box-shadow: inset 0 .4cqw .7cqw rgba(255,255,255,.14), inset 0 -.5cqw 1.1cqw rgba(0,0,0,.24), inset 0 .06cqw 0 rgba(255,255,255,.3); }
+    .badge{ background:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 .1cqw,transparent .1cqw .3cqw),linear-gradient(180deg,#cabd9f,#a89971);
+      box-shadow: inset 0 .1cqw 0 rgba(255,255,255,.6), inset 0 -.1cqw .1cqw rgba(0,0,0,.2), 0 .12cqw .18cqw rgba(0,0,0,.25); }
+    .band{ background:linear-gradient(180deg,#e2552f,#d5431f);
+      box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.28), inset 0 -.14cqw .2cqw rgba(0,0,0,.28); }
+    .led{ box-shadow: inset 0 0 .2cqw rgba(0,0,0,.6), inset 0 .08cqw .06cqw rgba(255,255,255,.5); }
+
+    /* ================= realism pass 3 — wear, contact shadow, tilt & motion ================= */
+    body{ perspective:2000px; overflow-x:hidden; }
+    .st40{ transform:rotateX(2.6deg); transform-origin:50% 36%;
+      filter:drop-shadow(0 2.2cqw 1.7cqw rgba(0,0,0,.5)); }
+    /* faint vintage wear + uneven gloss on the case, below the controls */
+    .st40::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+      background:
+        repeating-linear-gradient(118deg, rgba(255,255,255,.05) 0 .05cqw, transparent .05cqw 2.4cqw),
+        radial-gradient(55% 42% at 80% 14%, rgba(255,255,255,.14), transparent 62%),
+        radial-gradient(46% 60% at 10% 92%, rgba(70,45,18,.06), transparent 60%);
+      mix-blend-mode:overlay; }
+    /* keys: physical press, warmer ivory, black-key contact shadow on whites */
+    .wkey,.bwk,.bkey,.bbk{ transition:transform .06s ease, filter .06s ease; }
+    .wkey.down,.bwk.down{ transform:translateY(.5cqw); filter:brightness(.96); }
+    .bkey.down,.bbk.down{ transform:translateY(.34cqw); filter:brightness(1.1); }
+    .wkey{ background:linear-gradient(180deg,#fffef9 0%,#fbf7ec 10%,#f0e9d8 55%,#e7dfc9 88%,#d9d0ba 100%); }
+    .bkey,.bbk{ box-shadow:0 .55cqw .6cqw rgba(0,0,0,.6), .18cqw .12cqw .38cqw rgba(0,0,0,.32), -.18cqw .12cqw .38cqw rgba(0,0,0,.32); }
+    /* tempo lamp flashes on each pulse at the current BPM */
+    @keyframes beatflash{
+      0%{ background:radial-gradient(circle at 40% 35%,#ff8663,#e2472a); box-shadow:0 0 1.3cqw #ef5a2c, inset 0 0 .2cqw rgba(0,0,0,.35); }
+      20%{ background:radial-gradient(circle at 40% 35%,#8a2016,#4c110a); box-shadow:inset 0 0 .2cqw rgba(0,0,0,.6); }
+      100%{ background:radial-gradient(circle at 40% 35%,#8a2016,#4c110a); box-shadow:inset 0 0 .2cqw rgba(0,0,0,.6); } }
+    .led.beating{ animation:beatflash var(--beat,.66s) linear infinite; }
+    @media (prefers-reduced-motion:reduce){
+      .st40{ transform:none; }
+      .led.beating{ animation:none; }
+      .wkey,.bwk,.bkey,.bbk{ transition:none; } }
+  </style>
+</head>
+<body>
+  <div class="chassis">
+    <div class="screw tl"></div><div class="screw tr"></div><div class="screw bl"></div><div class="screw br"></div>
+    <div class="uhead">
+      <div class="brandU"><span class="logo">ARTIFACTS</span><span class="model">ST-40</span><span class="sub">Digital Tone &amp; Rhythm</span></div>
+      <div class="rightU"><span class="plateU">1981 · CV Engine</span><span class="pwrLed"></span></div>
+    </div>
+    <div class="stage"><div class="st40" id="st40"></div>
+<div id="audioHint" style="position:absolute;left:50%;bottom:9%;transform:translateX(-50%);pointer-events:none;z-index:50;font:600 1.05cqw/1 system-ui,sans-serif;color:#f4eee1;white-space:nowrap;background:rgba(18,15,11,.82);border:.08cqw solid rgba(255,255,255,.14);border-radius:999px;padding:.6cqw 1.5cqw;box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.55);backdrop-filter:blur(2px)">🔊  Toca el teclado para activar el sonido</div>
+<script id="st40worklet" type="text/worklet">
+// Casiotone "consonant-vowel" voices. Each preset:
+//  fam  harmonic family (wavetable body / "vowel")
+//  det  chorus detune (cents)   ch  chorus mix (0-1)
+//  lpf  warmth low-pass (Hz)
+//  atk/dec/sus/rel  ADSR       gain output level
+//  cons attack transient type (0 none, 1 bright click, 2 airy chiff)
+//  clv  transient level        cdec transient decay (s)
+const P_=(fam,det,ch,lpf,atk,dec,sus,rel,gain,cons,clv,cdec)=>({fam,det,ch,lpf,atk,dec,sus,rel,gain,cons,clv,cdec});
+const PRESETS=[
+ P_('epiano',  6,0.15,4200,0.002,1.60,0.00,0.35,0.70,1,0.25,0.030), // 1 electric piano
+ P_('pluck',   7,0.00,5000,0.001,0.35,0.00,0.14,0.62,1,0.40,0.020), // 2 banjo
+ P_('pluck',   6,0.10,3600,0.001,0.90,0.00,0.22,0.66,1,0.30,0.025), // 3 guitar
+ P_('harpsi',  6,0.12,5200,0.001,0.60,0.00,0.18,0.60,1,0.35,0.020), // 4 harpsichord
+ P_('mallet',  4,0.00,6000,0.001,0.45,0.00,0.15,0.60,1,0.30,0.015), // 5 xylophone
+ P_('mallet',  5,0.10,5000,0.001,0.90,0.00,0.20,0.60,1,0.25,0.020), // 6 celesta
+ P_('mallet',  5,0.00,7000,0.001,1.40,0.00,0.25,0.58,1,0.30,0.012), // 7 glockenspiel
+ P_('organ',   4,0.08,4500,0.004,0.05,1.00,0.10,0.60,0,0.00,0.020), // 8 organ
+ P_('reed',   12,0.50,4000,0.012,0.08,0.95,0.16,0.56,0,0.00,0.020), // 9 accordion
+ P_('pipe',    3,0.10,5000,0.004,0.05,1.00,0.09,0.60,2,0.06,0.050), //10 pipe organ
+ P_('reed',    6,0.20,3200,0.010,0.10,0.90,0.16,0.58,0,0.00,0.020), //11 oriental pipe
+ P_('brass',   7,0.20,4200,0.030,0.12,0.90,0.20,0.58,1,0.08,0.030), //12 brass
+ P_('string',  9,0.40,3000,0.060,0.15,0.90,0.30,0.55,2,0.05,0.050), //13 cello
+ P_('fuzz',   14,0.20,5000,0.006,0.10,0.95,0.22,0.50,0,0.00,0.020), //14 synth fuzz
+ P_('string',  8,0.35,4200,0.070,0.15,0.90,0.28,0.54,2,0.05,0.050), //15 violin
+ P_('brass',   7,0.15,5000,0.010,0.10,0.92,0.20,0.56,1,0.10,0.030), //16 trumpet
+ P_('fuzz',   16,0.25,3800,0.006,0.10,0.90,0.30,0.50,0,0.00,0.020), //17 funny fuzz
+ P_('string', 12,0.80,4000,0.090,0.20,0.90,0.40,0.52,0,0.00,0.020), //18 st. ensemble
+ P_('clarinet',5,0.15,3600,0.030,0.08,0.95,0.24,0.60,2,0.05,0.040), //19 clarinet
+ P_('flute',   4,0.15,4000,0.050,0.10,0.90,0.26,0.62,2,0.12,0.050), //20 flute
+ P_('flute',   3,0.10,4600,0.035,0.08,0.92,0.22,0.62,2,0.14,0.045), //21 recorder
+ P_('flute',   5,0.15,4200,0.050,0.10,0.90,0.28,0.60,2,0.12,0.050)  //22 folk flute
+];
+
+const REST=-128;
+// 6 rhythm patterns (index: 0 Samba,1 Waltz,2 Swing,3 Slow Rock,4 Pops,5 Rock)
+const PAT=[
+ {k:[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0],
+  s:[0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0],
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  b:[0,REST,REST,REST,REST,REST,7,REST,REST,REST,REST,REST,5,REST,REST,REST,REST,REST,3,REST,REST,REST,REST,REST,0,REST,REST,REST,REST,REST,7,REST]},
+ {k:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0],
+  hc:[1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  b:[0,REST,REST,REST,7,REST,REST,REST,7,REST,REST,REST,REST,REST,REST,REST,0,REST,REST,REST,7,REST,REST,REST,7,REST,REST,REST,REST,REST,REST,REST]},
+ {k:[1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+  hc:[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,REST,REST,3,REST,REST,REST,5,REST,REST,REST,7,REST,REST,REST,0,REST,REST,REST,3,REST,REST,REST,5,REST,REST,REST,7,REST,REST,REST]},
+ {k:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,REST,REST,0,REST,REST,REST,7,REST,REST,REST,5,REST,REST,REST,0,REST,REST,REST,0,REST,REST,REST,7,REST,REST,REST,3,REST,REST,REST]},
+ {k:[1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+  hc:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  b:[0,REST,REST,REST,REST,REST,7,REST,0,REST,REST,REST,5,REST,REST,REST,0,REST,REST,REST,REST,REST,7,REST,0,REST,REST,REST,5,REST,3,REST]},
+ // Index 5 = "Rock" — the MT-40 pattern that became the Sleng Teng riddim.
+ // Bassline in E minor (root-relative offsets 0=E, 3=G, 5=A, 7=B), the
+ // ascending/descending 4-note climb; steppers kick 1&3, snare 2&4, hats on
+ // eighths, open hat as the bar-2 turnaround. Default tempo 82 BPM, root E2.
+ {k:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,REST,REST,0,REST,3,REST,REST,REST,5,REST,7,REST,5,REST,0,REST,REST,REST,0,REST,3,REST,REST,REST,5,REST,7,REST,3,REST]}
+];
+
+class Biquad{constructor(){this.b0=1;this.b1=0;this.b2=0;this.a1=0;this.a2=0;this.x1=0;this.x2=0;this.y1=0;this.y2=0;}
+ reset(){this.x1=this.x2=this.y1=this.y2=0;}
+ bp(fs,fc,q){const w=2*Math.PI*fc/fs,al=Math.sin(w)/(2*q),cw=Math.cos(w),a0=1+al;this.b0=q*al/a0;this.b1=0;this.b2=-q*al/a0;this.a1=-2*cw/a0;this.a2=(1-al)/a0;}
+ hp(fs,fc,q){const w=2*Math.PI*fc/fs,al=Math.sin(w)/(2*q),cw=Math.cos(w),a0=1+al;this.b0=(1+cw)/2/a0;this.b1=-(1+cw)/a0;this.b2=(1+cw)/2/a0;this.a1=-2*cw/a0;this.a2=(1-al)/a0;}
+ lp(fs,fc,q){const w=2*Math.PI*fc/fs,al=Math.sin(w)/(2*q),cw=Math.cos(w),a0=1+al;this.b0=(1-cw)/2/a0;this.b1=(1-cw)/a0;this.b2=(1-cw)/2/a0;this.a1=-2*cw/a0;this.a2=(1-al)/a0;}
+ p(x){const y=this.b0*x+this.b1*this.x1+this.b2*this.x2-this.a1*this.y1-this.a2*this.y2;this.x2=this.x1;this.x1=x;this.y2=this.y1;this.y1=y;return y;}}
+class OnePole{constructor(fs){this.fs=fs;this.a=0;this.b=1;this.z=0;this.set(4000);}
+ set(fc){this.a=Math.exp(-2*Math.PI*fc/this.fs);this.b=1-this.a;} reset(){this.z=0;} p(x){this.z=this.b*x+this.a*this.z;return this.z;}}
+class LFSR{constructor(s){this.s=(s||0xACE1)>>>0;} next(){let lsb=this.s&1;this.s>>>=1;if(lsb)this.s^=0x80200003;this.s>>>=0;return (this.s&0xFFFFFF)/8388608-1;}}
+// Attack-Decay-Sustain-Release. Percussive MT-40 tones (sus=0) decay to
+// silence while held (xylophone/harpsichord/banjo ping); sustained tones
+// (sus~0.9-1) hold until release. States: 1 atk, 2 dec, 3 sus, 4 rel.
+class Env2{constructor(fs){this.fs=fs;this.atk=0.005;this.dec=0.1;this.sus=1;this.rel=0.3;this.mult=1;this.ai=0.01;this.dc=0.999;this.rc=0.999;this.lvl=0;this.st=0;}
+ times(a,d,s,r){this.atk=a;this.dec=d;this.sus=s;this.rel=r;this.ai=(a*this.fs>1)?1/(a*this.fs):1;this.dc=d>0?Math.exp(-6.9077553/(d*this.fs)):0;this.rcf();}
+ setMult(m){this.mult=m;this.rcf();} rcf(){const t=this.rel*this.mult;this.rc=t>0?Math.exp(-6.9077553/(t*this.fs)):0;}
+ on(){this.st=1;} off(){if(this.st!==0)this.st=4;} reset(){this.lvl=0;this.st=0;} active(){return this.st!==0;}
+ n(){if(this.st===1){this.lvl+=this.ai;if(this.lvl>=1){this.lvl=1;this.st=2;}}
+  else if(this.st===2){this.lvl=this.sus+(this.lvl-this.sus)*this.dc;if(this.lvl-this.sus<=1e-4){this.lvl=this.sus;this.st=(this.sus<=1e-4)?0:3;}}
+  else if(this.st===4){this.lvl*=this.rc;if(this.lvl<=1e-4){this.lvl=0;this.st=0;}}
+  return this.lvl;}}
+class Exp{constructor(fs){this.fs=fs;this.dec=0.1;this.c=0.999;this.lvl=0;}
+ set(d){this.dec=d;this.c=d>0?Math.exp(-6.9077553/(d*this.fs)):0;} trig(){this.lvl=1;} choke(){this.lvl=0;} active(){return this.lvl>1e-4;}
+ n(){const o=this.lvl;this.lvl*=this.c;if(this.lvl<1e-5)this.lvl=0;return o;}}
+// --- Additive band-limited wavetables (the "vowel" / tonal body) ----------
+// Each harmonic family is baked into a set of mip tables capped at rising
+// harmonic counts; playback picks the finest table whose top partial stays
+// below ~17 kHz, so high notes never alias.
+const NT=1024, NMASK=1023, MIPS=[2,4,8,16,32];
+function rd(tab,ph){ const x=ph*NT, i=x|0, fr=x-i; const a=tab[i], b=tab[(i+1)&NMASK]; return a+(b-a)*fr; }
+function pickMip(f){ const lim=17000/Math.max(1,f); let j=0; for(let m=0;m<MIPS.length;m++) if(MIPS[m]<=lim) j=m; return j; }
+const FAM={
+ organ:   k=>[1,0.5,0.7,0.35,0,0.2,0,0.12][k-1]||0,
+ pipe:    k=>[1,0.7,0.5,0.4,0.28,0.2,0.14,0.1,0.07,0.05,0.04,0.03][k-1]||0,
+ clarinet:k=>(k%2===1)?1/k:0,
+ reed:    k=>(k%2===1)?1/k:0.4/k,
+ brass:   k=>(1/k)*Math.pow(0.93,k-1),
+ string:  k=>1/Math.pow(k,0.9),
+ flute:   k=>[1,0.22,0.05,0.02][k-1]||0,
+ pluck:   k=>1/k,
+ harpsi:  k=>(1/Math.sqrt(k))*Math.pow(0.96,k-1),
+ mallet:  k=>[1,0.15,0.6,0.1,0.35,0,0.2][k-1]||0,
+ epiano:  k=>[1,0.3,0.12,0.5,0.05,0,0.18][k-1]||0,
+ fuzz:    k=>(1/Math.sqrt(k))*Math.pow(0.97,k-1)
+};
+function buildWaves(hf){ const acc=new Float32Array(NT), caps=new Set(MIPS), tabs=[]; const maxH=MIPS[MIPS.length-1];
+ for(let k=1;k<=maxH;k++){ const a=hf(k); if(a){ const wk=2*Math.PI*k/NT; for(let i=0;i<NT;i++) acc[i]+=a*Math.sin(wk*i); }
+  if(caps.has(k)){ tabs.push(acc.slice()); } }
+ tabs.forEach(t=>{ let m=1e-9; for(let i=0;i<NT;i++){ const v=Math.abs(t[i]); if(v>m)m=v; } for(let i=0;i<NT;i++) t[i]/=m; });
+ return tabs; }
+const FAMILY_TABLES={}; for(const k in FAM) FAMILY_TABLES[k]=buildWaves(FAM[k]);
+
+// --- Voice: wavetable body + chorus + ADSR + "consonant" attack transient --
+class Voice{constructor(fs){this.fs=fs;this.lpf=new OnePole(fs);this.env=new Env2(fs);this.cenv=new Exp(fs);
+  this.noise=new LFSR((0x1234+((fs|0)*2654435761))>>>0);this.cnf=new OnePole(fs);this.cnf.set(1800);
+  this.ph1=0;this.ph2=0;this.f=440;this.vel=1;this.note=-1;this.act=false;this.age=0;this.pr=PRESETS[0];
+  this.tabs=FAMILY_TABLES.organ;this.tab=this.tabs[0];this.detR=1;this.ch=0;this.clv=0;this.cons=0;}
+ setPreset(p){this.pr=p;this.tabs=FAMILY_TABLES[p.fam]||FAMILY_TABLES.organ;this.lpf.set(p.lpf);
+  this.env.times(p.atk,p.dec,p.sus,p.rel);this.detR=Math.pow(2,(p.det||0)/1200);this.ch=p.ch||0;
+  this.clv=p.clv||0;this.cons=p.cons||0;this.cenv.set(p.cdec||0.02);}
+ setMult(m){this.env.setMult(m);}
+ on(n,v){this.note=n;this.vel=v;this.f=440*Math.pow(2,(n-69)/12);this.ph1=0;this.ph2=0;this.lpf.reset();this.cnf.reset();
+  this.tab=this.tabs[pickMip(this.f)];this.env.times(this.pr.atk,this.pr.dec,this.pr.sus,this.pr.rel);this.env.on();
+  if(this.clv>0)this.cenv.trig();this.act=true;this.age=0;}
+ off(){this.env.off();}
+ render(lfo,depth){if(!this.act)return 0;const vib=Math.pow(2,(lfo*depth)/12),inc=this.f*vib/this.fs;
+  this.ph1+=inc;if(this.ph1>=1)this.ph1-=1;
+  let vowel=rd(this.tab,this.ph1);
+  if(this.ch>0){ this.ph2+=inc*this.detR;if(this.ph2>=1)this.ph2-=1; vowel=(vowel+this.ch*rd(this.tab,this.ph2))/(1+this.ch); }
+  vowel=this.lpf.p(vowel);
+  const e=this.env.n();
+  let cons=0; if(this.clv>0&&this.cenv.active()){ const nz=this.noise.next(),lp=this.cnf.p(nz); cons=(this.cons===2?lp:nz-lp)*this.cenv.n()*this.clv; }
+  if(!this.env.active()&&!this.cenv.active())this.act=false;
+  return (vowel*e+cons)*this.vel*this.pr.gain;}}
+class Alloc{constructor(fs){this.v=[];for(let i=0;i<8;i++)this.v.push(new Voice(fs));}
+ setPreset(p){this.v.forEach(x=>x.setPreset(p));} setMult(m){this.v.forEach(x=>x.setMult(m));}
+ on(n,vel){for(const x of this.v)if(x.act&&x.note===n){x.on(n,vel);return;}for(const x of this.v)if(!x.act){x.on(n,vel);return;}let o=this.v[0];for(const x of this.v)if(x.age>o.age)o=x;o.on(n,vel);}
+ off(n){for(const x of this.v)if(x.act&&x.note===n)x.off();} allOff(){this.v.forEach(x=>x.off());}
+ render(lfo,depth){let s=0;for(const x of this.v){if(x.act){s+=x.render(lfo,depth);x.age++;}}return s;}}
+class Kick{constructor(fs){this.fs=fs;this.bp=new Biquad();this.bp.bp(fs,55,18.5);this.imp=0;this.act=false;this.mag=0;this.drive=4;}
+ trig(){this.bp.reset();this.imp=Math.max(1,(0.001*this.fs)|0);this.act=true;}
+ p(){if(!this.act)return 0;let x=0;if(this.imp>0){x=1;this.imp--;}let y=this.bp.p(x);y=Math.tanh(this.drive*y);this.mag=0.999*this.mag+0.001*Math.abs(y);if(this.imp===0&&this.mag<1e-4)this.act=false;return y;}}
+class Snare{constructor(fs,noise){this.fs=fs;this.noise=noise;this.body=new Biquad();this.body.bp(fs,220,6);this.hpf=new Biquad();this.hpf.hp(fs,2500,0.707);this.be=new Exp(fs);this.ne=new Exp(fs);this.be.set(0.09);this.ne.set(0.15);this.imp=0;}
+ trig(){this.body.reset();this.imp=Math.max(1,(0.001*this.fs)|0);this.be.trig();this.ne.trig();}
+ active(){return this.be.active()||this.ne.active();}
+ p(){if(!this.active()&&this.imp===0)return 0;let x=0;if(this.imp>0){x=1;this.imp--;}const body=this.body.p(x)*this.be.n()*0.4;const w=this.hpf.p(this.noise.next())*this.ne.n()*0.85;return body+w;}}
+class Hat{constructor(fs,noise){this.fs=fs;this.noise=noise;this.h1=new Biquad();this.h1.hp(fs,8000,0.5412);this.h2=new Biquad();this.h2.hp(fs,8000,1.3066);this.ce=new Exp(fs);this.oe=new Exp(fs);this.ce.set(0.04);this.oe.set(0.30);}
+ closed(){if(this.oe.active())this.oe.choke();this.ce.trig();} open(){this.oe.trig();} active(){return this.ce.active()||this.oe.active();}
+ p(){if(!this.active())return 0;let n=this.noise.next();n=this.h1.p(n);n=this.h2.p(n);return n*(this.ce.n()+this.oe.n());}}
+// Deep "digital" MT-40 bass: pulse wave, resonant LPF for body, longer decay
+// so eighth notes sustain and connect; slight drive for punch.
+class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,1300,0.95);this.env=new Exp(fs);this.env.set(0.60);this.ph=0;this.inc=0;this.ag=0;this.ai=0;}
+ trig(n){this.inc=440*Math.pow(2,(n-69)/12)/this.fs;this.ph=0;this.env.trig();this.ag=0;this.ai=1/(0.004*this.fs);}
+ active(){return this.env.active();}
+ p(){if(!this.env.active())return 0;const sq=(this.ph<0.45)?1:-1;this.ph+=this.inc;if(this.ph>=1)this.ph-=1;if(this.ag<1){this.ag+=this.ai;if(this.ag>1)this.ag=1;}return Math.tanh(1.4*this.lpf.p(sq))*this.env.n()*this.ag*1.15;}}
+// One-pole DC blocker (~3.5 Hz high-pass) on the master output.
+class DCBlocker{constructor(){this.x1=0;this.y1=0;this.R=0.9995;} reset(){this.x1=0;this.y1=0;} p(x){const y=x-this.x1+this.R*this.y1;this.x1=x;this.y1=y;return y;}}
+function detectChord(held){if(!held.length)return null;let root=held[0];for(const n of held)if(n>root)root=n;let add=0;for(const n of held)if(n<root)add++;
+ let t;if(add===0)t=[root,root+4,root+7];else if(add===1)t=[root,root+3,root+7];else if(add===2)t=[root,root+4,root+7,root+10];else t=[root,root+3,root+7,root+10];return {root:root,tones:t};}
+class Rhythm{constructor(fs){this.fs=fs;this.noise=new LFSR(0xACE1);this.kick=new Kick(fs);this.snare=new Snare(fs,this.noise);this.hat=new Hat(fs,this.noise);this.bass=new Bass(fs);
+ this.bpm=82;this.sps=0;this.setTempo(82);this.phase=0;this.step=0;this.trans=0;this.fill=0;this.fh=false;this.fw=false;this.pend=false;this.rIdx=5;this.root=-1;this.rg=0.8;this.bg=0.85;this.rgS=0.8;this.bgS=0.85;}
+ setTempo(b){this.bpm=Math.max(40,Math.min(240,b));this.sps=this.fs/((this.bpm/60)*4);}
+ setRhythm(i){this.rIdx=Math.max(0,Math.min(5,i));} setChordRoot(r){this.root=r;}
+ synchro(){if(this.trans===0)this.trans=1;}
+ startStop(){if(this.trans===2){this.trans=0;}else{this.trans=2;this.step=0;this.phase=0;this.fire(0);}}
+ noteOnSplit(){if(this.trans!==2){this.trans=2;this.step=0;this.phase=0;this.fire(0);}}
+ allReleased(){if(this.trans===1)this.trans=0;}
+ setFill(h){if(h&&!this.fw){this.fill=(this.fill===1)?2:1;this.pend=false;}else if(!h&&this.fw){this.pend=true;}this.fh=h;this.fw=h;}
+ adv(){this.step=(this.step+1)%32;if(this.step%16===0){if(this.pend&&!this.fh){this.fill=0;this.pend=false;}}this.fire(this.step);}
+ fire(st){const p=PAT[this.rIdx];let kh=p.k[st]!==0;if(this.fill===1)kh=(st%4===0);if(kh)this.kick.trig();
+  let sh=p.s[st]!==0;if(this.fill===2)sh=(st%2===0);if(sh)this.snare.trig();
+  if(p.ho[st]!==0)this.hat.open();else if(p.hc[st]!==0)this.hat.closed();
+  const off=p.b[st];if(off!==REST){const root=(this.root>=0)?this.root:40;this.bass.trig(root+off);}}
+ p(){if(this.trans===2){this.phase+=1;if(this.phase>=this.sps){this.phase-=this.sps;this.adv();}}
+  const drums=this.kick.p()+this.snare.p()+this.hat.p();const b=this.bass.p();
+  this.rgS+=(this.rg-this.rgS)*0.0015;this.bgS+=(this.bg-this.bgS)*0.0015;return drums*this.rgS+b*this.bgS;}}
+
+// The complete ST-40 signal chain as a realm-agnostic object (no AudioWorklet
+// or DOM references) so it can run inside a worklet OR on the main thread.
+function makeST40(fs){
+ const mel=new Alloc(fs), chord=new Alloc(fs), rhythm=new Rhythm(fs);
+ let held=[], activeChord=[], master=0.85, masterS=0.85, vib=false, sus=false, lfoPh=0, lastTr=-1;
+ const dcb=new DCBlocker();
+ mel.setPreset(PRESETS[0]); chord.setPreset(PRESETS[0]);
+ function recompute(){const c=detectChord(held);
+  if(!c){for(const t of activeChord)chord.off(t);activeChord=[];rhythm.setChordRoot(-1);return;}
+  rhythm.setChordRoot(c.root);const nt=c.tones.map(t=>t+12);
+  if(nt.length===activeChord.length&&nt.every((x,i)=>x===activeChord[i]))return;
+  for(const t of activeChord)chord.off(t);for(const t of nt)chord.on(t,0.6);activeChord=nt;}
+ function noteOn(n,vel){if(n<51){rhythm.noteOnSplit();if(held.indexOf(n)<0)held.push(n);recompute();}else mel.on(n,vel);}
+ function noteOff(n){if(n<51){const i=held.indexOf(n);if(i>=0)held.splice(i,1);if(!held.length)rhythm.allReleased();recompute();}else mel.off(n);}
+ function param(id,v){if(id==='master_vca_gain')master=v;else if(id==='rhythm_bus_gain')rhythm.rg=v;
+  else if(id==='bass_osc_gain')rhythm.bg=v;else if(id==='host_bpm')rhythm.setTempo(v);
+  else if(id==='global_lfo_on')vib=v>0.5;else if(id==='env_release_mult'){sus=v>0.5;const m=sus?3:1;mel.setMult(m);chord.setMult(m);}
+  else if(id==='active_rhythm_idx')rhythm.setRhythm(v|0);
+  else if(id==='active_patch_idx'){const p=PRESETS[Math.max(0,Math.min(21,v|0))];mel.setPreset(p);chord.setPreset(p);}}
+ return {
+  msg(m){const t=m.t;if(t==='on')noteOn(m.n,m.vel);else if(t==='off')noteOff(m.n);
+   else if(t==='synchro')rhythm.synchro();else if(t==='startstop')rhythm.startStop();
+   else if(t==='fill')rhythm.setFill(!!m.b);else if(t==='param')param(m.id,m.v);},
+  block(L,Rr,n,onTransport){for(let i=0;i<n;i++){let lfo=0;if(vib)lfo=Math.sin(2*Math.PI*lfoPh);lfoPh+=5.5/fs;if(lfoPh>=1)lfoPh-=1;
+    const depth=vib?0.2:0;const mv=mel.render(lfo,depth)+chord.render(lfo,depth);const rhy=rhythm.p();
+    masterS+=(master-masterS)*0.0015;const s=dcb.p(Math.tanh((mv*0.45+rhy*0.6)*masterS));L[i]=s;if(Rr)Rr[i]=s;}
+   const tr=rhythm.trans;if(tr!==lastTr){lastTr=tr;if(onTransport)onTransport(tr);}}
+ };
+}
+
+class ST40Processor extends AudioWorkletProcessor{
+ constructor(){super();this.core=makeST40(sampleRate);this.port.onmessage=(e)=>this.core.msg(e.data);}
+ process(inp,out){const ch=out[0];this.core.block(ch[0],ch[1],ch[0].length,(tr)=>this.port.postMessage({t:'transport',st:tr}));return true;}}
+registerProcessor('st40',ST40Processor);
+</script></div>
+    <div class="ufoot"><span class="l">Artifacts DSP · Active</span><span class="r">ST-40 Synthesizer</span></div>
+  </div>
+
+  <script type="module">
+    
+// Casiotone "consonant-vowel" voices. Each preset:
+//  fam  harmonic family (wavetable body / "vowel")
+//  det  chorus detune (cents)   ch  chorus mix (0-1)
+//  lpf  warmth low-pass (Hz)
+//  atk/dec/sus/rel  ADSR       gain output level
+//  cons attack transient type (0 none, 1 bright click, 2 airy chiff)
+//  clv  transient level        cdec transient decay (s)
+const P_=(fam,det,ch,lpf,atk,dec,sus,rel,gain,cons,clv,cdec)=>({fam,det,ch,lpf,atk,dec,sus,rel,gain,cons,clv,cdec});
+const PRESETS=[
+ P_('epiano',  6,0.15,4200,0.002,1.60,0.00,0.35,0.70,1,0.25,0.030), // 1 electric piano
+ P_('pluck',   7,0.00,5000,0.001,0.35,0.00,0.14,0.62,1,0.40,0.020), // 2 banjo
+ P_('pluck',   6,0.10,3600,0.001,0.90,0.00,0.22,0.66,1,0.30,0.025), // 3 guitar
+ P_('harpsi',  6,0.12,5200,0.001,0.60,0.00,0.18,0.60,1,0.35,0.020), // 4 harpsichord
+ P_('mallet',  4,0.00,6000,0.001,0.45,0.00,0.15,0.60,1,0.30,0.015), // 5 xylophone
+ P_('mallet',  5,0.10,5000,0.001,0.90,0.00,0.20,0.60,1,0.25,0.020), // 6 celesta
+ P_('mallet',  5,0.00,7000,0.001,1.40,0.00,0.25,0.58,1,0.30,0.012), // 7 glockenspiel
+ P_('organ',   4,0.08,4500,0.004,0.05,1.00,0.10,0.60,0,0.00,0.020), // 8 organ
+ P_('reed',   12,0.50,4000,0.012,0.08,0.95,0.16,0.56,0,0.00,0.020), // 9 accordion
+ P_('pipe',    3,0.10,5000,0.004,0.05,1.00,0.09,0.60,2,0.06,0.050), //10 pipe organ
+ P_('reed',    6,0.20,3200,0.010,0.10,0.90,0.16,0.58,0,0.00,0.020), //11 oriental pipe
+ P_('brass',   7,0.20,4200,0.030,0.12,0.90,0.20,0.58,1,0.08,0.030), //12 brass
+ P_('string',  9,0.40,3000,0.060,0.15,0.90,0.30,0.55,2,0.05,0.050), //13 cello
+ P_('fuzz',   14,0.20,5000,0.006,0.10,0.95,0.22,0.50,0,0.00,0.020), //14 synth fuzz
+ P_('string',  8,0.35,4200,0.070,0.15,0.90,0.28,0.54,2,0.05,0.050), //15 violin
+ P_('brass',   7,0.15,5000,0.010,0.10,0.92,0.20,0.56,1,0.10,0.030), //16 trumpet
+ P_('fuzz',   16,0.25,3800,0.006,0.10,0.90,0.30,0.50,0,0.00,0.020), //17 funny fuzz
+ P_('string', 12,0.80,4000,0.090,0.20,0.90,0.40,0.52,0,0.00,0.020), //18 st. ensemble
+ P_('clarinet',5,0.15,3600,0.030,0.08,0.95,0.24,0.60,2,0.05,0.040), //19 clarinet
+ P_('flute',   4,0.15,4000,0.050,0.10,0.90,0.26,0.62,2,0.12,0.050), //20 flute
+ P_('flute',   3,0.10,4600,0.035,0.08,0.92,0.22,0.62,2,0.14,0.045), //21 recorder
+ P_('flute',   5,0.15,4200,0.050,0.10,0.90,0.28,0.60,2,0.12,0.050)  //22 folk flute
+];
+
+const REST=-128;
+// 6 rhythm patterns (index: 0 Samba,1 Waltz,2 Swing,3 Slow Rock,4 Pops,5 Rock)
+const PAT=[
+ {k:[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0],
+  s:[0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0],
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  b:[0,REST,REST,REST,REST,REST,7,REST,REST,REST,REST,REST,5,REST,REST,REST,REST,REST,3,REST,REST,REST,REST,REST,0,REST,REST,REST,REST,REST,7,REST]},
+ {k:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0],
+  hc:[1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  b:[0,REST,REST,REST,7,REST,REST,REST,7,REST,REST,REST,REST,REST,REST,REST,0,REST,REST,REST,7,REST,REST,REST,7,REST,REST,REST,REST,REST,REST,REST]},
+ {k:[1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+  hc:[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,REST,REST,3,REST,REST,REST,5,REST,REST,REST,7,REST,REST,REST,0,REST,REST,REST,3,REST,REST,REST,5,REST,REST,REST,7,REST,REST,REST]},
+ {k:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,REST,REST,0,REST,REST,REST,7,REST,REST,REST,5,REST,REST,REST,0,REST,REST,REST,0,REST,REST,REST,7,REST,REST,REST,3,REST,REST,REST]},
+ {k:[1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+  hc:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  b:[0,REST,REST,REST,REST,REST,7,REST,0,REST,REST,REST,5,REST,REST,REST,0,REST,REST,REST,REST,REST,7,REST,0,REST,REST,REST,5,REST,3,REST]},
+ // Index 5 = "Rock" — the MT-40 pattern that became the Sleng Teng riddim.
+ // Bassline in E minor (root-relative offsets 0=E, 3=G, 5=A, 7=B), the
+ // ascending/descending 4-note climb; steppers kick 1&3, snare 2&4, hats on
+ // eighths, open hat as the bar-2 turnaround. Default tempo 82 BPM, root E2.
+ {k:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+  hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
+  ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+  b:[0,REST,REST,REST,0,REST,3,REST,REST,REST,5,REST,7,REST,5,REST,0,REST,REST,REST,0,REST,3,REST,REST,REST,5,REST,7,REST,3,REST]}
+];
+
+class Biquad{constructor(){this.b0=1;this.b1=0;this.b2=0;this.a1=0;this.a2=0;this.x1=0;this.x2=0;this.y1=0;this.y2=0;}
+ reset(){this.x1=this.x2=this.y1=this.y2=0;}
+ bp(fs,fc,q){const w=2*Math.PI*fc/fs,al=Math.sin(w)/(2*q),cw=Math.cos(w),a0=1+al;this.b0=q*al/a0;this.b1=0;this.b2=-q*al/a0;this.a1=-2*cw/a0;this.a2=(1-al)/a0;}
+ hp(fs,fc,q){const w=2*Math.PI*fc/fs,al=Math.sin(w)/(2*q),cw=Math.cos(w),a0=1+al;this.b0=(1+cw)/2/a0;this.b1=-(1+cw)/a0;this.b2=(1+cw)/2/a0;this.a1=-2*cw/a0;this.a2=(1-al)/a0;}
+ lp(fs,fc,q){const w=2*Math.PI*fc/fs,al=Math.sin(w)/(2*q),cw=Math.cos(w),a0=1+al;this.b0=(1-cw)/2/a0;this.b1=(1-cw)/a0;this.b2=(1-cw)/2/a0;this.a1=-2*cw/a0;this.a2=(1-al)/a0;}
+ p(x){const y=this.b0*x+this.b1*this.x1+this.b2*this.x2-this.a1*this.y1-this.a2*this.y2;this.x2=this.x1;this.x1=x;this.y2=this.y1;this.y1=y;return y;}}
+class OnePole{constructor(fs){this.fs=fs;this.a=0;this.b=1;this.z=0;this.set(4000);}
+ set(fc){this.a=Math.exp(-2*Math.PI*fc/this.fs);this.b=1-this.a;} reset(){this.z=0;} p(x){this.z=this.b*x+this.a*this.z;return this.z;}}
+class LFSR{constructor(s){this.s=(s||0xACE1)>>>0;} next(){let lsb=this.s&1;this.s>>>=1;if(lsb)this.s^=0x80200003;this.s>>>=0;return (this.s&0xFFFFFF)/8388608-1;}}
+// Attack-Decay-Sustain-Release. Percussive MT-40 tones (sus=0) decay to
+// silence while held (xylophone/harpsichord/banjo ping); sustained tones
+// (sus~0.9-1) hold until release. States: 1 atk, 2 dec, 3 sus, 4 rel.
+class Env2{constructor(fs){this.fs=fs;this.atk=0.005;this.dec=0.1;this.sus=1;this.rel=0.3;this.mult=1;this.ai=0.01;this.dc=0.999;this.rc=0.999;this.lvl=0;this.st=0;}
+ times(a,d,s,r){this.atk=a;this.dec=d;this.sus=s;this.rel=r;this.ai=(a*this.fs>1)?1/(a*this.fs):1;this.dc=d>0?Math.exp(-6.9077553/(d*this.fs)):0;this.rcf();}
+ setMult(m){this.mult=m;this.rcf();} rcf(){const t=this.rel*this.mult;this.rc=t>0?Math.exp(-6.9077553/(t*this.fs)):0;}
+ on(){this.st=1;} off(){if(this.st!==0)this.st=4;} reset(){this.lvl=0;this.st=0;} active(){return this.st!==0;}
+ n(){if(this.st===1){this.lvl+=this.ai;if(this.lvl>=1){this.lvl=1;this.st=2;}}
+  else if(this.st===2){this.lvl=this.sus+(this.lvl-this.sus)*this.dc;if(this.lvl-this.sus<=1e-4){this.lvl=this.sus;this.st=(this.sus<=1e-4)?0:3;}}
+  else if(this.st===4){this.lvl*=this.rc;if(this.lvl<=1e-4){this.lvl=0;this.st=0;}}
+  return this.lvl;}}
+class Exp{constructor(fs){this.fs=fs;this.dec=0.1;this.c=0.999;this.lvl=0;}
+ set(d){this.dec=d;this.c=d>0?Math.exp(-6.9077553/(d*this.fs)):0;} trig(){this.lvl=1;} choke(){this.lvl=0;} active(){return this.lvl>1e-4;}
+ n(){const o=this.lvl;this.lvl*=this.c;if(this.lvl<1e-5)this.lvl=0;return o;}}
+// --- Additive band-limited wavetables (the "vowel" / tonal body) ----------
+// Each harmonic family is baked into a set of mip tables capped at rising
+// harmonic counts; playback picks the finest table whose top partial stays
+// below ~17 kHz, so high notes never alias.
+const NT=1024, NMASK=1023, MIPS=[2,4,8,16,32];
+function rd(tab,ph){ const x=ph*NT, i=x|0, fr=x-i; const a=tab[i], b=tab[(i+1)&NMASK]; return a+(b-a)*fr; }
+function pickMip(f){ const lim=17000/Math.max(1,f); let j=0; for(let m=0;m<MIPS.length;m++) if(MIPS[m]<=lim) j=m; return j; }
+const FAM={
+ organ:   k=>[1,0.5,0.7,0.35,0,0.2,0,0.12][k-1]||0,
+ pipe:    k=>[1,0.7,0.5,0.4,0.28,0.2,0.14,0.1,0.07,0.05,0.04,0.03][k-1]||0,
+ clarinet:k=>(k%2===1)?1/k:0,
+ reed:    k=>(k%2===1)?1/k:0.4/k,
+ brass:   k=>(1/k)*Math.pow(0.93,k-1),
+ string:  k=>1/Math.pow(k,0.9),
+ flute:   k=>[1,0.22,0.05,0.02][k-1]||0,
+ pluck:   k=>1/k,
+ harpsi:  k=>(1/Math.sqrt(k))*Math.pow(0.96,k-1),
+ mallet:  k=>[1,0.15,0.6,0.1,0.35,0,0.2][k-1]||0,
+ epiano:  k=>[1,0.3,0.12,0.5,0.05,0,0.18][k-1]||0,
+ fuzz:    k=>(1/Math.sqrt(k))*Math.pow(0.97,k-1)
+};
+function buildWaves(hf){ const acc=new Float32Array(NT), caps=new Set(MIPS), tabs=[]; const maxH=MIPS[MIPS.length-1];
+ for(let k=1;k<=maxH;k++){ const a=hf(k); if(a){ const wk=2*Math.PI*k/NT; for(let i=0;i<NT;i++) acc[i]+=a*Math.sin(wk*i); }
+  if(caps.has(k)){ tabs.push(acc.slice()); } }
+ tabs.forEach(t=>{ let m=1e-9; for(let i=0;i<NT;i++){ const v=Math.abs(t[i]); if(v>m)m=v; } for(let i=0;i<NT;i++) t[i]/=m; });
+ return tabs; }
+const FAMILY_TABLES={}; for(const k in FAM) FAMILY_TABLES[k]=buildWaves(FAM[k]);
+
+// --- Voice: wavetable body + chorus + ADSR + "consonant" attack transient --
+class Voice{constructor(fs){this.fs=fs;this.lpf=new OnePole(fs);this.env=new Env2(fs);this.cenv=new Exp(fs);
+  this.noise=new LFSR((0x1234+((fs|0)*2654435761))>>>0);this.cnf=new OnePole(fs);this.cnf.set(1800);
+  this.ph1=0;this.ph2=0;this.f=440;this.vel=1;this.note=-1;this.act=false;this.age=0;this.pr=PRESETS[0];
+  this.tabs=FAMILY_TABLES.organ;this.tab=this.tabs[0];this.detR=1;this.ch=0;this.clv=0;this.cons=0;}
+ setPreset(p){this.pr=p;this.tabs=FAMILY_TABLES[p.fam]||FAMILY_TABLES.organ;this.lpf.set(p.lpf);
+  this.env.times(p.atk,p.dec,p.sus,p.rel);this.detR=Math.pow(2,(p.det||0)/1200);this.ch=p.ch||0;
+  this.clv=p.clv||0;this.cons=p.cons||0;this.cenv.set(p.cdec||0.02);}
+ setMult(m){this.env.setMult(m);}
+ on(n,v){this.note=n;this.vel=v;this.f=440*Math.pow(2,(n-69)/12);this.ph1=0;this.ph2=0;this.lpf.reset();this.cnf.reset();
+  this.tab=this.tabs[pickMip(this.f)];this.env.times(this.pr.atk,this.pr.dec,this.pr.sus,this.pr.rel);this.env.on();
+  if(this.clv>0)this.cenv.trig();this.act=true;this.age=0;}
+ off(){this.env.off();}
+ render(lfo,depth){if(!this.act)return 0;const vib=Math.pow(2,(lfo*depth)/12),inc=this.f*vib/this.fs;
+  this.ph1+=inc;if(this.ph1>=1)this.ph1-=1;
+  let vowel=rd(this.tab,this.ph1);
+  if(this.ch>0){ this.ph2+=inc*this.detR;if(this.ph2>=1)this.ph2-=1; vowel=(vowel+this.ch*rd(this.tab,this.ph2))/(1+this.ch); }
+  vowel=this.lpf.p(vowel);
+  const e=this.env.n();
+  let cons=0; if(this.clv>0&&this.cenv.active()){ const nz=this.noise.next(),lp=this.cnf.p(nz); cons=(this.cons===2?lp:nz-lp)*this.cenv.n()*this.clv; }
+  if(!this.env.active()&&!this.cenv.active())this.act=false;
+  return (vowel*e+cons)*this.vel*this.pr.gain;}}
+class Alloc{constructor(fs){this.v=[];for(let i=0;i<8;i++)this.v.push(new Voice(fs));}
+ setPreset(p){this.v.forEach(x=>x.setPreset(p));} setMult(m){this.v.forEach(x=>x.setMult(m));}
+ on(n,vel){for(const x of this.v)if(x.act&&x.note===n){x.on(n,vel);return;}for(const x of this.v)if(!x.act){x.on(n,vel);return;}let o=this.v[0];for(const x of this.v)if(x.age>o.age)o=x;o.on(n,vel);}
+ off(n){for(const x of this.v)if(x.act&&x.note===n)x.off();} allOff(){this.v.forEach(x=>x.off());}
+ render(lfo,depth){let s=0;for(const x of this.v){if(x.act){s+=x.render(lfo,depth);x.age++;}}return s;}}
+class Kick{constructor(fs){this.fs=fs;this.bp=new Biquad();this.bp.bp(fs,55,18.5);this.imp=0;this.act=false;this.mag=0;this.drive=4;}
+ trig(){this.bp.reset();this.imp=Math.max(1,(0.001*this.fs)|0);this.act=true;}
+ p(){if(!this.act)return 0;let x=0;if(this.imp>0){x=1;this.imp--;}let y=this.bp.p(x);y=Math.tanh(this.drive*y);this.mag=0.999*this.mag+0.001*Math.abs(y);if(this.imp===0&&this.mag<1e-4)this.act=false;return y;}}
+class Snare{constructor(fs,noise){this.fs=fs;this.noise=noise;this.body=new Biquad();this.body.bp(fs,220,6);this.hpf=new Biquad();this.hpf.hp(fs,2500,0.707);this.be=new Exp(fs);this.ne=new Exp(fs);this.be.set(0.09);this.ne.set(0.15);this.imp=0;}
+ trig(){this.body.reset();this.imp=Math.max(1,(0.001*this.fs)|0);this.be.trig();this.ne.trig();}
+ active(){return this.be.active()||this.ne.active();}
+ p(){if(!this.active()&&this.imp===0)return 0;let x=0;if(this.imp>0){x=1;this.imp--;}const body=this.body.p(x)*this.be.n()*0.4;const w=this.hpf.p(this.noise.next())*this.ne.n()*0.85;return body+w;}}
+class Hat{constructor(fs,noise){this.fs=fs;this.noise=noise;this.h1=new Biquad();this.h1.hp(fs,8000,0.5412);this.h2=new Biquad();this.h2.hp(fs,8000,1.3066);this.ce=new Exp(fs);this.oe=new Exp(fs);this.ce.set(0.04);this.oe.set(0.30);}
+ closed(){if(this.oe.active())this.oe.choke();this.ce.trig();} open(){this.oe.trig();} active(){return this.ce.active()||this.oe.active();}
+ p(){if(!this.active())return 0;let n=this.noise.next();n=this.h1.p(n);n=this.h2.p(n);return n*(this.ce.n()+this.oe.n());}}
+// Deep "digital" MT-40 bass: pulse wave, resonant LPF for body, longer decay
+// so eighth notes sustain and connect; slight drive for punch.
+class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,1300,0.95);this.env=new Exp(fs);this.env.set(0.60);this.ph=0;this.inc=0;this.ag=0;this.ai=0;}
+ trig(n){this.inc=440*Math.pow(2,(n-69)/12)/this.fs;this.ph=0;this.env.trig();this.ag=0;this.ai=1/(0.004*this.fs);}
+ active(){return this.env.active();}
+ p(){if(!this.env.active())return 0;const sq=(this.ph<0.45)?1:-1;this.ph+=this.inc;if(this.ph>=1)this.ph-=1;if(this.ag<1){this.ag+=this.ai;if(this.ag>1)this.ag=1;}return Math.tanh(1.4*this.lpf.p(sq))*this.env.n()*this.ag*1.15;}}
+// One-pole DC blocker (~3.5 Hz high-pass) on the master output.
+class DCBlocker{constructor(){this.x1=0;this.y1=0;this.R=0.9995;} reset(){this.x1=0;this.y1=0;} p(x){const y=x-this.x1+this.R*this.y1;this.x1=x;this.y1=y;return y;}}
+function detectChord(held){if(!held.length)return null;let root=held[0];for(const n of held)if(n>root)root=n;let add=0;for(const n of held)if(n<root)add++;
+ let t;if(add===0)t=[root,root+4,root+7];else if(add===1)t=[root,root+3,root+7];else if(add===2)t=[root,root+4,root+7,root+10];else t=[root,root+3,root+7,root+10];return {root:root,tones:t};}
+class Rhythm{constructor(fs){this.fs=fs;this.noise=new LFSR(0xACE1);this.kick=new Kick(fs);this.snare=new Snare(fs,this.noise);this.hat=new Hat(fs,this.noise);this.bass=new Bass(fs);
+ this.bpm=82;this.sps=0;this.setTempo(82);this.phase=0;this.step=0;this.trans=0;this.fill=0;this.fh=false;this.fw=false;this.pend=false;this.rIdx=5;this.root=-1;this.rg=0.8;this.bg=0.85;this.rgS=0.8;this.bgS=0.85;}
+ setTempo(b){this.bpm=Math.max(40,Math.min(240,b));this.sps=this.fs/((this.bpm/60)*4);}
+ setRhythm(i){this.rIdx=Math.max(0,Math.min(5,i));} setChordRoot(r){this.root=r;}
+ synchro(){if(this.trans===0)this.trans=1;}
+ startStop(){if(this.trans===2){this.trans=0;}else{this.trans=2;this.step=0;this.phase=0;this.fire(0);}}
+ noteOnSplit(){if(this.trans!==2){this.trans=2;this.step=0;this.phase=0;this.fire(0);}}
+ allReleased(){if(this.trans===1)this.trans=0;}
+ setFill(h){if(h&&!this.fw){this.fill=(this.fill===1)?2:1;this.pend=false;}else if(!h&&this.fw){this.pend=true;}this.fh=h;this.fw=h;}
+ adv(){this.step=(this.step+1)%32;if(this.step%16===0){if(this.pend&&!this.fh){this.fill=0;this.pend=false;}}this.fire(this.step);}
+ fire(st){const p=PAT[this.rIdx];let kh=p.k[st]!==0;if(this.fill===1)kh=(st%4===0);if(kh)this.kick.trig();
+  let sh=p.s[st]!==0;if(this.fill===2)sh=(st%2===0);if(sh)this.snare.trig();
+  if(p.ho[st]!==0)this.hat.open();else if(p.hc[st]!==0)this.hat.closed();
+  const off=p.b[st];if(off!==REST){const root=(this.root>=0)?this.root:40;this.bass.trig(root+off);}}
+ p(){if(this.trans===2){this.phase+=1;if(this.phase>=this.sps){this.phase-=this.sps;this.adv();}}
+  const drums=this.kick.p()+this.snare.p()+this.hat.p();const b=this.bass.p();
+  this.rgS+=(this.rg-this.rgS)*0.0015;this.bgS+=(this.bg-this.bgS)*0.0015;return drums*this.rgS+b*this.bgS;}}
+
+// The complete ST-40 signal chain as a realm-agnostic object (no AudioWorklet
+// or DOM references) so it can run inside a worklet OR on the main thread.
+function makeST40(fs){
+ const mel=new Alloc(fs), chord=new Alloc(fs), rhythm=new Rhythm(fs);
+ let held=[], activeChord=[], master=0.85, masterS=0.85, vib=false, sus=false, lfoPh=0, lastTr=-1;
+ const dcb=new DCBlocker();
+ mel.setPreset(PRESETS[0]); chord.setPreset(PRESETS[0]);
+ function recompute(){const c=detectChord(held);
+  if(!c){for(const t of activeChord)chord.off(t);activeChord=[];rhythm.setChordRoot(-1);return;}
+  rhythm.setChordRoot(c.root);const nt=c.tones.map(t=>t+12);
+  if(nt.length===activeChord.length&&nt.every((x,i)=>x===activeChord[i]))return;
+  for(const t of activeChord)chord.off(t);for(const t of nt)chord.on(t,0.6);activeChord=nt;}
+ function noteOn(n,vel){if(n<51){rhythm.noteOnSplit();if(held.indexOf(n)<0)held.push(n);recompute();}else mel.on(n,vel);}
+ function noteOff(n){if(n<51){const i=held.indexOf(n);if(i>=0)held.splice(i,1);if(!held.length)rhythm.allReleased();recompute();}else mel.off(n);}
+ function param(id,v){if(id==='master_vca_gain')master=v;else if(id==='rhythm_bus_gain')rhythm.rg=v;
+  else if(id==='bass_osc_gain')rhythm.bg=v;else if(id==='host_bpm')rhythm.setTempo(v);
+  else if(id==='global_lfo_on')vib=v>0.5;else if(id==='env_release_mult'){sus=v>0.5;const m=sus?3:1;mel.setMult(m);chord.setMult(m);}
+  else if(id==='active_rhythm_idx')rhythm.setRhythm(v|0);
+  else if(id==='active_patch_idx'){const p=PRESETS[Math.max(0,Math.min(21,v|0))];mel.setPreset(p);chord.setPreset(p);}}
+ return {
+  msg(m){const t=m.t;if(t==='on')noteOn(m.n,m.vel);else if(t==='off')noteOff(m.n);
+   else if(t==='synchro')rhythm.synchro();else if(t==='startstop')rhythm.startStop();
+   else if(t==='fill')rhythm.setFill(!!m.b);else if(t==='param')param(m.id,m.v);},
+  block(L,Rr,n,onTransport){for(let i=0;i<n;i++){let lfo=0;if(vib)lfo=Math.sin(2*Math.PI*lfoPh);lfoPh+=5.5/fs;if(lfoPh>=1)lfoPh-=1;
+    const depth=vib?0.2:0;const mv=mel.render(lfo,depth)+chord.render(lfo,depth);const rhy=rhythm.p();
+    masterS+=(master-masterS)*0.0015;const s=dcb.p(Math.tanh((mv*0.45+rhy*0.6)*masterS));L[i]=s;if(Rr)Rr[i]=s;}
+   const tr=rhythm.trans;if(tr!==lastTr){lastTr=tr;if(onTransport)onTransport(tr);}}
+ };
+}
+
+    // ---- Web Audio synth bridge (self-contained; faithful DSP port) ----
+    let actx=null, node=null, spNode=null, fbCore=null; const pending=[];
+    function postMsg(m){ if(node) node.port.postMessage(m); else if(fbCore) fbCore.msg(m); else pending.push(m); }
+    function flushPending(){ const q=pending.slice(); pending.length=0; q.forEach(postMsg); }
+    function hideHint(){ var b=document.getElementById("audioHint"); if(b) b.style.display="none"; }
+    function startFallback(){
+      // ScriptProcessorNode path — works on file:// where Blob worklets are blocked.
+      fbCore=makeST40(actx.sampleRate);
+      spNode=actx.createScriptProcessor(1024,0,2);
+      spNode.onaudioprocess=(e)=>{ const ob=e.outputBuffer, L=ob.getChannelData(0), Rr=ob.numberOfChannels>1?ob.getChannelData(1):null;
+        fbCore.block(L,Rr,L.length,(tr)=>{ if(window.st40SetTransport) window.st40SetTransport(tr); }); };
+      spNode.connect(actx.destination);
+    }
+    async function startAudio(){
+      if(actx){ if(actx.state==="suspended") actx.resume(); return; }
+      actx=new (window.AudioContext||window.webkitAudioContext)();
+      let ok=false;
+      if(actx.audioWorklet){
+        try{
+          const src=document.getElementById("st40worklet").textContent;
+          const url=URL.createObjectURL(new Blob([src],{type:"application/javascript"}));
+          await actx.audioWorklet.addModule(url);
+          node=new AudioWorkletNode(actx,"st40",{outputChannelCount:[2]});
+          node.connect(actx.destination);
+          node.port.onmessage=(e)=>{ if(e.data.t==="transport" && window.st40SetTransport) window.st40SetTransport(e.data.st); };
+          ok=true;
+        }catch(err){ node=null; }   // worklet unavailable (e.g. file://) -> fall back
+      }
+      if(!ok) startFallback();
+      flushPending();
+      if(actx.state==="suspended") actx.resume();
+      hideHint();
+    }
+    window.addEventListener("pointerdown", startAudio, true);
+    window.addEventListener("keydown", startAudio, true);
+
+    const Juce=(function(){
+      function L(){ return { _f:[], addListener(fn){this._f.push(fn);}, removeListener(){}, fire(){this._f.forEach(fn=>fn());} }; }
+      function slider(scaled,norm,name){ return { properties:{start:0,end:1,skew:1,name:name}, valueChangedEvent:L(),propertiesChangedEvent:L(),_n:norm,_s:scaled,
+        getNormalisedValue(){return this._n;}, getScaledValue(){return this._s;},
+        setNormalisedValue(v){ this._n=v; this._s=(name==="host_bpm")?(40+v*200):v; postMsg({t:"param",id:name,v:this._s}); this.valueChangedEvent.fire(); },
+        sliderDragStarted(){}, sliderDragEnded(){} }; }
+      function toggle(v,name){ return { valueChangedEvent:L(),propertiesChangedEvent:L(),_v:v,
+        getValue(){return this._v;}, setValue(x){ this._v=x; postMsg({t:"param",id:name,v:x?1:0}); this.valueChangedEvent.fire(); } }; }
+      function combo(ch,ix,name){ return { properties:{choices:ch}, valueChangedEvent:L(),propertiesChangedEvent:L(),_i:ix,
+        getChoiceIndex(){return this._i;}, setChoiceIndex(i){ this._i=i; postMsg({t:"param",id:name,v:i}); this.valueChangedEvent.fire(); } }; }
+      const sl={ master_vca_gain:slider(0.85,0.85,"master_vca_gain"), host_bpm:slider(82,0.21,"host_bpm"),
+        rhythm_bus_gain:slider(0.8,0.8,"rhythm_bus_gain"), bass_osc_gain:slider(0.85,0.85,"bass_osc_gain") };
+      const tg={ global_lfo_on:toggle(false,"global_lfo_on"), env_release_mult:toggle(false,"env_release_mult") };
+      const co={ active_rhythm_idx:combo(["Samba","Waltz","Swing","Slow Rock","Pops","Rock"],5,"active_rhythm_idx"),
+        active_patch_idx:combo(["electric piano","banjo","guitar","harpsichord","xylophone","celesta","glockenspiel","organ","accordion","pipe organ","oriental pipe","brass","cello","synth fuzz","violin","trumpet","funny fuzz","st. ensemble","clarinet","flute","recorder","folk flute"],0,"active_patch_idx") };
+      const fns={ noteOn:(n,v)=>postMsg({t:"on",n:n,vel:v}), noteOff:(n)=>postMsg({t:"off",n:n}),
+        synchro:()=>postMsg({t:"synchro"}), setFill:(b)=>postMsg({t:"fill",b:b}), startStop:()=>postMsg({t:"startstop"}) };
+      return { getSliderState:n=>sl[n], getToggleState:n=>tg[n], getComboBoxState:n=>co[n], getNativeFunction:n=>fns[n] };
+    })();
+    const root=document.getElementById("st40");
+
+    // ---- native functions ----
+    let noteOn,noteOff,synchro,setFill,startStop;
+    try{ noteOn=Juce.getNativeFunction("noteOn"); noteOff=Juce.getNativeFunction("noteOff");
+      synchro=Juce.getNativeFunction("synchro"); setFill=Juce.getNativeFunction("setFill");
+      startStop=Juce.getNativeFunction("startStop"); }catch(e){}
+
+    // ---- placement helper: coords in cqw (1cqw = 1% of case width) ----
+    function P(cls, x, y, w, h, html){
+      const d=document.createElement("div"); d.className=cls;
+      d.style.cssText=`left:${x}cqw;top:${y}cqw;`+(w!=null?`width:${w}cqw;`:"")+(h!=null?`height:${h}cqw;`:"");
+      if(html!=null) d.innerHTML=html; root.appendChild(d); return d;
+    }
+    function T(x,y,txt,size=1.1,cls="txt",w){ const d=P(cls,x,y,w); d.style.fontSize=size+"cqw";
+      d.style.textAlign="center"; if(w) d.style.marginLeft="0"; d.innerHTML=txt; return d; }
+
+    // ================= PANEL FRAME =================
+    P("redline",14.5,1.5,82.7,0.32);                 // top red line
+    [14.5,22,50,66,81,97.2].forEach(x=>P("divl",x,1.5,null,8.6));  // section dividers
+    const band=P("band",14.5,9.9,82.7,1.7);
+    band.innerHTML='<span style="width:7.5cqw">volume</span><span style="width:28cqw">rhythm</span>'+
+      '<span style="width:16cqw">tone</span><span style="width:15cqw">effect</span><span style="flex:1">power</span>';
+
+    // speaker: recessed grille with carved horizontal louvers
+    P("spk",2.5,1.55,11.4,7.5);
+    for(let i=0;i<12;i++) P("slot",3.15,2.0+i*0.57,10.1,0.3);
+
+    // ================= KNOBS =================
+    function knob(cx,cy,d){ const k=P("knob",cx-d/2,cy-d/2,d,d,'<div class="skirt"></div><div class="face"></div><div class="gloss"></div><div class="dial"></div>');
+      // dotted position arc around the upper sweep (like the printed panel)
+      const R=d*0.66, N=9;
+      for(let i=0;i<N;i++){ const a=(-132+i*(264/(N-1)))*Math.PI/180;
+        P("ktick", cx+Math.sin(a)*R-0.15, cy-Math.cos(a)*R-0.15, 0.3,0.3); }
+      P("dot",cx-d/2-0.5,cy+d*0.32,null,null); P("dot",cx+d/2+0.1,cy+d*0.32,null,null);
+      return k.querySelector(".dial"); }
+    const D=3.2;
+    const volDial=knob(18.2,3.5,D);
+    T(15.2,5.3,"min",0.85,"dim"); T(19.6,5.3,"max",0.85,"dim");
+    const tempoDial=knob(30,3.3,D);
+    T(25.8,5.0,"slow",0.85,"dim"); T(31.9,5.0,"fast",0.85,"dim");
+    // "tempo" plates over the slow–fast rule (panel-cream knockout), sitting
+    // above the transport buttons so it collides with neither.
+    const tmpL=T(28.5,5.15,"tempo",0.78,"txt",3);
+    tmpL.style.background="#f4ede1"; tmpL.style.borderRadius=".25cqw"; tmpL.style.lineHeight="1.05";
+    const rbvDial=knob(41,3.2,D);
+    T(36.9,4.85,"min",0.85,"dim"); T(42.8,4.85,"max",0.85,"dim");
+    T(38.3,5.3,"<b>rhythm/bass</b>",0.66,"txt",5.4); T(39.5,5.78,"volume",0.62,"txt",3);
+
+    // ================= RHYTHM buttons + LED + slider =================
+    const beatLed=P("led",29.5,4.6,0.85,0.85);
+    P("redline",26.6,5.5,7.6,0.09).style.background="#b6a888";  // bracket line
+    const orange=P("sq orange",26.6,6.1,2.2,2.2);
+    T(25.4,8.5,"<b>chord bass</b>",0.62,"txt",4.6);
+    T(25.4,9.06,"synchro / fill-in",0.56,"txt",4.6);
+    const beige=P("sq beige",30.2,6.1,2.2,2.2);
+    T(29.3,8.78,"start/stop",0.66,"txt",4.2);
+    // rhythm slider (names in a tight zigzag directly above the track)
+    const RHY=["samba","waltz","swing","slow rock","pops","rock"];
+    P("rtrack",37.6,7.5,10.4,1.7,'<div class="ln"></div>');
+    const rrange=document.createElement("input"); rrange.type="range"; rrange.min=0; rrange.max=5; rrange.step=1;
+    rrange.className="rrange a"; rrange.style.cssText="left:37.6cqw;top:7.5cqw;width:10.4cqw;height:1.7cqw;";
+    root.appendChild(rrange);
+    T(41.0,9.35,"rhythm",0.85,"txt",4);
+    // Six selector names in one compact row above the track. "slow rock" is
+    // set two lines so it fits its cell without colliding with its neighbours.
+    RHY.forEach((nm,i)=>{ const fx=38.3+i*(9.3/5);
+      P("rtick",fx,7.35,null,null).style.width=".3cqw";
+      const two=(nm==="slow rock");
+      const t=T(fx-1.9,two?6.3:6.68,two?"slow<br>rock":nm,two?0.56:0.6,"txt",3.8);
+      t.style.whiteSpace="nowrap"; t.style.lineHeight=two?"1.0":"1.1"; });
+
+    // ================= TONE (memory / mode) =================
+    function slideSwitch(x,y,w,h,cls,positions,labels,label){
+      const t=P("swt "+cls,x,y,w,h);
+      const th=document.createElement("div"); th.className="swth"; th.style.width=(w/positions*1.4)+"cqw"; t.appendChild(th);
+      labels.forEach((tl,i)=>{ T(x+w*(i+0.5)/positions-1.2,y-1.5,tl,0.9,"txt",2.4);
+        P("dot",x+w*(i+0.5)/positions-0.2,y-0.5,null,null).style.background="#6b5f4a"; });
+      if(label) T(x-1,y+h+0.3,label,0.95,"txt",w+2);
+      let idx=0;
+      const setThumb=()=>{ const seg=(t.clientWidth-th.clientWidth)/(positions-1); th.style.left=(idx*seg)+"px"; };
+      t.addEventListener("click",()=>{ idx=(idx+1)%positions; setThumb(); t.dispatchEvent(new CustomEvent("chg",{detail:idx})); });
+      requestAnimationFrame(setThumb); window.addEventListener("resize",setThumb);
+      return { set:i=>{idx=i;setThumb();}, get:()=>idx, on:f=>t.addEventListener("chg",e=>f(e.detail)) };
+    }
+    const memSw =slideSwitch(51.5,4.7,9.3,2.7,"blue",4,["1","2","3","4"],"tone memory");
+    const modeSw=slideSwitch(61.8,4.7,3.6,2.7,"blue",2,["play","set"],"mode");
+
+    // ================= EFFECT =================
+    const susSw=slideSwitch(67.6,4.7,5.4,2.7,"brownsw",2,["off","on"],"sustain");
+    const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
+
+    // ================= POWER + brand =================
+    P("badge",87.0,1.9,9.8,2.7,'<b>ST-40</b>');
+    P("led",84.9,4.0,0.9,0.9);
+    const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
+
+    // ================= TONE STRIP =================
+    const TONE=["electric piano","banjo","guitar","harpsichord","xylophone","celesta","glockenspiel","organ",
+      "accordion","pipe organ","oriental pipe","brass","cello","synth fuzz","violin","trumpet","funny fuzz",
+      "st. ensemble","clarinet","flute","recorder","folk flute"];
+    const stripL=3, stripR=97.2, stripW=stripR-stripL, cw=stripW/22;
+    // Factory tone-memory defaults (manual §4): 1 Electric Piano, 2 Celesta,
+    // 3 Pipe Organ, 4 Flute — tone numbers 1/6/10/20 -> indices 0/5/9/19.
+    let patchState=null, memSlots=[0,5,9,19], curSlot=0, modeSet=false;
+    const tcells=[];
+    TONE.forEach((nm,i)=>{ const c=P("tcell",stripL+i*cw,11.9,cw,3.2,`<span class="n">${i+1}</span><span class="nm">${nm}</span>`);
+      c.dataset.i=i; c.addEventListener("click",()=>{ if(patchState){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } });
+      tcells.push(c); });
+    function markTones(){ if(!patchState)return; const idx=patchState.getChoiceIndex();
+      tcells.forEach(c=>c.classList.toggle("sel",+c.dataset.i===idx)); }
+
+    // ================= KEYBOARD =================
+    const boardY=15.3, boardB=30.4;
+    P("board",0,boardY,100,boardB-boardY);
+    // brand + bass block
+    const bx=3.2;
+    P("brand",bx,boardY+0.5,20,null,'<span class="c">Artifacts </span><span class="m">ST-40</span>');
+    P("ul",bx,boardY+3.0,17); P("ul",bx,boardY+3.3,17);
+    T(bx+5.5,boardB-2.0,"bass",1.1,"txt",6).style.color="#5c4636";
+
+    const NN=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const FLAT={1:"C#",3:"E♭",6:"F#",8:"A♭",10:"B♭"};
+    const isB=n=>[1,3,6,8,10].includes(((n%12)+12)%12);
+    function press(el,n){ if(el.classList.contains("down"))return; el.classList.add("down"); noteOn&&noteOn(n,0.85); }
+    function rel(el,n){ if(!el.classList.contains("down"))return; el.classList.remove("down"); noteOff&&noteOff(n); }
+    function att(el,n){ el.addEventListener("pointerdown",e=>{el.setPointerCapture(e.pointerId);press(el,n);});
+      el.addEventListener("pointerup",()=>rel(el,n)); el.addEventListener("pointercancel",()=>rel(el,n));
+      el.addEventListener("pointerleave",e=>{ if(e.buttons) rel(el,n); }); }
+    // SET mode (manual §5 control): each melody white key selects one of the 22
+    // tones and stores it in the current tone-memory slot; PLAY mode plays notes.
+    function selectTone(i){ if(patchState && i<22){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } }
+    function attMelody(el,n,wi){
+      el.addEventListener("pointerdown",e=>{ el.setPointerCapture(e.pointerId);
+        if(modeSet){ el.classList.add("down"); selectTone(wi); } else press(el,n); });
+      el.addEventListener("pointerup",()=>{ if(modeSet) el.classList.remove("down"); else rel(el,n); });
+      el.addEventListener("pointercancel",()=>{ if(modeSet) el.classList.remove("down"); else rel(el,n); });
+      el.addEventListener("pointerleave",e=>{ if(e.buttons){ if(modeSet) el.classList.remove("down"); else rel(el,n); } }); }
+
+    // main manual 53..89 (F3..F6), area x=22..97.2, y=boardY+1..boardB-0.6
+    (function(){ const low=53,high=89, X0=22, X1=97.2, Y0=boardY+1.0, Y1=boardB-0.6;
+      const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
+      const w=(X1-X0)/whites.length; const wm=new Map();
+      // White keys are notched into the real piano shape where a black key sits
+      // above them, so their tap area (clip-path also clips hit-testing) and the
+      // amber press highlight stop exactly at the black key edge — no more
+      // triggering / painting a white key under a neighbouring black one.
+      const wk=w-0.12, notchY=61;
+      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,wk,Y1-Y0); wm.set(n,k); attMelody(k,n,i);
+        const leftN=(n-1>=low)&&isB(n-1), rightN=(n+1<=high)&&isB(n+1);
+        if(leftN||rightN){
+          const lx=leftN ? 100*(0.3*w-0.15)/wk : 0;
+          const rx=rightN? 100*(0.7*w+0.15)/wk : 100;
+          k.style.clipPath=`polygon(${lx}% 0,${rx}% 0,${rx}% ${notchY}%,100% ${notchY}%,100% 100%,0 100%,0 ${notchY}%,${lx}% ${notchY}%)`;
+        } });
+      for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
+        const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); attMelody(root.lastChild,n,99); }
+    })();
+    // bass manual 36..50 — discrete keys matching the hardware: black keys in a
+    // separate upper band, white-key letters ABOVE the white keys, and thin
+    // vertical guide lines at every white-key boundary.
+    (function(){ const low=36,high=50, X0=bx, X1=20.8;
+      const blackLabelY=boardY+3.5, blackTop=boardY+4.3, blackH=2.3;
+      const whiteLabelY=boardY+7.0, whiteTop=boardY+7.9, whiteBot=boardB-2.6;
+      const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
+      const gap=0.5, w=((X1-X0)-gap*(whites.length-1))/whites.length; const wm=new Map();
+      // vertical guide lines at each white-key boundary (through both bands)
+      for(let i=0;i<=whites.length;i++){ const gx=X0+i*(w+gap)-gap/2;
+        P("bassdiv",gx,blackTop-0.4,null,whiteBot-(blackTop-0.4)); }
+      // white keys + letters above them
+      whites.forEach((n,i)=>{ const x=X0+i*(w+gap);
+        const k=P("bwk",x,whiteTop,w,whiteBot-whiteTop); wm.set(n,k); att(k,n);
+        T(x,whiteLabelY,NN[((n%12)+12)%12],0.9,"bklab",w); });
+      // black keys (upper band) + accidental labels above them
+      for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
+        const bw=w*0.78; const cx=X0+(idx+1)*(w+gap)-gap/2-bw/2;
+        P("bbk",cx,blackTop,bw,blackH); att(root.lastChild,n);
+        T(cx,blackLabelY,FLAT[((n%12)+12)%12],0.85,"bklab",bw); }
+    })();
+
+    P("warn",0,0).id="warn"; const warn=root.lastChild; warn.className="warn"; warn.textContent="Native bridge unavailable — open inside the plugin host.";
+
+    // ================= BINDINGS =================
+    let tempoS=null;
+    function updateBeat(){ if(tempoS) beatLed.style.setProperty("--beat",(60/Math.max(40,tempoS.getScaledValue()))+"s"); }
+    // Transport lamp: solid on when playing; flashes each pulse when armed/playing.
+    window.st40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2);
+      beatLed.classList.toggle("beating", st>=1); updateBeat(); };
+    function bindKnob(dial,states){ const s0=states[0];
+      const r=()=>{ dial.style.transform=`rotate(${-140+s0.getNormalisedValue()*280}deg)`; };
+      s0.valueChangedEvent.addListener(r); s0.propertiesChangedEvent.addListener(r);
+      const knob=dial.parentElement; let sy=0,sv=0,act=false;
+      knob.addEventListener("pointerdown",e=>{act=true;sy=e.clientY;sv=s0.getNormalisedValue();knob.setPointerCapture(e.pointerId);states.forEach(s=>s.sliderDragStarted&&s.sliderDragStarted());});
+      knob.addEventListener("pointermove",e=>{ if(!act)return; const v=Math.max(0,Math.min(1,sv+(sy-e.clientY)/180)); states.forEach(s=>s.setNormalisedValue(v)); });
+      const end=()=>{ if(act){act=false;states.forEach(s=>s.sliderDragEnded&&s.sliderDragEnded());} };
+      knob.addEventListener("pointerup",end); knob.addEventListener("pointercancel",end); r();
+    }
+    function bindToggleSwitch(sw,name){ const s=Juce.getToggleState(name);
+      const r=()=>sw.set(s.getValue()?1:0); s.valueChangedEvent.addListener(r); sw.on(i=>s.setValue(i===1)); r(); }
+    function bindRhythm(name){ const s=Juce.getComboBoxState(name);
+      const r=()=>{ rrange.value=s.getChoiceIndex(); }; s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
+      rrange.addEventListener("input",()=>s.setChoiceIndex(parseInt(rrange.value,10))); r(); }
+    function bindTone(name){ patchState=Juce.getComboBoxState(name);
+      // Seed the active memory slot from the live tone so the first recall of
+      // slot 0 restores what is actually playing rather than jumping to patch 0.
+      memSlots[curSlot]=patchState.getChoiceIndex();
+      patchState.valueChangedEvent.addListener(markTones); patchState.propertiesChangedEvent.addListener(markTones);
+      memSw.on(slot=>{ curSlot=slot; patchState.setChoiceIndex(memSlots[slot]); }); markTones(); }
+
+    // Mode switch: index 1 = SET (white keys select tones), 0 = PLAY.
+    modeSw.on(i=>{ modeSet=(i===1); root.classList.toggle("setmode", modeSet); });
+
+    orange.addEventListener("pointerdown",()=>{ synchro&&synchro(); setFill&&setFill(true); });
+    const oUp=()=>setFill&&setFill(false);
+    orange.addEventListener("pointerup",oUp); orange.addEventListener("pointerleave",oUp); orange.addEventListener("pointercancel",oUp);
+    beige.addEventListener("click",()=>startStop&&startStop());
+
+    try{
+      bindKnob(volDial,[Juce.getSliderState("master_vca_gain")]);
+      tempoS=Juce.getSliderState("host_bpm"); bindKnob(tempoDial,[tempoS]);
+      tempoS.valueChangedEvent.addListener(updateBeat); updateBeat();
+      bindKnob(rbvDial,[Juce.getSliderState("rhythm_bus_gain"),Juce.getSliderState("bass_osc_gain")]);
+      bindToggleSwitch(susSw,"env_release_mult");
+      bindToggleSwitch(vibSw,"global_lfo_on");
+      bindRhythm("active_rhythm_idx");
+      bindTone("active_patch_idx");
+    }catch(e){ warn.style.display="block"; }
+  </script>
+</body>
+</html>
+
+</body>
+</html>

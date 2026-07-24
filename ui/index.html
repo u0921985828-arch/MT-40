@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Artifacts ST-40</title>
+  <style>
+    :root{
+      --cream:#efe7d8; --cream-lo:#e6ddc9; --cream-hi:#f4eee1; --edge:#cabd9f; --div:#d4c8ac;
+      --gold:#c39a63; --gold-lo:#b3894f; --bevel:#c9a978;
+      --red:#d8452a; --band:#dc5033; --ink:#463b30; --inkdim:#6f6350;
+      --kface:#d8b982; --kface2:#a97b46; --kskirt1:#6a3d20; --kskirt2:#9a6a3c;
+      --orange:#f0541f; --orange-hi:#f8794a; --orange-lo:#c23f14;
+      --beige:#b7aa89; --beige-hi:#cabe9e; --blue:#93a7b9; --blue-lo:#70889d;
+      --brown:#9c7550; --brown-lo:#7a5836; --dark:#37342e;
+      --wht:#f7f4ed; --wht-lo:#e7e1d3; --blk:#161310;
+      font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
+    }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
+    html,body{ margin:0; min-height:100%; background:#141210;
+      background-image:radial-gradient(circle at 50% -10%,#2b2620,#0e0d0b 78%); }
+    body{ padding:2.2vw 2vw; display:flex; justify-content:center; align-items:flex-start; user-select:none; -webkit-user-select:none; }
+
+    /* ============ PREMIUM PLUGIN CHASSIS (UA-style frame) ============ */
+    /* The faithful MT-40 instrument (.st40) is preserved and recessed inside a
+       machined graphite chassis with header, footer, screws and depth. */
+    .chassis{ position:relative; width:100%; max-width:1240px; margin:auto; container-type:inline-size;
+      padding:1.5cqw 1.7cqw 1.1cqw; border-radius:1.7cqw; isolation:isolate;
+      background:
+        linear-gradient(180deg,#43474d 0%,#2c2f34 10%,#212327 50%,#191b1e 90%,#111214 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.03) 1px 2.5px);
+      border:.08cqw solid #0a0b0c;
+      box-shadow:
+        0 3.4cqw 7cqw rgba(0,0,0,.72), 0 .7cqw 1.6cqw rgba(0,0,0,.55),
+        inset 0 .16cqw 0 rgba(255,255,255,.16), inset 0 -.6cqw 1.3cqw rgba(0,0,0,.55),
+        inset 0 0 0 .12cqw rgba(0,0,0,.55); }
+    .chassis::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:5;
+      background:radial-gradient(130% 70% at 50% -8%, rgba(255,255,255,.07), transparent 55%); }
+
+    .screw{ position:absolute; z-index:6; width:1.25cqw; height:1.25cqw; border-radius:50%;
+      background:radial-gradient(circle at 38% 32%, #7c8085, #45484d 52%, #1b1c1e 100%);
+      box-shadow: inset 0 .07cqw .1cqw rgba(255,255,255,.4), inset 0 -.07cqw .14cqw rgba(0,0,0,.75), 0 .07cqw .16cqw rgba(0,0,0,.6); }
+    .screw::after{ content:""; position:absolute; inset:34% 14%; border-radius:.05cqw;
+      background:linear-gradient(90deg,transparent 43%, rgba(0,0,0,.6) 43% 57%, transparent 57%); transform:rotate(34deg); }
+    .screw.tl{ top:.85cqw; left:.85cqw } .screw.tr{ top:.85cqw; right:.85cqw }
+    .screw.bl{ bottom:.75cqw; left:.85cqw } .screw.br{ bottom:.75cqw; right:.85cqw }
+
+    .uhead{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between;
+      padding:.15cqw 1.6cqw .95cqw; }
+    .brandU{ display:flex; align-items:baseline; gap:.7cqw; }
+    .brandU .logo{ font:800 2.4cqw/1 "Helvetica Neue",system-ui,sans-serif; letter-spacing:.22cqw; color:#eee7d6;
+      text-shadow:0 .09cqw .05cqw rgba(0,0,0,.85), 0 -.05cqw 0 rgba(255,255,255,.14); }
+    .brandU .model{ font:600 1.35cqw/1 "Helvetica Neue",system-ui; color:#d79441; letter-spacing:.12cqw;
+      text-shadow:0 .06cqw 0 rgba(0,0,0,.7), 0 0 .5cqw rgba(215,148,65,.35); }
+    .brandU .sub{ font:600 .92cqw/1 system-ui; color:#8b877b; letter-spacing:.4cqw; text-transform:uppercase; margin-left:.5cqw;
+      padding-left:.8cqw; border-left:.08cqw solid rgba(255,255,255,.12); }
+    .rightU{ display:flex; align-items:center; gap:1.1cqw; }
+    .plateU{ font:600 .86cqw/1 system-ui; color:#9a9488; letter-spacing:.34cqw; text-transform:uppercase;
+      padding:.5cqw .8cqw; border-radius:.4cqw; background:linear-gradient(180deg,#2a2c30,#1b1d20);
+      box-shadow:inset 0 .08cqw 0 rgba(255,255,255,.08), inset 0 -.08cqw .1cqw rgba(0,0,0,.6), 0 .05cqw 0 rgba(255,255,255,.05); }
+    .pwrLed{ width:.95cqw; height:.95cqw; border-radius:50%;
+      background:radial-gradient(circle at 40% 34%, #ffe0a2, #f0850f 58%, #7a3d06 100%);
+      box-shadow:0 0 1.1cqw #ff9d2e, 0 0 .35cqw #ffcf85, inset 0 0 .12cqw rgba(0,0,0,.4); }
+
+    .stage{ position:relative; z-index:4; border-radius:1.15cqw; padding:.55cqw;
+      background:linear-gradient(180deg,#0e0f11,#070808);
+      box-shadow: inset 0 .34cqw 1cqw rgba(0,0,0,.85), inset 0 -.16cqw .4cqw rgba(255,255,255,.05),
+        inset 0 0 0 .1cqw rgba(0,0,0,.7), 0 .12cqw 0 rgba(255,255,255,.05); }
+
+    .ufoot{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between; padding:.85cqw 1.6cqw .1cqw; }
+    .ufoot .l,.ufoot .r{ font:600 .86cqw/1 system-ui; letter-spacing:.3cqw; text-transform:uppercase; color:#6c675c;
+      text-shadow:0 .05cqw 0 rgba(0,0,0,.6); }
+    .ufoot .l::before{ content:""; display:inline-block; width:.55cqw; height:.55cqw; margin-right:.5cqw; border-radius:50%;
+      background:radial-gradient(circle,#7ad08a,#2f7a3f); box-shadow:0 0 .5cqw #4fbf6a; vertical-align:middle; }
+
+    /* instrument recessed in the well: trade the big float shadow for an inset look */
+    .chassis .st40{ max-width:none; border-radius:1cqw;
+      box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.12),
+        0 .25cqw .6cqw rgba(0,0,0,.45), 0 0 0 .12cqw rgba(0,0,0,.5); }
+
+    .st40{ position:relative; width:100%; max-width:1120px; aspect-ratio:100/31;
+      background:linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
+      border:1px solid var(--edge); border-radius:1.4cqw;
+      box-shadow:0 2.4cqw 6cqw rgba(0,0,0,.55), inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.10);
+      container-type:inline-size; overflow:hidden; font-size:1cqw; }
+    .a{ position:absolute; } /* absolute-positioned element; coords set inline in cqw */
+
+    /* red lines / band */
+    .redline{ position:absolute; background:var(--red); border-radius:.2cqw; }
+    .band{ position:absolute; background:var(--band); display:flex; align-items:center; border-radius:.15cqw; }
+    .band > span{ text-align:center; color:#fff; font-size:1.15cqw; letter-spacing:.12cqw; font-weight:600; }
+    .divl{ position:absolute; width:.14cqw; background:var(--div); }
+
+    /* speaker */
+    .slot{ position:absolute; border-radius:.25cqw; background:linear-gradient(180deg,#cec1a3,#b6a582);
+      box-shadow:inset 0 .05cqw 0 rgba(255,255,255,.5),0 .05cqw .05cqw rgba(0,0,0,.12); }
+
+    /* knobs */
+    .knob{ position:absolute; border-radius:50%; }
+    .knob .skirt{ position:absolute; inset:0; border-radius:50%;
+      background:repeating-conic-gradient(from 0deg,var(--kskirt1) 0deg 1.6deg,var(--kskirt2) 1.6deg 3.2deg);
+      box-shadow:0 .3cqw .5cqw rgba(0,0,0,.4),inset 0 0 .3cqw rgba(0,0,0,.4); }
+    .knob .face{ position:absolute; inset:22%; border-radius:50%;
+      background:radial-gradient(circle at 42% 34%,var(--kface),var(--kface2) 66%,#8a5f34);
+      box-shadow:inset 0 .12cqw .3cqw rgba(255,255,255,.4),0 .1cqw .2cqw rgba(0,0,0,.3); }
+    .knob .dial{ position:absolute; inset:0; }
+    .knob .dial::before{ content:""; position:absolute; top:8%; left:50%; width:.5cqw; height:24%;
+      margin-left:-.25cqw; border-radius:.25cqw; background:#f3ecdd; }
+    .txt{ position:absolute; color:var(--ink); }
+    .dim{ position:absolute; color:var(--inkdim); }
+    .dot{ position:absolute; width:.4cqw; height:.4cqw; border-radius:50%; background:#8a7d64; }
+
+    /* buttons */
+    .sq{ position:absolute; border-radius:.5cqw; cursor:pointer;
+      box-shadow:0 .25cqw .35cqw rgba(0,0,0,.35),inset 0 .18cqw .25cqw rgba(255,255,255,.35),inset 0 -.2cqw .3cqw rgba(0,0,0,.22); }
+    .sq:active{ transform:translateY(.1cqw); }
+    .sq.orange{ background:linear-gradient(180deg,var(--orange-hi),var(--orange) 45%,var(--orange-lo)); }
+    .sq.beige{ background:linear-gradient(180deg,var(--beige-hi),var(--beige) 55%,#998c6d); }
+    .led{ position:absolute; border-radius:50%;
+      background:radial-gradient(circle at 40% 35%,#b02516,#5e150c); box-shadow:inset 0 0 .2cqw #000; }
+    .led.on{ background:radial-gradient(circle at 40% 35%,#ff6a4a,var(--red)); box-shadow:0 0 .8cqw var(--red); }
+    .box{ border:.1cqw solid var(--ink); padding:0 .2cqw; border-radius:.12cqw; }
+
+    /* rhythm slider */
+    .rtrack{ position:absolute; border-radius:.4cqw; background:linear-gradient(180deg,#efe9db,#dcd2bb);
+      box-shadow:inset 0 .15cqw .35cqw rgba(0,0,0,.28); overflow:hidden; }
+    .rtrack .ln{ position:absolute; left:6%; right:6%; top:50%; height:.35cqw; margin-top:-.17cqw; background:#1b1b1b; border-radius:.2cqw; }
+    .rrange{ position:absolute; -webkit-appearance:none; appearance:none; background:transparent; margin:0; cursor:pointer; }
+    .rrange::-webkit-slider-thumb{ -webkit-appearance:none; width:2.6cqw; height:100%; border-radius:.4cqw;
+      background:linear-gradient(180deg,var(--orange-hi),var(--orange) 50%,var(--orange-lo)); border:.08cqw solid #a23414; }
+    .rrange::-moz-range-thumb{ width:2.6cqw; height:100%; border-radius:.4cqw;
+      background:linear-gradient(180deg,var(--orange-hi),var(--orange) 50%,var(--orange-lo)); border:.08cqw solid #a23414; }
+    .rtick{ position:absolute; width:.4cqw; height:.4cqw; background:#40382c; }
+
+    /* slide switches */
+    .swt{ position:absolute; border-radius:.45cqw; cursor:pointer;
+      background:linear-gradient(180deg,#e7dfcd,#d3c8ae); box-shadow:inset 0 .12cqw .3cqw rgba(0,0,0,.25); }
+    .swth{ position:absolute; top:12%; height:76%; border-radius:.35cqw; pointer-events:none;
+      box-shadow:0 .12cqw .25cqw rgba(0,0,0,.4),inset 0 .12cqw .12cqw rgba(255,255,255,.4); transition:left .07s; }
+    .blue .swth{ background:linear-gradient(180deg,#aebfce,var(--blue) 55%,var(--blue-lo)); }
+    .blue .swth::after{ content:""; position:absolute; right:14%; top:24%; width:24%; height:52%; background:#3f4a54; border-radius:.1cqw; }
+    .brownsw .swth{ background:linear-gradient(180deg,#b48f68,var(--brown) 55%,var(--brown-lo)); }
+    .darksw .swth{ background:linear-gradient(180deg,#54524c,var(--dark) 55%,#1f1e1b); }
+
+    /* brand badge */
+    .badge{ position:absolute; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(180deg,#c8bb9e,#a99a78); border:.1cqw solid #8b7d5e; border-radius:.3cqw;
+      box-shadow:inset 0 .1cqw 0 rgba(255,255,255,.5),0 .15cqw .25cqw rgba(0,0,0,.25); }
+    .badge b{ font-weight:800; font-style:italic; letter-spacing:.05cqw; color:#1c1a17; font-size:1.5cqw; }
+
+    /* tone strip */
+    .tcell{ position:absolute; top:0; bottom:0; border-right:.1cqw solid #cabd9f; text-align:center; cursor:pointer; overflow:hidden; }
+    .tcell .n{ font-size:.95cqw; color:var(--red); font-weight:700; display:block; line-height:1; }
+    .tcell .nm{ font-size:.76cqw; color:var(--ink); display:block; line-height:1.05; margin-top:.08cqw; }
+    .tcell.sel{ background:rgba(216,69,42,.15); }
+    .tcell.sel .nm{ font-weight:700; }
+    /* SET mode: the tone strip + melody keys read as selectors */
+    .setmode .tcell{ background:rgba(216,69,42,.10); }
+    .setmode .tcell.sel{ background:rgba(216,69,42,.24); }
+    .setmode .wkey{ background:linear-gradient(180deg,#fff2ec,#f0dbd1); }
+
+    /* keyboard */
+    .board{ position:absolute; background:linear-gradient(180deg,var(--bevel),var(--gold-lo)); }
+    .brand{ position:absolute; color:#5c4636; }
+    .brand .c{ font-size:1.7cqw; } .brand .m{ font-size:1.9cqw; font-weight:800; letter-spacing:.08cqw; }
+    .ul{ position:absolute; height:.1cqw; background:#5c4636; }
+    .wkey{ position:absolute; background:linear-gradient(180deg,#fdfcf8,var(--wht-lo));
+      border:.08cqw solid #b8b09e; border-radius:0 0 .3cqw .3cqw; cursor:pointer; touch-action:none; }
+    .wkey.down{ background:linear-gradient(180deg,#f1e0c1,#e1cba3); box-shadow:inset 0 .3cqw .55cqw rgba(95,65,25,.30); }
+    .bkey{ position:absolute; background:linear-gradient(180deg,#4a4640,var(--blk)); border-radius:0 0 .28cqw .28cqw;
+      cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .25cqw .3cqw rgba(0,0,0,.5); }
+    .bkey.down{ background:linear-gradient(180deg,#2a2723,#000); }
+    .bwk{ position:absolute; background:linear-gradient(180deg,#fdfcf8,#e9e3d4); border:.08cqw solid #b8b09e;
+      border-radius:.2cqw; cursor:pointer; touch-action:none; }
+    .bwk.down{ background:linear-gradient(180deg,#f1e0c1,#e1cba3); box-shadow:inset 0 .3cqw .55cqw rgba(95,65,25,.30); }
+    .bbk{ position:absolute; background:linear-gradient(180deg,#4a4640,var(--blk)); border-radius:.18cqw;
+      cursor:pointer; z-index:3; touch-action:none; box-shadow:0 .2cqw .3cqw rgba(0,0,0,.5); }
+    .bbk.down{ background:linear-gradient(180deg,#2a2723,#000); }
+    .bklab{ position:absolute; text-align:center; font-size:.85cqw; color:#5c4636; pointer-events:none; }
+    .bassdiv{ position:absolute; width:.1cqw; background:#8a7250; opacity:.45; border-radius:.05cqw; }
+    .warn{ position:absolute; left:3cqw; bottom:.4cqw; color:var(--red); font-size:1cqw; font-weight:700; display:none; }
+
+    /* ================= realism pass — material, light & depth ================= */
+    .st40{
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+        radial-gradient(130% 92% at 50% -14%, rgba(255,255,255,.34), transparent 56%),
+        linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
+      background-blend-mode: soft-light, screen, normal;
+      box-shadow:
+        0 3cqw 7cqw rgba(0,0,0,.6), 0 .7cqw 1.4cqw rgba(0,0,0,.34),
+        inset 0 .16cqw 0 rgba(255,255,255,.75),
+        inset 0 -.5cqw 1.2cqw rgba(60,40,15,.14),
+        inset 0 0 2.4cqw rgba(70,45,18,.10); }
+    /* speaker louvers become carved grooves */
+    .slot{ background:linear-gradient(180deg,#b3a37f,#cabd9c);
+      box-shadow: inset 0 .12cqw .2cqw rgba(0,0,0,.42), 0 .09cqw 0 rgba(255,255,255,.6); }
+    /* knobs: cast shadow + specular hit */
+    .knob{ filter:drop-shadow(0 .36cqw .42cqw rgba(0,0,0,.42)); }
+    .knob .face::after{ content:""; position:absolute; top:11%; left:14%; width:38%; height:30%;
+      border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.62),transparent 70%); pointer-events:none; }
+    /* square buttons: gloss highlight + seated well */
+    .sq{ box-shadow:0 .42cqw .5cqw rgba(0,0,0,.4), 0 0 0 .1cqw rgba(0,0,0,.10),
+      inset 0 .2cqw .3cqw rgba(255,255,255,.45), inset 0 -.3cqw .42cqw rgba(0,0,0,.3); }
+    .sq::after{ content:""; position:absolute; left:12%; right:12%; top:9%; height:36%; border-radius:.42cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.55),transparent); pointer-events:none; }
+    /* slide switches: glossier thumb, deeper track */
+    .swt{ box-shadow:inset 0 .16cqw .34cqw rgba(0,0,0,.34), inset 0 -.05cqw 0 rgba(255,255,255,.5); }
+    .swth{ box-shadow:0 .18cqw .3cqw rgba(0,0,0,.45), inset 0 .18cqw .14cqw rgba(255,255,255,.55),
+      inset 0 -.14cqw .2cqw rgba(0,0,0,.28); }
+    /* white keys: glossy with sheen + separation shadow */
+    .wkey{ background:linear-gradient(180deg,#ffffff,#fbf9f2 14%,#eae4d5 86%,#dbd3c1);
+      box-shadow: inset 0 .16cqw 0 rgba(255,255,255,.95), inset -.12cqw 0 .16cqw rgba(0,0,0,.07),
+        0 .4cqw .5cqw rgba(0,0,0,.14); }
+    .bwk{ background:linear-gradient(180deg,#ffffff,#f4eee0 58%,#e3dcc9);
+      box-shadow: inset 0 .14cqw 0 rgba(255,255,255,.92), 0 .3cqw .4cqw rgba(0,0,0,.18); }
+    /* black keys: glossy body + specular streak */
+    .bkey{ background:linear-gradient(180deg,#5b564e 0%,#2c2925 20%,#141210 100%); box-shadow:0 .42cqw .5cqw rgba(0,0,0,.55); }
+    .bbk{ background:linear-gradient(180deg,#5b564e,#2c2925 22%,#141210); }
+    .bkey::after,.bbk::after{ content:""; position:absolute; left:16%; right:16%; top:6%; height:24%;
+      border-radius:.2cqw; background:linear-gradient(180deg,rgba(255,255,255,.28),transparent); pointer-events:none; }
+    /* keybed + red band: subtle sheen */
+    .board{ box-shadow: inset 0 .3cqw .6cqw rgba(255,255,255,.12), inset 0 -.4cqw 1cqw rgba(0,0,0,.2); }
+    .band{ box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.22), inset 0 -.12cqw .2cqw rgba(0,0,0,.2); }
+
+    /* ================= realism pass 2 — finer materials, light & carved detail ================= */
+    .st40{
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"),
+        radial-gradient(70% 55% at 26% 6%, rgba(255,255,255,.30), transparent 60%),
+        radial-gradient(140% 100% at 50% -16%, rgba(255,255,255,.30), transparent 55%),
+        linear-gradient(168deg,#f6f0e4 0%,#efe7d8 42%,#e5dbc6 82%,#dccfb6 100%);
+      background-blend-mode: soft-light, screen, screen, normal;
+      border:1px solid #c3b596;
+      box-shadow:
+        0 3.2cqw 7.5cqw rgba(0,0,0,.62), 0 .9cqw 1.8cqw rgba(0,0,0,.36),
+        inset 0 .24cqw .05cqw rgba(255,255,255,.9),
+        inset .18cqw 0 .12cqw rgba(255,255,255,.4), inset -.18cqw 0 .12cqw rgba(0,0,0,.12),
+        inset 0 -.8cqw 1.5cqw rgba(55,36,14,.2), inset 0 0 3cqw rgba(70,45,18,.10); }
+    /* speaker recess + carved louvers */
+    .spk{ position:absolute; border-radius:.6cqw; background:linear-gradient(180deg,#d6caac,#c4b791);
+      box-shadow: inset 0 .3cqw .5cqw rgba(0,0,0,.28), inset 0 -.15cqw .2cqw rgba(255,255,255,.4), 0 .1cqw 0 rgba(255,255,255,.5); }
+    .slot{ background:linear-gradient(180deg,#a99a76,#c2b48f); border-radius:.18cqw;
+      box-shadow: inset 0 .12cqw .16cqw rgba(0,0,0,.5), 0 .1cqw 0 rgba(255,255,255,.55); }
+    /* engraved section dividers (dark groove + light edge) */
+    .divl{ background:#b3a67f; width:.12cqw; box-shadow:.1cqw 0 0 rgba(255,255,255,.5); }
+    /* knobs: finer knurl, caramel face, specular gloss, crisp pointer, cast shadow */
+    .knob{ filter:drop-shadow(0 .34cqw .4cqw rgba(0,0,0,.4)); }
+    .knob .skirt{ background:repeating-conic-gradient(from 0deg,#5e3618 0deg 1.4deg,#8a5a30 1.4deg 2.8deg,#a5713d 2.8deg 4.2deg);
+      box-shadow:0 .22cqw .35cqw rgba(0,0,0,.38), inset 0 0 .4cqw rgba(0,0,0,.5), inset 0 .1cqw .1cqw rgba(255,255,255,.25); }
+    .knob .face{ inset:20%; background:radial-gradient(circle at 40% 32%,#e3c58f,#c69c60 55%,#9a6f3c 100%);
+      box-shadow:inset 0 .14cqw .3cqw rgba(255,255,255,.5), inset 0 -.14cqw .25cqw rgba(0,0,0,.35), 0 .08cqw .15cqw rgba(0,0,0,.3); }
+    .knob .face::after{ background:radial-gradient(circle,rgba(255,255,255,.7),transparent 68%); }
+    .knob .gloss{ position:absolute; inset:20%; border-radius:50%; pointer-events:none;
+      background:linear-gradient(135deg,rgba(255,255,255,.45) 0%,transparent 42%,transparent 72%,rgba(0,0,0,.18) 100%); }
+    .knob .dial::before{ width:.55cqw; height:30%; top:6%; margin-left:-.27cqw; border-radius:.3cqw; background:#fbf6ea;
+      box-shadow:0 0 .15cqw rgba(0,0,0,.4); }
+    .ktick{ position:absolute; border-radius:50%; background:#6f5d3e; opacity:.5; }
+    /* square buttons: recessed well + glossy dome */
+    .sq.orange{ background:linear-gradient(180deg,#ff7a4d 0%,#f0541f 42%,#c8400f 100%); }
+    .sq.beige{ background:linear-gradient(180deg,#d0c4a4 0%,#b7aa89 52%,#948868 100%); }
+    .sq{ box-shadow:0 .45cqw .55cqw rgba(0,0,0,.42), 0 0 0 .12cqw rgba(90,60,25,.14),
+      inset 0 .24cqw .3cqw rgba(255,255,255,.5), inset 0 -.34cqw .45cqw rgba(0,0,0,.32); }
+    .sq::after{ top:8%; height:40%; left:14%; right:14%; border-radius:.5cqw .5cqw .8cqw .8cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.05)); }
+    /* slide switches: deep track + glossy thumb */
+    .swt{ background:linear-gradient(180deg,#ded4bd,#efe8d7);
+      box-shadow:inset 0 .2cqw .38cqw rgba(0,0,0,.36), inset 0 -.06cqw 0 rgba(255,255,255,.55); }
+    .swth{ box-shadow:0 .2cqw .3cqw rgba(0,0,0,.48), inset 0 .2cqw .16cqw rgba(255,255,255,.6), inset 0 -.16cqw .22cqw rgba(0,0,0,.3); }
+    /* rhythm slider: deep channel + chunky glossy cap */
+    .rtrack{ background:linear-gradient(180deg,#e6dfcd,#d2c8b0);
+      box-shadow:inset 0 .2cqw .4cqw rgba(0,0,0,.3), inset 0 -.06cqw 0 rgba(255,255,255,.5); }
+    .rrange::-webkit-slider-thumb{ box-shadow:0 .3cqw .4cqw rgba(0,0,0,.45), inset 0 .2cqw .16cqw rgba(255,255,255,.55), inset 0 -.2cqw .25cqw rgba(0,0,0,.3); }
+    /* white keys: glossy with a soft top reflection + crisp separation */
+    .wkey{ background:linear-gradient(180deg,#ffffff 0%,#fdfbf5 10%,#f0ebdd 55%,#e6dfcd 88%,#d8d0bd 100%);
+      box-shadow: inset 0 .18cqw 0 rgba(255,255,255,1), inset -.14cqw 0 .18cqw rgba(0,0,0,.09), inset .06cqw 0 0 rgba(255,255,255,.6), 0 .45cqw .55cqw rgba(0,0,0,.15); }
+    .wkey::after{ content:""; position:absolute; left:0; right:0; top:0; height:26%; border-radius:0 0 .5cqw .5cqw;
+      background:linear-gradient(180deg,rgba(255,255,255,.7),transparent); pointer-events:none; }
+    .bwk{ background:linear-gradient(180deg,#ffffff 0%,#f6f0e2 55%,#e6dfcc 100%);
+      box-shadow: inset 0 .14cqw 0 rgba(255,255,255,.95), 0 .3cqw .4cqw rgba(0,0,0,.2); }
+    /* black keys: glossy, specular streak + rounded front lip + shadow on whites */
+    .bkey,.bbk{ box-shadow:0 .5cqw .55cqw rgba(0,0,0,.6); }
+    .bkey{ background:linear-gradient(178deg,#6a645b 0%,#332f2a 16%,#181613 70%,#0c0b09 100%); }
+    .bbk{ background:linear-gradient(178deg,#6a645b,#332f2a 18%,#181613 72%,#0c0b09); }
+    .bkey::before,.bbk::before{ content:""; position:absolute; left:0; right:0; bottom:0; height:12%;
+      border-radius:0 0 .26cqw .26cqw; background:linear-gradient(180deg,transparent,rgba(255,255,255,.14)); pointer-events:none; }
+    .bkey::after,.bbk::after{ left:18%; right:18%; top:5%; height:22%; background:linear-gradient(180deg,rgba(255,255,255,.35),transparent); }
+    /* keybed depth + brushed-metal badge + crisper band/LEDs */
+    .board{ box-shadow: inset 0 .4cqw .7cqw rgba(255,255,255,.14), inset 0 -.5cqw 1.1cqw rgba(0,0,0,.24), inset 0 .06cqw 0 rgba(255,255,255,.3); }
+    .badge{ background:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 .1cqw,transparent .1cqw .3cqw),linear-gradient(180deg,#cabd9f,#a89971);
+      box-shadow: inset 0 .1cqw 0 rgba(255,255,255,.6), inset 0 -.1cqw .1cqw rgba(0,0,0,.2), 0 .12cqw .18cqw rgba(0,0,0,.25); }
+    .band{ background:linear-gradient(180deg,#e2552f,#d5431f);
+      box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.28), inset 0 -.14cqw .2cqw rgba(0,0,0,.28); }
+    .led{ box-shadow: inset 0 0 .2cqw rgba(0,0,0,.6), inset 0 .08cqw .06cqw rgba(255,255,255,.5); }
+
+    /* ================= realism pass 3 — wear, contact shadow, tilt & motion ================= */
+    body{ perspective:2000px; overflow-x:hidden; }
+    .st40{ transform:rotateX(2.6deg); transform-origin:50% 36%;
+      filter:drop-shadow(0 2.2cqw 1.7cqw rgba(0,0,0,.5)); }
+    /* faint vintage wear + uneven gloss on the case, below the controls */
+    .st40::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+      background:
+        repeating-linear-gradient(118deg, rgba(255,255,255,.05) 0 .05cqw, transparent .05cqw 2.4cqw),
+        radial-gradient(55% 42% at 80% 14%, rgba(255,255,255,.14), transparent 62%),
+        radial-gradient(46% 60% at 10% 92%, rgba(70,45,18,.06), transparent 60%);
+      mix-blend-mode:overlay; }
+    /* keys: physical press, warmer ivory, black-key contact shadow on whites */
+    .wkey,.bwk,.bkey,.bbk{ transition:transform .06s ease, filter .06s ease; }
+    .wkey.down,.bwk.down{ transform:translateY(.5cqw); filter:brightness(.96); }
+    .bkey.down,.bbk.down{ transform:translateY(.34cqw); filter:brightness(1.1); }
+    .wkey{ background:linear-gradient(180deg,#fffef9 0%,#fbf7ec 10%,#f0e9d8 55%,#e7dfc9 88%,#d9d0ba 100%); }
+    .bkey,.bbk{ box-shadow:0 .55cqw .6cqw rgba(0,0,0,.6), .18cqw .12cqw .38cqw rgba(0,0,0,.32), -.18cqw .12cqw .38cqw rgba(0,0,0,.32); }
+    /* tempo lamp flashes on each pulse at the current BPM */
+    @keyframes beatflash{
+      0%{ background:radial-gradient(circle at 40% 35%,#ff8663,#e2472a); box-shadow:0 0 1.3cqw #ef5a2c, inset 0 0 .2cqw rgba(0,0,0,.35); }
+      20%{ background:radial-gradient(circle at 40% 35%,#8a2016,#4c110a); box-shadow:inset 0 0 .2cqw rgba(0,0,0,.6); }
+      100%{ background:radial-gradient(circle at 40% 35%,#8a2016,#4c110a); box-shadow:inset 0 0 .2cqw rgba(0,0,0,.6); } }
+    .led.beating{ animation:beatflash var(--beat,.66s) linear infinite; }
+    @media (prefers-reduced-motion:reduce){
+      .st40{ transform:none; }
+      .led.beating{ animation:none; }
+      .wkey,.bwk,.bkey,.bbk{ transition:none; } }
+  </style>
+</head>
+<body>
+  <div class="chassis">
+    <div class="screw tl"></div><div class="screw tr"></div><div class="screw bl"></div><div class="screw br"></div>
+    <div class="uhead">
+      <div class="brandU"><span class="logo">ARTIFACTS</span><span class="model">ST-40</span><span class="sub">Digital Tone &amp; Rhythm</span></div>
+      <div class="rightU"><span class="plateU">1981 · CV Engine</span><span class="pwrLed"></span></div>
+    </div>
+    <div class="stage"><div class="st40" id="st40"></div></div>
+    <div class="ufoot"><span class="l">Artifacts DSP · Active</span><span class="r">ST-40 Synthesizer</span></div>
+  </div>
+
+  <script type="module">
+    import * as Juce from "./js/juce/index.js";
+    const root=document.getElementById("st40");
+
+    // ---- native functions ----
+    let noteOn,noteOff,synchro,setFill,startStop;
+    try{ noteOn=Juce.getNativeFunction("noteOn"); noteOff=Juce.getNativeFunction("noteOff");
+      synchro=Juce.getNativeFunction("synchro"); setFill=Juce.getNativeFunction("setFill");
+      startStop=Juce.getNativeFunction("startStop"); }catch(e){}
+
+    // ---- placement helper: coords in cqw (1cqw = 1% of case width) ----
+    function P(cls, x, y, w, h, html){
+      const d=document.createElement("div"); d.className=cls;
+      d.style.cssText=`left:${x}cqw;top:${y}cqw;`+(w!=null?`width:${w}cqw;`:"")+(h!=null?`height:${h}cqw;`:"");
+      if(html!=null) d.innerHTML=html; root.appendChild(d); return d;
+    }
+    function T(x,y,txt,size=1.1,cls="txt",w){ const d=P(cls,x,y,w); d.style.fontSize=size+"cqw";
+      d.style.textAlign="center"; if(w) d.style.marginLeft="0"; d.innerHTML=txt; return d; }
+
+    // ================= PANEL FRAME =================
+    P("redline",14.5,1.5,82.7,0.32);                 // top red line
+    [14.5,22,50,66,81,97.2].forEach(x=>P("divl",x,1.5,null,8.6));  // section dividers
+    const band=P("band",14.5,9.9,82.7,1.7);
+    band.innerHTML='<span style="width:7.5cqw">volume</span><span style="width:28cqw">rhythm</span>'+
+      '<span style="width:16cqw">tone</span><span style="width:15cqw">effect</span><span style="flex:1">power</span>';
+
+    // speaker: recessed grille with carved horizontal louvers
+    P("spk",2.5,1.55,11.4,7.5);
+    for(let i=0;i<12;i++) P("slot",3.15,2.0+i*0.57,10.1,0.3);
+
+    // ================= KNOBS =================
+    function knob(cx,cy,d){ const k=P("knob",cx-d/2,cy-d/2,d,d,'<div class="skirt"></div><div class="face"></div><div class="gloss"></div><div class="dial"></div>');
+      // dotted position arc around the upper sweep (like the printed panel)
+      const R=d*0.66, N=9;
+      for(let i=0;i<N;i++){ const a=(-132+i*(264/(N-1)))*Math.PI/180;
+        P("ktick", cx+Math.sin(a)*R-0.15, cy-Math.cos(a)*R-0.15, 0.3,0.3); }
+      P("dot",cx-d/2-0.5,cy+d*0.32,null,null); P("dot",cx+d/2+0.1,cy+d*0.32,null,null);
+      return k.querySelector(".dial"); }
+    const D=3.2;
+    const volDial=knob(18.2,3.5,D);
+    T(15.2,5.3,"min",0.85,"dim"); T(19.6,5.3,"max",0.85,"dim");
+    const tempoDial=knob(30,3.3,D);
+    T(25.8,5.0,"slow",0.85,"dim"); T(31.9,5.0,"fast",0.85,"dim");
+    // "tempo" plates over the slow–fast rule (panel-cream knockout), sitting
+    // above the transport buttons so it collides with neither.
+    const tmpL=T(28.5,5.15,"tempo",0.78,"txt",3);
+    tmpL.style.background="#f4ede1"; tmpL.style.borderRadius=".25cqw"; tmpL.style.lineHeight="1.05";
+    const rbvDial=knob(41,3.2,D);
+    T(36.9,4.85,"min",0.85,"dim"); T(42.8,4.85,"max",0.85,"dim");
+    T(38.3,5.3,"<b>rhythm/bass</b>",0.66,"txt",5.4); T(39.5,5.78,"volume",0.62,"txt",3);
+
+    // ================= RHYTHM buttons + LED + slider =================
+    const beatLed=P("led",29.5,4.6,0.85,0.85);
+    P("redline",26.6,5.5,7.6,0.09).style.background="#b6a888";  // bracket line
+    const orange=P("sq orange",26.6,6.1,2.2,2.2);
+    T(25.4,8.5,"<b>chord bass</b>",0.62,"txt",4.6);
+    T(25.4,9.06,"synchro / fill-in",0.56,"txt",4.6);
+    const beige=P("sq beige",30.2,6.1,2.2,2.2);
+    T(29.3,8.78,"start/stop",0.66,"txt",4.2);
+    // rhythm slider (names in a tight zigzag directly above the track)
+    const RHY=["samba","waltz","swing","slow rock","pops","rock"];
+    P("rtrack",37.6,7.5,10.4,1.7,'<div class="ln"></div>');
+    const rrange=document.createElement("input"); rrange.type="range"; rrange.min=0; rrange.max=5; rrange.step=1;
+    rrange.className="rrange a"; rrange.style.cssText="left:37.6cqw;top:7.5cqw;width:10.4cqw;height:1.7cqw;";
+    root.appendChild(rrange);
+    T(41.0,9.35,"rhythm",0.85,"txt",4);
+    // Six selector names in one compact row above the track. "slow rock" is
+    // set two lines so it fits its cell without colliding with its neighbours.
+    RHY.forEach((nm,i)=>{ const fx=38.3+i*(9.3/5);
+      P("rtick",fx,7.35,null,null).style.width=".3cqw";
+      const two=(nm==="slow rock");
+      const t=T(fx-1.9,two?6.3:6.68,two?"slow<br>rock":nm,two?0.56:0.6,"txt",3.8);
+      t.style.whiteSpace="nowrap"; t.style.lineHeight=two?"1.0":"1.1"; });
+
+    // ================= TONE (memory / mode) =================
+    function slideSwitch(x,y,w,h,cls,positions,labels,label){
+      const t=P("swt "+cls,x,y,w,h);
+      const th=document.createElement("div"); th.className="swth"; th.style.width=(w/positions*1.4)+"cqw"; t.appendChild(th);
+      labels.forEach((tl,i)=>{ T(x+w*(i+0.5)/positions-1.2,y-1.5,tl,0.9,"txt",2.4);
+        P("dot",x+w*(i+0.5)/positions-0.2,y-0.5,null,null).style.background="#6b5f4a"; });
+      if(label) T(x-1,y+h+0.3,label,0.95,"txt",w+2);
+      let idx=0;
+      const setThumb=()=>{ const seg=(t.clientWidth-th.clientWidth)/(positions-1); th.style.left=(idx*seg)+"px"; };
+      t.addEventListener("click",()=>{ idx=(idx+1)%positions; setThumb(); t.dispatchEvent(new CustomEvent("chg",{detail:idx})); });
+      requestAnimationFrame(setThumb); window.addEventListener("resize",setThumb);
+      return { set:i=>{idx=i;setThumb();}, get:()=>idx, on:f=>t.addEventListener("chg",e=>f(e.detail)) };
+    }
+    const memSw =slideSwitch(51.5,4.7,9.3,2.7,"blue",4,["1","2","3","4"],"tone memory");
+    const modeSw=slideSwitch(61.8,4.7,3.6,2.7,"blue",2,["play","set"],"mode");
+
+    // ================= EFFECT =================
+    const susSw=slideSwitch(67.6,4.7,5.4,2.7,"brownsw",2,["off","on"],"sustain");
+    const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
+
+    // ================= POWER + brand =================
+    P("badge",87.0,1.9,9.8,2.7,'<b>ST-40</b>');
+    P("led",84.9,4.0,0.9,0.9);
+    const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
+
+    // ================= TONE STRIP =================
+    const TONE=["electric piano","banjo","guitar","harpsichord","xylophone","celesta","glockenspiel","organ",
+      "accordion","pipe organ","oriental pipe","brass","cello","synth fuzz","violin","trumpet","funny fuzz",
+      "st. ensemble","clarinet","flute","recorder","folk flute"];
+    const stripL=3, stripR=97.2, stripW=stripR-stripL, cw=stripW/22;
+    // Factory tone-memory defaults (manual §4): 1 Electric Piano, 2 Celesta,
+    // 3 Pipe Organ, 4 Flute — tone numbers 1/6/10/20 -> indices 0/5/9/19.
+    let patchState=null, memSlots=[0,5,9,19], curSlot=0, modeSet=false;
+    const tcells=[];
+    TONE.forEach((nm,i)=>{ const c=P("tcell",stripL+i*cw,11.9,cw,3.2,`<span class="n">${i+1}</span><span class="nm">${nm}</span>`);
+      c.dataset.i=i; c.addEventListener("click",()=>{ if(patchState){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } });
+      tcells.push(c); });
+    function markTones(){ if(!patchState)return; const idx=patchState.getChoiceIndex();
+      tcells.forEach(c=>c.classList.toggle("sel",+c.dataset.i===idx)); }
+
+    // ================= KEYBOARD =================
+    const boardY=15.3, boardB=30.4;
+    P("board",0,boardY,100,boardB-boardY);
+    // brand + bass block
+    const bx=3.2;
+    P("brand",bx,boardY+0.5,20,null,'<span class="c">Artifacts </span><span class="m">ST-40</span>');
+    P("ul",bx,boardY+3.0,17); P("ul",bx,boardY+3.3,17);
+    T(bx+5.5,boardB-2.0,"bass",1.1,"txt",6).style.color="#5c4636";
+
+    const NN=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const FLAT={1:"C#",3:"E♭",6:"F#",8:"A♭",10:"B♭"};
+    const isB=n=>[1,3,6,8,10].includes(((n%12)+12)%12);
+    function press(el,n){ if(el.classList.contains("down"))return; el.classList.add("down"); noteOn&&noteOn(n,0.85); }
+    function rel(el,n){ if(!el.classList.contains("down"))return; el.classList.remove("down"); noteOff&&noteOff(n); }
+    function att(el,n){ el.addEventListener("pointerdown",e=>{el.setPointerCapture(e.pointerId);press(el,n);});
+      el.addEventListener("pointerup",()=>rel(el,n)); el.addEventListener("pointercancel",()=>rel(el,n));
+      el.addEventListener("pointerleave",e=>{ if(e.buttons) rel(el,n); }); }
+    // SET mode (manual §5 control): each melody white key selects one of the 22
+    // tones and stores it in the current tone-memory slot; PLAY mode plays notes.
+    function selectTone(i){ if(patchState && i<22){ patchState.setChoiceIndex(i); memSlots[curSlot]=i; } }
+    function attMelody(el,n,wi){
+      el.addEventListener("pointerdown",e=>{ el.setPointerCapture(e.pointerId);
+        if(modeSet){ el.classList.add("down"); selectTone(wi); } else press(el,n); });
+      el.addEventListener("pointerup",()=>{ if(modeSet) el.classList.remove("down"); else rel(el,n); });
+      el.addEventListener("pointercancel",()=>{ if(modeSet) el.classList.remove("down"); else rel(el,n); });
+      el.addEventListener("pointerleave",e=>{ if(e.buttons){ if(modeSet) el.classList.remove("down"); else rel(el,n); } }); }
+
+    // main manual 53..89 (F3..F6), area x=22..97.2, y=boardY+1..boardB-0.6
+    (function(){ const low=53,high=89, X0=22, X1=97.2, Y0=boardY+1.0, Y1=boardB-0.6;
+      const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
+      const w=(X1-X0)/whites.length; const wm=new Map();
+      // White keys are notched into the real piano shape where a black key sits
+      // above them, so their tap area (clip-path also clips hit-testing) and the
+      // amber press highlight stop exactly at the black key edge — no more
+      // triggering / painting a white key under a neighbouring black one.
+      const wk=w-0.12, notchY=61;
+      whites.forEach((n,i)=>{ const k=P("wkey",X0+i*w,Y0,wk,Y1-Y0); wm.set(n,k); attMelody(k,n,i);
+        const leftN=(n-1>=low)&&isB(n-1), rightN=(n+1<=high)&&isB(n+1);
+        if(leftN||rightN){
+          const lx=leftN ? 100*(0.3*w-0.15)/wk : 0;
+          const rx=rightN? 100*(0.7*w+0.15)/wk : 100;
+          k.style.clipPath=`polygon(${lx}% 0,${rx}% 0,${rx}% ${notchY}%,100% ${notchY}%,100% 100%,0 100%,0 ${notchY}%,${lx}% ${notchY}%)`;
+        } });
+      for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
+        const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); attMelody(root.lastChild,n,99); }
+    })();
+    // bass manual 36..50 — discrete keys matching the hardware: black keys in a
+    // separate upper band, white-key letters ABOVE the white keys, and thin
+    // vertical guide lines at every white-key boundary.
+    (function(){ const low=36,high=50, X0=bx, X1=20.8;
+      const blackLabelY=boardY+3.5, blackTop=boardY+4.3, blackH=2.3;
+      const whiteLabelY=boardY+7.0, whiteTop=boardY+7.9, whiteBot=boardB-2.6;
+      const whites=[]; for(let n=low;n<=high;n++) if(!isB(n)) whites.push(n);
+      const gap=0.5, w=((X1-X0)-gap*(whites.length-1))/whites.length; const wm=new Map();
+      // vertical guide lines at each white-key boundary (through both bands)
+      for(let i=0;i<=whites.length;i++){ const gx=X0+i*(w+gap)-gap/2;
+        P("bassdiv",gx,blackTop-0.4,null,whiteBot-(blackTop-0.4)); }
+      // white keys + letters above them
+      whites.forEach((n,i)=>{ const x=X0+i*(w+gap);
+        const k=P("bwk",x,whiteTop,w,whiteBot-whiteTop); wm.set(n,k); att(k,n);
+        T(x,whiteLabelY,NN[((n%12)+12)%12],0.9,"bklab",w); });
+      // black keys (upper band) + accidental labels above them
+      for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
+        const bw=w*0.78; const cx=X0+(idx+1)*(w+gap)-gap/2-bw/2;
+        P("bbk",cx,blackTop,bw,blackH); att(root.lastChild,n);
+        T(cx,blackLabelY,FLAT[((n%12)+12)%12],0.85,"bklab",bw); }
+    })();
+
+    P("warn",0,0).id="warn"; const warn=root.lastChild; warn.className="warn"; warn.textContent="Native bridge unavailable — open inside the plugin host.";
+
+    // ================= BINDINGS =================
+    let tempoS=null;
+    function updateBeat(){ if(tempoS) beatLed.style.setProperty("--beat",(60/Math.max(40,tempoS.getScaledValue()))+"s"); }
+    // Transport lamp: solid on when playing; flashes each pulse when armed/playing.
+    window.st40SetTransport=(st)=>{ beatLed.classList.toggle("on", st===2);
+      beatLed.classList.toggle("beating", st>=1); updateBeat(); };
+    function bindKnob(dial,states){ const s0=states[0];
+      const r=()=>{ dial.style.transform=`rotate(${-140+s0.getNormalisedValue()*280}deg)`; };
+      s0.valueChangedEvent.addListener(r); s0.propertiesChangedEvent.addListener(r);
+      const knob=dial.parentElement; let sy=0,sv=0,act=false;
+      knob.addEventListener("pointerdown",e=>{act=true;sy=e.clientY;sv=s0.getNormalisedValue();knob.setPointerCapture(e.pointerId);states.forEach(s=>s.sliderDragStarted&&s.sliderDragStarted());});
+      knob.addEventListener("pointermove",e=>{ if(!act)return; const v=Math.max(0,Math.min(1,sv+(sy-e.clientY)/180)); states.forEach(s=>s.setNormalisedValue(v)); });
+      const end=()=>{ if(act){act=false;states.forEach(s=>s.sliderDragEnded&&s.sliderDragEnded());} };
+      knob.addEventListener("pointerup",end); knob.addEventListener("pointercancel",end); r();
+    }
+    function bindToggleSwitch(sw,name){ const s=Juce.getToggleState(name);
+      const r=()=>sw.set(s.getValue()?1:0); s.valueChangedEvent.addListener(r); sw.on(i=>s.setValue(i===1)); r(); }
+    function bindRhythm(name){ const s=Juce.getComboBoxState(name);
+      const r=()=>{ rrange.value=s.getChoiceIndex(); }; s.valueChangedEvent.addListener(r); s.propertiesChangedEvent.addListener(r);
+      rrange.addEventListener("input",()=>s.setChoiceIndex(parseInt(rrange.value,10))); r(); }
+    function bindTone(name){ patchState=Juce.getComboBoxState(name);
+      // Seed the active memory slot from the live tone so the first recall of
+      // slot 0 restores what is actually playing rather than jumping to patch 0.
+      memSlots[curSlot]=patchState.getChoiceIndex();
+      patchState.valueChangedEvent.addListener(markTones); patchState.propertiesChangedEvent.addListener(markTones);
+      memSw.on(slot=>{ curSlot=slot; patchState.setChoiceIndex(memSlots[slot]); }); markTones(); }
+
+    // Mode switch: index 1 = SET (white keys select tones), 0 = PLAY.
+    modeSw.on(i=>{ modeSet=(i===1); root.classList.toggle("setmode", modeSet); });
+
+    orange.addEventListener("pointerdown",()=>{ synchro&&synchro(); setFill&&setFill(true); });
+    const oUp=()=>setFill&&setFill(false);
+    orange.addEventListener("pointerup",oUp); orange.addEventListener("pointerleave",oUp); orange.addEventListener("pointercancel",oUp);
+    beige.addEventListener("click",()=>startStop&&startStop());
+
+    try{
+      bindKnob(volDial,[Juce.getSliderState("master_vca_gain")]);
+      tempoS=Juce.getSliderState("host_bpm"); bindKnob(tempoDial,[tempoS]);
+      tempoS.valueChangedEvent.addListener(updateBeat); updateBeat();
+      bindKnob(rbvDial,[Juce.getSliderState("rhythm_bus_gain"),Juce.getSliderState("bass_osc_gain")]);
+      bindToggleSwitch(susSw,"env_release_mult");
+      bindToggleSwitch(vibSw,"global_lfo_on");
+      bindRhythm("active_rhythm_idx");
+      bindTone("active_patch_idx");
+    }catch(e){ warn.style.display="block"; }
+  </script>
+</body>
+</html>
