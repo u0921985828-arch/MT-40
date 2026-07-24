@@ -97,9 +97,9 @@ html, body {
    first band of every section lines up on the same horizontal (hardware-like). */
 .sect-body {
   display: flex; flex-direction: column;
-  justify-content: flex-start; align-items: center;
+  justify-content: space-between; align-items: center;
   gap: var(--band-gap);
-  padding-top: 6px;
+  padding: 10px 0 14px;
   min-height: 0;
 }
 .sect h2 {
@@ -169,10 +169,13 @@ html, body {
 #oscillators .combo.wide { width: 90px; flex: none; }
 #oscillators .knob.small, .knob-spacer { width: 44px; flex: none; }
 .knob-spacer { height: 1px; }
-.mix-row { display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 3px; flex-wrap: nowrap; min-height: var(--knob-band); }
-.mix-ch { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.mix-ch .knob.small { width: 40px; }
-.mix-ch .knob.small .knob-face { width: 30px; height: 30px; }
+.mix-row { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 10px; flex: 1; }
+.mix-ch { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 14px; }
+.mix-ch .knob.small { flex-direction: row; align-items: center; gap: 8px; width: auto; }
+.mix-ch .knob.small .caption { order: -1; width: 44px; text-align: right; }
+.mix-ch .knob.small .value { display: none; }
+.mix-ch .knob.small .knob-face { width: 34px; height: 34px; }
+#mixer .combo.tiny { margin-left: 6px; }
 .combo.tiny { width: 52px; }
 .combo.tiny select { font-size: 9px; padding: 2px 3px; }
 
