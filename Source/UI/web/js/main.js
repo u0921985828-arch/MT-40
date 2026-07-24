@@ -453,6 +453,81 @@ function setupVisualiser() {
 // ---------------------------------------------------------------------------
 // Presets  <->  native getPresets / loadPreset / savePreset
 // ---------------------------------------------------------------------------
+// Nested preset browser: library -> category folders -> presets (flyout to
+// the side). Kept separate from the flat combo dropdown.
+function makePresetTree(host, onSelect) {
+  host.classList.add("dd", "pdd");
+  host.innerHTML =
+    `<button class="dd-btn" type="button"><span class="dd-lbl">Init</span><span class="dd-arw"></span></button>` +
+    `<div class="dd-menu pmenu"></div>`;
+  const btn = host.querySelector(".dd-btn");
+  const lbl = host.querySelector(".dd-lbl");
+  const menu = host.querySelector(".dd-menu");
+  let opts = [];
+
+  const pick = (val, label) => {
+    lbl.textContent = label;
+    opts.forEach((o) => o.el.classList.toggle("sel", String(o.val) === String(val)));
+    closeAllDD();
+    onSelect(val);
+  };
+  const mkOpt = (o, into) => {
+    const it = document.createElement("div");
+    it.className = "dd-opt"; it.textContent = o.label; it.dataset.val = o.value;
+    it.addEventListener("click", (e) => { e.stopPropagation(); pick(o.value, o.label); });
+    into.appendChild(it); opts.push({ el: it, val: o.value });
+  };
+  const positionSub = (fo, sub) => {
+    const r = fo.getBoundingClientRect();
+    fo.classList.toggle("left", window.innerWidth - r.right < 200);
+    sub.style.maxHeight = Math.max(120, Math.min(320, window.innerHeight - r.top - 12)) + "px";
+  };
+
+  const build = (data) => {
+    opts = []; menu.innerHTML = "";
+    if (data.lib) {
+      const h = document.createElement("div"); h.className = "dd-lib"; h.textContent = data.lib;
+      menu.appendChild(h);
+    }
+    (data.flat || []).forEach((o) => mkOpt(o, menu));
+    (data.folders || []).forEach((f) => {
+      const fo = document.createElement("div"); fo.className = "dd-folder";
+      fo.innerHTML = `<span class="dd-fl">${f.label}</span><span class="dd-chev"></span>`;
+      const sub = document.createElement("div"); sub.className = "dd-sub";
+      f.items.forEach((o) => mkOpt(o, sub));
+      fo.appendChild(sub);
+      fo.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !fo.classList.contains("open");
+        menu.querySelectorAll(".dd-folder.open").forEach((x) => x.classList.remove("open"));
+        if (willOpen) { fo.classList.add("open"); positionSub(fo, sub); }
+      });
+      menu.appendChild(fo);
+    });
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = !host.classList.contains("open");
+    closeAllDD();
+    menu.querySelectorAll(".dd-folder.open").forEach((x) => x.classList.remove("open"));
+    if (open) { host.classList.add("open"); __openDD = host; }
+  });
+
+  return {
+    build,
+    setValue: (val) => {
+      let label = "";
+      opts.forEach((o) => {
+        const on = String(o.val) === String(val);
+        o.el.classList.toggle("sel", on);
+        if (on) label = o.el.textContent;
+      });
+      if (label) lbl.textContent = label;
+    },
+  };
+}
+
 function setupPresets() {
   const host = document.getElementById("presetSelect");
   const saveBtn = document.getElementById("presetSave");
@@ -465,29 +540,26 @@ function setupPresets() {
     savePreset = getNativeFunction("savePreset");
   } catch (e) { return; }
 
-  const dd = makeDropdown(host, "");
-  dd.onSelect = (v) => { if (v !== "__init__") loadPreset(v); };
+  const tree = makePresetTree(host, (v) => { if (v !== "__init__") loadPreset(v); });
 
   const refresh = async () => {
     const res = await getBank();
     let bank = { categories: [], presets: {} };
     try { bank = JSON.parse(res.bank || "{}"); } catch (e) {}
-    const groups = [{ label: "", items: [{ label: "Init", value: "__init__" }] }];
-    (bank.categories || []).forEach((cat) => {
-      groups.push({
+    tree.build({
+      lib: "Default",
+      flat: [{ label: "Init", value: "__init__" }],
+      folders: (bank.categories || []).map((cat) => ({
         label: cat,
-        items: (bank.presets[cat] || []).map((p) => ({
-          label: p.name, value: cat + "|||" + p.name,
-        })),
-      });
+        items: (bank.presets[cat] || []).map((p) => ({ label: p.name, value: cat + "|||" + p.name })),
+      })),
     });
-    dd.setGroups(groups);
-    if (res.current) dd.setValue(res.current);
+    if (res.current) tree.setValue(res.current);
   };
 
   saveBtn.addEventListener("click", async () => {
     const name = window.prompt("Preset name:", "My Preset");
-    if (name) { await savePreset(name); await refresh(); dd.setValue("User|||" + name); }
+    if (name) { await savePreset(name); await refresh(); tree.setValue("User|||" + name); }
   });
 
   refresh();

@@ -257,6 +257,26 @@ html, body {
 .dd-menu::-webkit-scrollbar-thumb { background: #4a4a52; border-radius: 4px; }
 .dd-menu::-webkit-scrollbar-track { background: transparent; }
 
+/* ---- Nested preset browser: library -> folders -> presets (flyout) -- */
+.pmenu { overflow: visible; max-height: none; min-width: 180px; }
+.dd-lib { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #8a7f63;
+  padding: 4px 8px 5px; margin-bottom: 2px; border-bottom: 1px solid rgba(0,0,0,0.5); }
+.dd-folder { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 6px 8px; font-size: 12px; color: var(--label); border-radius: 3px; cursor: pointer;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.8); }
+.dd-folder:hover, .dd-folder.open { background: linear-gradient(180deg, #3a4a5e, #223245); color: #fff; }
+.dd-chev { width: 6px; height: 9px; flex: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='9'%3E%3Cpath d='M0 0l6 4.5L0 9z' fill='%23b6ab8a'/%3E%3C/svg%3E") no-repeat center; }
+.dd-sub { display: none; position: absolute; left: 100%; top: -4px; margin-left: 5px; z-index: 70;
+  min-width: 186px; overflow-y: auto; overflow-x: hidden; padding: 3px;
+  border: 1px solid #000; border-top-color: #3a3a42; border-radius: 5px;
+  background: linear-gradient(180deg, #34343a, #141416);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.09), 0 12px 26px rgba(0,0,0,0.75), 0 2px 6px rgba(0,0,0,0.6); }
+.dd-folder.open .dd-sub { display: block; }
+.dd-folder.left .dd-sub { left: auto; right: 100%; margin-left: 0; margin-right: 5px; }
+.dd-sub::-webkit-scrollbar { width: 8px; }
+.dd-sub::-webkit-scrollbar-thumb { background: #4a4a52; border-radius: 4px; }
+
 /* ---- Photoreal rocker switches (recessed metal frame + lit paddle) -- */
 .rocker .cap { position: relative; background: linear-gradient(180deg,#3a3a40,#141417);
   box-shadow: inset 0 1px 1px rgba(255,255,255,0.12), inset 0 -2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.6); }
