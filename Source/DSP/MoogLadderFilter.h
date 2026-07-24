@@ -65,8 +65,9 @@ public:
         // 2x oversampling of the non-linear difference equation.
         for (int os = 0; os < 2; ++os)
         {
-            // Soft input drive (resonance-compensated so the passband holds up).
-            const float xin = std::tanh (input * (1.0f + drive) + 0.5f * k * satFb);
+            // The through-path stays linear (accurate tuning, unity passband);
+            // the soft transistor non-linearity lives in the resonance feedback.
+            const float xin = input * (1.0f + drive);
 
             // --- Analytic zero-delay-feedback solve --------------------------
             // Each one-pole stage:  y = G*u + (1-G)*z   ->   b_i = (1-G)*z_i.
@@ -78,10 +79,10 @@ public:
             // State contribution propagated to the 4th stage output.
             const float S = G3 * b1 + G2 * b2 + G * b3 + b4;
 
-            // y4 = G^4*(xin - k*y4) + S  ->  solve for y4.
+            // Linear predictor for the 4th-stage output, then saturate the
+            // feedback: keeps self-oscillation perfectly in tune yet bounded.
             const float y4 = (G4 * xin + S) / (1.0f + k * G4);
-
-            const float u1 = xin - k * y4;
+            const float u1 = xin - k * std::tanh (y4);
 
             // Run the four cascaded TPT one-poles with the resolved input.
             float u = u1;
@@ -93,7 +94,6 @@ public:
                 u = y;
             }
 
-            satFb = u;          // == y4 (after the exact solve); feeds next sub-sample
             output = u;
         }
 
@@ -121,5 +121,4 @@ private:
 
     float  G { 0.0f }, oneMinusG { 1.0f }, G2 { 0.0f }, G3 { 0.0f }, G4 { 0.0f };
     float  z[4] { 0.0f, 0.0f, 0.0f, 0.0f };
-    float  satFb { 0.0f };   // saturated feedback memory across sub-samples
 };
