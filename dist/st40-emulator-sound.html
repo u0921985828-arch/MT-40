@@ -27,7 +27,64 @@
     *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
     html,body{ margin:0; min-height:100%; background:#141210;
       background-image:radial-gradient(circle at 50% -10%,#2b2620,#0e0d0b 78%); }
-    body{ padding:16px; display:flex; justify-content:center; user-select:none; -webkit-user-select:none; }
+    body{ padding:2.2vw 2vw; display:flex; justify-content:center; align-items:flex-start; user-select:none; -webkit-user-select:none; }
+
+    /* ============ PREMIUM PLUGIN CHASSIS (UA-style frame) ============ */
+    /* The faithful MT-40 instrument (.st40) is preserved and recessed inside a
+       machined graphite chassis with header, footer, screws and depth. */
+    .chassis{ position:relative; width:100%; max-width:1240px; margin:auto; container-type:inline-size;
+      padding:1.5cqw 1.7cqw 1.1cqw; border-radius:1.7cqw; isolation:isolate;
+      background:
+        linear-gradient(180deg,#43474d 0%,#2c2f34 10%,#212327 50%,#191b1e 90%,#111214 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.03) 1px 2.5px);
+      border:.08cqw solid #0a0b0c;
+      box-shadow:
+        0 3.4cqw 7cqw rgba(0,0,0,.72), 0 .7cqw 1.6cqw rgba(0,0,0,.55),
+        inset 0 .16cqw 0 rgba(255,255,255,.16), inset 0 -.6cqw 1.3cqw rgba(0,0,0,.55),
+        inset 0 0 0 .12cqw rgba(0,0,0,.55); }
+    .chassis::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:5;
+      background:radial-gradient(130% 70% at 50% -8%, rgba(255,255,255,.07), transparent 55%); }
+
+    .screw{ position:absolute; z-index:6; width:1.25cqw; height:1.25cqw; border-radius:50%;
+      background:radial-gradient(circle at 38% 32%, #7c8085, #45484d 52%, #1b1c1e 100%);
+      box-shadow: inset 0 .07cqw .1cqw rgba(255,255,255,.4), inset 0 -.07cqw .14cqw rgba(0,0,0,.75), 0 .07cqw .16cqw rgba(0,0,0,.6); }
+    .screw::after{ content:""; position:absolute; inset:34% 14%; border-radius:.05cqw;
+      background:linear-gradient(90deg,transparent 43%, rgba(0,0,0,.6) 43% 57%, transparent 57%); transform:rotate(34deg); }
+    .screw.tl{ top:.85cqw; left:.85cqw } .screw.tr{ top:.85cqw; right:.85cqw }
+    .screw.bl{ bottom:.75cqw; left:.85cqw } .screw.br{ bottom:.75cqw; right:.85cqw }
+
+    .uhead{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between;
+      padding:.15cqw 1.6cqw .95cqw; }
+    .brandU{ display:flex; align-items:baseline; gap:.7cqw; }
+    .brandU .logo{ font:800 2.4cqw/1 "Helvetica Neue",system-ui,sans-serif; letter-spacing:.22cqw; color:#eee7d6;
+      text-shadow:0 .09cqw .05cqw rgba(0,0,0,.85), 0 -.05cqw 0 rgba(255,255,255,.14); }
+    .brandU .model{ font:600 1.35cqw/1 "Helvetica Neue",system-ui; color:#d79441; letter-spacing:.12cqw;
+      text-shadow:0 .06cqw 0 rgba(0,0,0,.7), 0 0 .5cqw rgba(215,148,65,.35); }
+    .brandU .sub{ font:600 .92cqw/1 system-ui; color:#8b877b; letter-spacing:.4cqw; text-transform:uppercase; margin-left:.5cqw;
+      padding-left:.8cqw; border-left:.08cqw solid rgba(255,255,255,.12); }
+    .rightU{ display:flex; align-items:center; gap:1.1cqw; }
+    .plateU{ font:600 .86cqw/1 system-ui; color:#9a9488; letter-spacing:.34cqw; text-transform:uppercase;
+      padding:.5cqw .8cqw; border-radius:.4cqw; background:linear-gradient(180deg,#2a2c30,#1b1d20);
+      box-shadow:inset 0 .08cqw 0 rgba(255,255,255,.08), inset 0 -.08cqw .1cqw rgba(0,0,0,.6), 0 .05cqw 0 rgba(255,255,255,.05); }
+    .pwrLed{ width:.95cqw; height:.95cqw; border-radius:50%;
+      background:radial-gradient(circle at 40% 34%, #ffe0a2, #f0850f 58%, #7a3d06 100%);
+      box-shadow:0 0 1.1cqw #ff9d2e, 0 0 .35cqw #ffcf85, inset 0 0 .12cqw rgba(0,0,0,.4); }
+
+    .stage{ position:relative; z-index:4; border-radius:1.15cqw; padding:.55cqw;
+      background:linear-gradient(180deg,#0e0f11,#070808);
+      box-shadow: inset 0 .34cqw 1cqw rgba(0,0,0,.85), inset 0 -.16cqw .4cqw rgba(255,255,255,.05),
+        inset 0 0 0 .1cqw rgba(0,0,0,.7), 0 .12cqw 0 rgba(255,255,255,.05); }
+
+    .ufoot{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between; padding:.85cqw 1.6cqw .1cqw; }
+    .ufoot .l,.ufoot .r{ font:600 .86cqw/1 system-ui; letter-spacing:.3cqw; text-transform:uppercase; color:#6c675c;
+      text-shadow:0 .05cqw 0 rgba(0,0,0,.6); }
+    .ufoot .l::before{ content:""; display:inline-block; width:.55cqw; height:.55cqw; margin-right:.5cqw; border-radius:50%;
+      background:radial-gradient(circle,#7ad08a,#2f7a3f); box-shadow:0 0 .5cqw #4fbf6a; vertical-align:middle; }
+
+    /* instrument recessed in the well: trade the big float shadow for an inset look */
+    .chassis .st40{ max-width:none; border-radius:1cqw;
+      box-shadow: inset 0 .12cqw 0 rgba(255,255,255,.6), inset 0 -.4cqw 1cqw rgba(0,0,0,.12),
+        0 .25cqw .6cqw rgba(0,0,0,.45), 0 0 0 .12cqw rgba(0,0,0,.5); }
 
     .st40{ position:relative; width:100%; max-width:1120px; aspect-ratio:100/31;
       background:linear-gradient(170deg,var(--cream-hi),var(--cream) 44%,var(--cream-lo));
@@ -274,7 +331,13 @@
   </style>
 </head>
 <body>
-  <div class="st40" id="st40"></div>
+  <div class="chassis">
+    <div class="screw tl"></div><div class="screw tr"></div><div class="screw bl"></div><div class="screw br"></div>
+    <div class="uhead">
+      <div class="brandU"><span class="logo">ARTIFACTS</span><span class="model">ST-40</span><span class="sub">Digital Tone &amp; Rhythm</span></div>
+      <div class="rightU"><span class="plateU">1981 · CV Engine</span><span class="pwrLed"></span></div>
+    </div>
+    <div class="stage"><div class="st40" id="st40"></div>
 <div id="audioHint" style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;font:600 13px system-ui,sans-serif;color:#f4eee1;background:rgba(20,17,13,.9);border:1px solid #4a4438;border-radius:999px;padding:8px 16px;box-shadow:0 6px 20px rgba(0,0,0,.5)">🔊  Toca el teclado para activar el sonido</div>
 <script id="st40worklet" type="text/worklet">
 // Casiotone "consonant-vowel" voices. Each preset:
@@ -499,7 +562,9 @@ class ST40Processor extends AudioWorkletProcessor{
  constructor(){super();this.core=makeST40(sampleRate);this.port.onmessage=(e)=>this.core.msg(e.data);}
  process(inp,out){const ch=out[0];this.core.block(ch[0],ch[1],ch[0].length,(tr)=>this.port.postMessage({t:'transport',st:tr}));return true;}}
 registerProcessor('st40',ST40Processor);
-</script>
+</script></div>
+    <div class="ufoot"><span class="l">Artifacts DSP · Active</span><span class="r">ST-40 Synthesizer</span></div>
+  </div>
 
   <script type="module">
     
