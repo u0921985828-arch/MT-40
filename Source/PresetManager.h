@@ -1,13 +1,18 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <unordered_map>
 #include "Parameters.h"
+#include "WebAssets.h"
 
 /**
-    Factory + user preset management for the APVTS state.
+    Preset management backed by the shared preset bank (webapp/presets.json,
+    embedded as binary data). Factory presets are grouped into category folders
+    (Bass, Lead, Brass, ...). User presets are stored as APVTS-state XML files
+    and surfaced under a "User" folder.
 
-    Factory presets are defined in code as parameter overrides; user presets are
-    stored as APVTS-state XML files under the user application-data directory.
+    The bank uses the web-engine camelCase parameter names; they are mapped to
+    APVTS parameter IDs here.
 */
 class PresetManager
 {
@@ -16,101 +21,134 @@ public:
         : apvts (stateToManage)
     {
         presetDir().createDirectory();
+        loadBank();
     }
 
-    juce::StringArray getPresetNames() const
+    /** Full menu (bank categories + a User folder) as a JSON string for the UI. */
+    juce::String getBankJson() const
     {
-        juce::StringArray names;
-        for (const auto& p : factoryPresets())
-            names.add (p.name);
+        auto* root = new juce::DynamicObject();
+        juce::Array<juce::var> cats;
 
+        auto* presetsObj = new juce::DynamicObject();
+        if (auto* bankObj = bankVar.getDynamicObject())
+        {
+            if (auto* srcPresets = bankObj->getProperty ("presets").getDynamicObject())
+            {
+                const auto catsVar = bankObj->getProperty ("categories");
+                if (catsVar.isArray())
+                    for (const auto& c : *catsVar.getArray())
+                    {
+                        cats.add (c);
+                        presetsObj->setProperty (c.toString(), srcPresets->getProperty (c.toString()));
+                    }
+            }
+        }
+
+        // User folder.
+        juce::Array<juce::var> userArr;
         for (const auto& f : presetDir().findChildFiles (juce::File::findFiles, false, "*.xml"))
-            names.add (f.getFileNameWithoutExtension());
+        {
+            auto* o = new juce::DynamicObject();
+            o->setProperty ("name", f.getFileNameWithoutExtension());
+            userArr.add (juce::var (o));
+        }
+        if (! userArr.isEmpty())
+        {
+            cats.add ("User");
+            presetsObj->setProperty ("User", userArr);
+        }
 
-        return names;
+        root->setProperty ("categories", cats);
+        root->setProperty ("presets", juce::var (presetsObj));
+        return juce::JSON::toString (juce::var (root), true);
     }
 
     juce::String getCurrentPreset() const { return currentPreset; }
 
-    void loadPreset (const juce::String& name)
+    /** id is "Category|||Name" (bank or User). */
+    void loadPreset (const juce::String& id)
     {
-        // Factory preset?
-        for (const auto& preset : factoryPresets())
-        {
-            if (preset.name == name)
-            {
-                resetToDefaults();
-                for (const auto& [id, value] : preset.values)
-                    if (auto* param = apvts.getParameter (id))
-                        param->setValueNotifyingHost (param->convertTo0to1 (value));
+        const auto sep = id.indexOf ("|||");
+        if (sep < 0)
+            return;
 
-                currentPreset = name;
-                return;
-            }
+        const auto category = id.substring (0, sep);
+        const auto name     = id.substring (sep + 3);
+
+        if (category == "User")
+        {
+            const auto file = presetDir().getChildFile (name + ".xml");
+            if (file.existsAsFile())
+                if (auto xml = juce::XmlDocument::parse (file))
+                {
+                    apvts.replaceState (juce::ValueTree::fromXml (*xml));
+                    currentPreset = id;
+                }
+            return;
         }
 
-        // User preset file.
-        const auto file = presetDir().getChildFile (name + ".xml");
-        if (file.existsAsFile())
-            if (auto xml = juce::XmlDocument::parse (file))
-            {
-                apvts.replaceState (juce::ValueTree::fromXml (*xml));
-                currentPreset = name;
-            }
+        applyFromBank (category, name);
+        currentPreset = id;
     }
 
     void savePreset (const juce::String& name)
     {
         if (name.isEmpty())
             return;
-
         if (auto xml = apvts.copyState().createXml())
             xml->writeTo (presetDir().getChildFile (name + ".xml"));
-
-        currentPreset = name;
+        currentPreset = "User|||" + name;
     }
 
 private:
-    struct Preset
+    void loadBank()
     {
-        juce::String name;
-        std::vector<std::pair<juce::String, float>> values;
-    };
-
-    static const std::vector<Preset>& factoryPresets()
-    {
-        // Waveform indices: Triangle 0, Tri-Saw 1, Saw 2, Square 3, Wide 4, Narrow 5.
-        static const std::vector<Preset> presets
+        for (int i = 0; i < WebAssets::namedResourceListSize; ++i)
         {
-            { "Init", {} },
-            { "Fat Bass", {
-                { ParamID::osc1Wave, 2 }, { ParamID::osc1Range, 2 },
-                { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 2 }, { ParamID::osc2Detune, 0.1f },
-                { ParamID::mixOsc1Vol, 0.9f }, { ParamID::mixOsc2Vol, 0.7f },
-                { ParamID::filterCutoff, 900.0f }, { ParamID::filterReso, 0.35f },
-                { ParamID::filterEnv, 0.7f }, { ParamID::filterDecay, 350.0f },
-                { ParamID::filterDrive, 0.35f }, { ParamID::driftAmount, 0.3f },
-                { ParamID::ampDecay, 600.0f }, { ParamID::ampSustain, 0.9f } } },
-            { "Screaming Lead", {
-                { ParamID::osc1Wave, 3 }, { ParamID::osc1Range, 3 },
-                { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 2 }, { ParamID::osc2Detune, 0.2f },
-                { ParamID::filterCutoff, 2500.0f }, { ParamID::filterReso, 0.55f },
-                { ParamID::filterEnv, 0.6f }, { ParamID::glideOn, 1 }, { ParamID::glideTime, 0.08f },
-                { ParamID::filterDrive, 0.5f }, { ParamID::ampSustain, 0.85f } } },
-            { "Brass", {
-                { ParamID::osc1Wave, 2 }, { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 2 },
-                { ParamID::osc2Detune, 0.07f }, { ParamID::filterCutoff, 1400.0f },
-                { ParamID::filterReso, 0.25f }, { ParamID::filterEnv, 0.75f },
-                { ParamID::filterAttack, 60.0f }, { ParamID::filterDecay, 800.0f },
-                { ParamID::ampAttack, 40.0f }, { ParamID::ampSustain, 0.8f } } },
-            { "Resonant Drone", {
-                { ParamID::osc1Wave, 3 }, { ParamID::osc1Range, 1 },
-                { ParamID::mixOsc3On, 1 }, { ParamID::osc3KbControl, 0 },
-                { ParamID::modMix, 0.0f }, { ParamID::modFilterOn, 1 }, { ParamID::modWheel, 0.4f },
-                { ParamID::filterCutoff, 500.0f }, { ParamID::filterReso, 0.8f },
-                { ParamID::bassThin, 0.5f }, { ParamID::ampSustain, 1.0f }, { ParamID::ampRelease, 1200.0f } } },
-        };
-        return presets;
+            if (juce::String (WebAssets::originalFilenames[i]) == "presets.json")
+            {
+                int size = 0;
+                const char* data = WebAssets::getNamedResource (WebAssets::namedResourceList[i], size);
+                bankVar = juce::JSON::parse (juce::String::fromUTF8 (data, size));
+                return;
+            }
+        }
+    }
+
+    void applyFromBank (const juce::String& category, const juce::String& name)
+    {
+        auto* bankObj = bankVar.getDynamicObject();
+        if (bankObj == nullptr) return;
+        auto* presets = bankObj->getProperty ("presets").getDynamicObject();
+        if (presets == nullptr) return;
+
+        const auto arr = presets->getProperty (category);
+        if (! arr.isArray()) return;
+
+        for (const auto& item : *arr.getArray())
+        {
+            if (auto* obj = item.getDynamicObject())
+            {
+                if (obj->getProperty ("name").toString() == name)
+                {
+                    resetToDefaults();
+                    if (auto* params = obj->getProperty ("params").getDynamicObject())
+                        for (const auto& kv : params->getProperties())
+                            applyParam (kv.name.toString(), (float) (double) kv.value);
+                    return;
+                }
+            }
+        }
+    }
+
+    void applyParam (const juce::String& camelKey, float value)
+    {
+        const auto& map = camelToId();
+        const auto it = map.find (camelKey.toStdString());
+        if (it == map.end()) return;
+        if (auto* p = apvts.getParameter (it->second))
+            p->setValueNotifyingHost (p->convertTo0to1 (value));
     }
 
     void resetToDefaults()
@@ -119,13 +157,39 @@ private:
             param->setValueNotifyingHost (param->getDefaultValue());
     }
 
+    static const std::unordered_map<std::string, juce::String>& camelToId()
+    {
+        static const std::unordered_map<std::string, juce::String> m = {
+            {"masterVolume",ParamID::masterVolume},{"masterTune",ParamID::masterTune},
+            {"glideOn",ParamID::glideOn},{"glideTime",ParamID::glideTime},
+            {"modWheel",ParamID::modWheel},{"modMix",ParamID::modMix},
+            {"modOscOn",ParamID::modOscOn},{"modFilterOn",ParamID::modFilterOn},
+            {"osc1Wave",ParamID::osc1Wave},{"osc1Range",ParamID::osc1Range},
+            {"osc2Wave",ParamID::osc2Wave},{"osc2Range",ParamID::osc2Range},{"osc2Detune",ParamID::osc2Detune},
+            {"osc3Wave",ParamID::osc3Wave},{"osc3Range",ParamID::osc3Range},{"osc3Detune",ParamID::osc3Detune},
+            {"osc3Kb",ParamID::osc3KbControl},
+            {"mixOsc1Vol",ParamID::mixOsc1Vol},{"mixOsc2Vol",ParamID::mixOsc2Vol},{"mixOsc3Vol",ParamID::mixOsc3Vol},
+            {"mixNoiseVol",ParamID::mixNoiseVol},{"mixExtVol",ParamID::mixExtVol},
+            {"mixOsc1On",ParamID::mixOsc1On},{"mixOsc2On",ParamID::mixOsc2On},{"mixOsc3On",ParamID::mixOsc3On},
+            {"mixNoiseOn",ParamID::mixNoiseOn},{"mixExtOn",ParamID::mixExtOn},{"noiseType",ParamID::noiseType},
+            {"filterCutoff",ParamID::filterCutoff},{"filterReso",ParamID::filterReso},{"filterEnv",ParamID::filterEnv},
+            {"filterKeyTrack",ParamID::filterKeyTrack},
+            {"filterAttack",ParamID::filterAttack},{"filterDecay",ParamID::filterDecay},
+            {"filterSustain",ParamID::filterSustain},{"filterRelease",ParamID::filterRelease},
+            {"ampAttack",ParamID::ampAttack},{"ampDecay",ParamID::ampDecay},
+            {"ampSustain",ParamID::ampSustain},{"ampRelease",ParamID::ampRelease},
+            {"drift",ParamID::driftAmount},{"filterDrive",ParamID::filterDrive},{"bassThin",ParamID::bassThin},
+        };
+        return m;
+    }
+
     juce::File presetDir() const
     {
         return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
-                   .getChildFile ("MoogVASynth")
-                   .getChildFile ("Presets");
+                   .getChildFile ("MoogVASynth").getChildFile ("Presets");
     }
 
     juce::AudioProcessorValueTreeState& apvts;
+    juce::var bankVar;
     juce::String currentPreset { "Init" };
 };

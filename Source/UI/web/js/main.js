@@ -311,28 +311,37 @@ function setupPresets() {
   const saveBtn = document.getElementById("presetSave");
   if (!select || !saveBtn) return;
 
-  let getPresets, loadPreset, savePreset;
+  let getBank, loadPreset, savePreset;
   try {
-    getPresets = getNativeFunction("getPresets");
+    getBank = getNativeFunction("getPresetBank");
     loadPreset = getNativeFunction("loadPreset");
     savePreset = getNativeFunction("savePreset");
   } catch (e) { return; }
 
   const refresh = async () => {
-    const res = await getPresets();
+    const res = await getBank();
+    let bank = { categories: [], presets: {} };
+    try { bank = JSON.parse(res.bank || "{}"); } catch (e) {}
     select.innerHTML = "";
-    (res.names || []).forEach((n) => {
-      const opt = document.createElement("option");
-      opt.value = n; opt.textContent = n;
-      select.appendChild(opt);
+    const init = document.createElement("option");
+    init.value = "__init__"; init.textContent = "Init"; select.appendChild(init);
+    (bank.categories || []).forEach((cat) => {
+      const og = document.createElement("optgroup"); og.label = cat;
+      (bank.presets[cat] || []).forEach((p) => {
+        const o = document.createElement("option");
+        o.value = cat + "|||" + p.name; o.textContent = p.name; og.appendChild(o);
+      });
+      select.appendChild(og);
     });
     if (res.current) select.value = res.current;
   };
 
-  select.addEventListener("change", () => loadPreset(select.value));
+  select.addEventListener("change", () => {
+    if (select.value !== "__init__") loadPreset(select.value);
+  });
   saveBtn.addEventListener("click", async () => {
-    const name = window.prompt("Preset name:", select.value || "My Preset");
-    if (name) { await savePreset(name); await refresh(); select.value = name; }
+    const name = window.prompt("Preset name:", "My Preset");
+    if (name) { await savePreset(name); await refresh(); select.value = "User|||" + name; }
   });
 
   refresh();

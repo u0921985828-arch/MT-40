@@ -63,15 +63,12 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
                     processorRef.getKeyboardState().noteOff (1, (int) args[0], 0.0f);
                 complete (juce::var());
             })
-        .withNativeFunction ("getPresets",
+        .withNativeFunction ("getPresetBank",
             [this] (const juce::Array<juce::var>&,
                     juce::WebBrowserComponent::NativeFunctionCompletion complete)
             {
-                juce::Array<juce::var> names;
-                for (const auto& n : processorRef.getPresetManager().getPresetNames())
-                    names.add (n);
                 auto* obj = new juce::DynamicObject();
-                obj->setProperty ("names", names);
+                obj->setProperty ("bank", processorRef.getPresetManager().getBankJson());
                 obj->setProperty ("current", processorRef.getPresetManager().getCurrentPreset());
                 complete (juce::var (obj));
             })

@@ -46,7 +46,8 @@ juce_add_binary_data(MoogWebAssets
         Source/UI/web/index.html
         Source/UI/web/style.css
         Source/UI/web/js/main.js
-        Source/UI/web/js/juce/index-classic.js)
+        Source/UI/web/js/juce/index-classic.js
+        webapp/presets.json)
 
 target_sources(MoogVASynth PRIVATE
     Source/PluginProcessor.cpp
