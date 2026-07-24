@@ -25,7 +25,7 @@
   #stage{
     width:var(--dw,1280px);height:var(--dh,720px);flex:none;position:relative;
     display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;overflow:hidden;
-    transform-origin:center center;transform:scale(var(--sc,1));
+    transform-origin:center center;transform:scale(1);
     background:
       var(--wood-tex,none),
       linear-gradient(100deg,rgba(90,58,30,.35),rgba(42,26,13,.35)),
@@ -5142,7 +5142,13 @@ requestAnimationFrame(vu);
 //====================================================================
 const RES=[{n:"16:9 · 1280×720",w:1280,h:720},{n:"16:10 · 1200×760",w:1200,h:760},{n:"Compacto · 1040×660",w:1040,h:660}];
 let resIdx=0;const stageEl=document.getElementById("stage");
-function setScale(){const r=RES[resIdx];const sc=Math.min(window.innerWidth/r.w,window.innerHeight/r.h);stageEl.style.setProperty("--sc",sc.toFixed(4));}
+function setScale(){
+  const r=RES[resIdx],vw=window.innerWidth,vh=window.innerHeight,portrait=vh>vw;
+  // Landscape-locked: on a portrait screen rotate the canvas 90deg so it always
+  // fills the screen in landscape (no prompt).
+  const sc=portrait?Math.min(vh/r.w,vw/r.h):Math.min(vw/r.w,vh/r.h);
+  stageEl.style.transform=`rotate(${portrait?90:0}deg) scale(${sc.toFixed(4)})`;
+}
 function applyRes(){const r=RES[resIdx];stageEl.style.setProperty("--dw",r.w+"px");stageEl.style.setProperty("--dh",r.h+"px");setScale();}
 (function(){const s=document.getElementById("res");RES.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=r.n;s.appendChild(o);});
   s.addEventListener("change",()=>{resIdx=+s.value;applyRes();});})();
