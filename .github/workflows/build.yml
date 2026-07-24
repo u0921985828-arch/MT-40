@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, "claude/**" ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install JUCE Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+            libxcomposite-dev libasound2-dev libfreetype6-dev \
+            libfontconfig1-dev libgl1-mesa-dev ninja-build
+
+      - name: Cache JUCE source
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: juce-${{ runner.os }}-8.0.4
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j
+
+      - name: List artifacts
+        run: find build/MoogVASynth_artefacts -maxdepth 3 -type d -name "*.vst3" -o -type f -name "MoogVA Synth" | sort
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoogVASynth-linux
+          path: |
+            build/MoogVASynth_artefacts/Release/VST3/**
+            build/MoogVASynth_artefacts/Release/Standalone/**
+          if-no-files-found: warn
