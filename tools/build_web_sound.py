@@ -87,7 +87,7 @@ const PAT=[
   s:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
   hc:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
   ho:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
-  b:[0,REST,REST,0,REST,REST,3,REST,5,REST,REST,5,REST,7,REST,REST,0,REST,REST,0,REST,REST,3,REST,5,REST,7,REST,5,REST,3,REST]}
+  b:[0,REST,REST,REST,0,REST,3,REST,REST,REST,5,REST,7,REST,5,REST,0,REST,REST,REST,0,REST,3,REST,REST,REST,5,REST,7,REST,3,REST]}
 ];
 
 class Biquad{constructor(){this.b0=1;this.b1=0;this.b2=0;this.a1=0;this.a2=0;this.x1=0;this.x2=0;this.y1=0;this.y2=0;}
@@ -180,7 +180,7 @@ class Hat{constructor(fs,noise){this.fs=fs;this.noise=noise;this.h1=new Biquad()
  p(){if(!this.active())return 0;let n=this.noise.next();n=this.h1.p(n);n=this.h2.p(n);return n*(this.ce.n()+this.oe.n());}}
 // Deep "digital" MT-40 bass: pulse wave, resonant LPF for body, longer decay
 // so eighth notes sustain and connect; slight drive for punch.
-class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,1300,1.1);this.env=new Exp(fs);this.env.set(0.40);this.ph=0;this.inc=0;this.ag=0;this.ai=0;}
+class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,1300,0.95);this.env=new Exp(fs);this.env.set(0.60);this.ph=0;this.inc=0;this.ag=0;this.ai=0;}
  trig(n){this.inc=440*Math.pow(2,(n-69)/12)/this.fs;this.ph=0;this.env.trig();this.ag=0;this.ai=1/(0.004*this.fs);}
  active(){return this.env.active();}
  p(){if(!this.env.active())return 0;const sq=(this.ph<0.45)?1:-1;this.ph+=this.inc;if(this.ph>=1)this.ph-=1;if(this.ag<1){this.ag+=this.ai;if(this.ag>1)this.ag=1;}return Math.tanh(1.4*this.lpf.p(sq))*this.env.n()*this.ag*1.15;}}
