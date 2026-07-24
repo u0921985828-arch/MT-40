@@ -6,6 +6,14 @@
   --metal: #26262a;
   --key-white: #efe9dc;
   --key-black: #141109;
+
+  /* ---- Panel layout metrics (measured "chassis" spacing) ---- */
+  --band-gap: 18px;     /* vertical distance between control rows */
+  --knob-band: 74px;    /* height reserved for a knob row */
+  --sw-band: 44px;      /* height reserved for a switch row */
+  --row-gap: 12px;      /* horizontal distance between controls in a row */
+  --sect-pad: 10px;     /* inner padding of a section */
+  --title-h: 24px;      /* engraved section-label strip height */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,25 +84,38 @@ html, body {
   overflow: hidden;
 }
 .sect {
-  display: flex; flex-direction: column;
-  padding: 8px 6px 3px;
+  display: grid;
+  grid-template-rows: 1fr var(--title-h);
+  padding: var(--sect-pad) 6px 4px;
   border-right: 1px solid rgba(0,0,0,0.6);
   box-shadow: inset -1px 0 0 rgba(255,255,255,0.03);
   min-width: 0; overflow: hidden;
 }
 .sect:last-child { border-right: none; }
-.sect-body { flex: 1; display: flex; flex-direction: column; justify-content: space-around; align-items: center; gap: 6px; }
+
+/* Control area: rows stacked from the top with a fixed vertical pitch, so the
+   first band of every section lines up on the same horizontal (hardware-like). */
+.sect-body {
+  display: flex; flex-direction: column;
+  justify-content: flex-start; align-items: center;
+  gap: var(--band-gap);
+  padding-top: 6px;
+  min-height: 0;
+}
 .sect h2 {
   font-family: Georgia, "Times New Roman", serif;
   font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  color: #e9dfc2; text-align: center; padding-top: 5px; margin-top: 3px;
+  color: #e9dfc2; text-align: center;
+  align-self: stretch;
+  display: flex; align-items: center; justify-content: center;
   border-top: 1px solid rgba(0,0,0,0.5);
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(255,255,255,0.05);
 }
 
-.krow, .swrow { display: flex; justify-content: center; align-items: flex-start; gap: 8px; }
-.swrow { gap: 14px; padding-top: 2px; }
-.env { gap: 4px; }
+/* Rows ("bands") — fixed height so every control has a defined slot. */
+.krow { display: flex; justify-content: center; align-items: flex-start; gap: var(--row-gap); min-height: var(--knob-band); }
+.swrow { display: flex; justify-content: center; align-items: center; gap: 18px; min-height: var(--sw-band); }
+.env { gap: 8px; }
 
 /* ---- Knobs: metal skirt, tick ring, white pointer ------------------- */
 .knob { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: ns-resize; width: 56px; }
@@ -141,11 +162,14 @@ html, body {
 .combo .caption { font-size: 9px; color: var(--label-dim); text-transform: uppercase; }
 
 /* ---- Oscillator rows / mixer --------------------------------------- */
-.osc-row { display: flex; align-items: center; gap: 6px; }
-.osc-label { font-family: Georgia, serif; font-size: 15px; font-weight: 700; color: #e9dfc2; width: 14px; text-align: center; }
-#oscillators .combo { width: 66px; }
-#oscillators .combo.wide { width: 90px; }
-.mix-body { flex-direction: row; align-items: flex-end; justify-content: center; gap: 2px; flex-wrap: nowrap; }
+/* Oscillator rows: fixed columns so Range / Tune / Waveform line up. */
+.osc-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-height: var(--knob-band); width: 100%; padding-left: 4px; }
+.osc-label { font-family: Georgia, serif; font-size: 15px; font-weight: 700; color: #e9dfc2; width: 14px; text-align: center; flex: none; }
+#oscillators .combo { width: 66px; flex: none; }
+#oscillators .combo.wide { width: 90px; flex: none; }
+#oscillators .knob.small, .knob-spacer { width: 44px; flex: none; }
+.knob-spacer { height: 1px; }
+.mix-row { display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 3px; flex-wrap: nowrap; min-height: var(--knob-band); }
 .mix-ch { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .mix-ch .knob.small { width: 40px; }
 .mix-ch .knob.small .knob-face { width: 30px; height: 30px; }
