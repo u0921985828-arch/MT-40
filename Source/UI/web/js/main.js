@@ -205,9 +205,58 @@ function setupKeyboard() {
 }
 
 // ---------------------------------------------------------------------------
+// Visualiser  <-  "visualiser" backend event (waveform + spectrum)
+// ---------------------------------------------------------------------------
+function setupVisualiser() {
+  const scope = document.getElementById("scope");
+  const spectrum = document.getElementById("spectrum");
+  if (!scope || !spectrum) return;
+  const sctx = scope.getContext("2d");
+  const pctx = spectrum.getContext("2d");
+
+  const drawScope = (wave) => {
+    const w = scope.width, h = scope.height;
+    sctx.clearRect(0, 0, w, h);
+    sctx.strokeStyle = "rgba(80, 220, 120, 0.25)";
+    sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.moveTo(0, h / 2); sctx.lineTo(w, h / 2); sctx.stroke();
+
+    sctx.strokeStyle = "#5cf08a";
+    sctx.lineWidth = 1.5;
+    sctx.beginPath();
+    wave.forEach((v, i) => {
+      const x = (i / (wave.length - 1)) * w;
+      const y = h / 2 - v * (h / 2 - 2);
+      i === 0 ? sctx.moveTo(x, y) : sctx.lineTo(x, y);
+    });
+    sctx.stroke();
+  };
+
+  const drawSpectrum = (bins) => {
+    const w = spectrum.width, h = spectrum.height;
+    pctx.clearRect(0, 0, w, h);
+    const bw = w / bins.length;
+    for (let i = 0; i < bins.length; i++) {
+      const bh = bins[i] * h;
+      const t = i / bins.length;
+      pctx.fillStyle = `rgb(${40 + t * 120}, ${180 - t * 40}, ${220 - t * 120})`;
+      pctx.fillRect(i * bw, h - bh, Math.max(1, bw - 0.5), bh);
+    }
+  };
+
+  try {
+    window.__JUCE__.backend.addEventListener("visualiser", (payload) => {
+      if (payload.wave) drawScope(payload.wave);
+      if (payload.spectrum) drawSpectrum(payload.spectrum);
+    });
+  } catch (e) { /* dev browser */ }
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 document.querySelectorAll(".knob").forEach(setupKnob);
 document.querySelectorAll(".rocker").forEach(setupRocker);
 document.querySelectorAll(".combo").forEach(setupCombo);
 setupKeyboard();
+setupVisualiser();

@@ -84,12 +84,66 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
     setResizable (true, true);
     setResizeLimits (960, 600, 1800, 1100);
     setSize (1120, 700);
+
+    startTimerHz (30); // drive the visualiser
+}
+
+MoogSynthAudioProcessorEditor::~MoogSynthAudioProcessorEditor()
+{
+    stopTimer();
 }
 
 void MoogSynthAudioProcessorEditor::resized()
 {
     if (webView != nullptr)
         webView->setBounds (getLocalBounds());
+}
+
+void MoogSynthAudioProcessorEditor::timerCallback()
+{
+    if (webView == nullptr)
+        return;
+
+    // ---- Grab the latest block of output ----------------------------------
+    processorRef.readScope (scopeSamples.data(), fftSize);
+
+    // ---- Waveform (down-sampled to a fixed number of points) --------------
+    constexpr int wavePoints = 220;
+    juce::Array<juce::var> wave;
+    wave.ensureStorageAllocated (wavePoints);
+    for (int i = 0; i < wavePoints; ++i)
+    {
+        const int idx = (i * (fftSize - 1)) / (wavePoints - 1);
+        wave.add (juce::jlimit (-1.0f, 1.0f, scopeSamples[(size_t) idx]));
+    }
+
+    // ---- Spectrum (log-spaced, in normalised dB) --------------------------
+    std::copy (scopeSamples.begin(), scopeSamples.end(), fftData.begin());
+    std::fill (fftData.begin() + fftSize, fftData.end(), 0.0f);
+    window.multiplyWithWindowingTable (fftData.data(), fftSize);
+    fft.performFrequencyOnlyForwardTransform (fftData.data());
+
+    const double sr = processorRef.getSampleRate() > 0.0 ? processorRef.getSampleRate() : 44100.0;
+    const double nyquist = sr * 0.5;
+    constexpr int specBins = 120;
+
+    juce::Array<juce::var> spectrum;
+    spectrum.ensureStorageAllocated (specBins);
+    for (int b = 0; b < specBins; ++b)
+    {
+        const double freq = 20.0 * std::pow (1000.0, (double) b / (specBins - 1)); // 20 Hz .. 20 kHz
+        int bin = (int) std::round (freq / nyquist * (fftSize / 2));
+        bin = juce::jlimit (1, fftSize / 2, bin);
+
+        const float mag = fftData[(size_t) bin] / (float) (fftSize / 2);
+        const float db  = juce::Decibels::gainToDecibels (mag + 1.0e-9f);
+        spectrum.add (juce::jlimit (0.0f, 1.0f, juce::jmap (db, -90.0f, 0.0f, 0.0f, 1.0f)));
+    }
+
+    auto* payload = new juce::DynamicObject();
+    payload->setProperty ("wave", wave);
+    payload->setProperty ("spectrum", spectrum);
+    webView->emitEventIfBrowserIsVisible ("visualiser", juce::var (payload));
 }
 
 std::optional<juce::WebBrowserComponent::Resource>

@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <juce_dsp/juce_dsp.h>
 #include "PluginProcessor.h"
 
 /**
@@ -12,18 +13,30 @@
     is bridged to the web page through a relay + parameter attachment, and the
     on-screen keyboard talks back to the processor via native functions.
 */
-class MoogSynthAudioProcessorEditor : public juce::AudioProcessorEditor
+class MoogSynthAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                      private juce::Timer
 {
 public:
     explicit MoogSynthAudioProcessorEditor (MoogSynthAudioProcessor&);
-    ~MoogSynthAudioProcessorEditor() override = default;
+    ~MoogSynthAudioProcessorEditor() override;
 
     void resized() override;
 
 private:
     std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url) const;
 
+    // Pushes the latest waveform + spectrum frame to the WebView.
+    void timerCallback() override;
+
     MoogSynthAudioProcessor& processorRef;
+
+    // Visualiser DSP.
+    static constexpr int fftOrder = 10;
+    static constexpr int fftSize  = 1 << fftOrder; // 1024
+    juce::dsp::FFT fft { fftOrder };
+    juce::dsp::WindowingFunction<float> window { fftSize, juce::dsp::WindowingFunction<float>::hann };
+    std::array<float, fftSize>     scopeSamples {};
+    std::array<float, fftSize * 2> fftData {};
 
     // One relay + attachment per parameter, grouped by control type.
     juce::OwnedArray<juce::WebSliderRelay>        sliderRelays;

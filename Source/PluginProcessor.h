@@ -46,11 +46,27 @@ public:
     juce::AudioProcessorValueTreeState& getAPVTS() noexcept { return apvts; }
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
 
+    /** Copies the most recent `numSamples` of output into `dest` (oldest first)
+        for the visualiser. Safe to call from the message thread. */
+    int readScope (float* dest, int numSamples) const noexcept;
+
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
 private:
+    inline void pushScope (float sample) noexcept;
+
     juce::AudioProcessorValueTreeState apvts;
     juce::MidiKeyboardState keyboardState;
+
+    // Lock-free single-producer / single-consumer ring buffer feeding the
+    // WebView oscilloscope + spectrum display.
+    struct Scope
+    {
+        static constexpr int size = 4096;
+        static constexpr int mask = size - 1;
+        std::array<std::atomic<float>, size> buffer;
+        std::atomic<int> writePos { 0 };
+    } scope;
     PolyphonicSynthesizer synth;
 
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;

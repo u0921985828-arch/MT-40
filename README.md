@@ -40,8 +40,14 @@ the plugin stays fully self-contained.
   (filter + filter envelope) and **Output** (loudness envelope + master), plus
   an on-screen keyboard.
 - `js/main.js` — builds the knobs/switches/combos and binds each to its
-  parameter through the JUCE frontend library.
+  parameter through the JUCE frontend library, and renders the real-time
+  **oscilloscope + spectrum** display.
 - `js/juce/index.js` — the JUCE WebView frontend library (vendored).
+
+The visualiser is fed from the audio thread: the processor writes the output
+into a lock-free ring buffer (`readScope`), and a 30 Hz timer in the editor
+computes an FFT and pushes both the waveform and a log-spaced spectrum to the
+page via `emitEventIfBrowserIsVisible("visualiser", …)`.
 
 Every control is bridged to the `AudioProcessorValueTreeState` in
 `PluginEditor.cpp`: each parameter gets a relay

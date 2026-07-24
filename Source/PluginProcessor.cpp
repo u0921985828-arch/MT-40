@@ -33,6 +33,9 @@ MoogSynthAudioProcessor::MoogSynthAudioProcessor()
       apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
     synth.setup (apvts);
+
+    for (auto& s : scope.buffer)
+        s.store (0.0f, std::memory_order_relaxed);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -160,6 +163,26 @@ void MoogSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 {
     synth.prepareToPlay (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
     masterGain.reset (sampleRate, 0.02);
+
+    for (auto& s : scope.buffer)
+        s.store (0.0f, std::memory_order_relaxed);
+    scope.writePos.store (0, std::memory_order_relaxed);
+}
+
+void MoogSynthAudioProcessor::pushScope (float sample) noexcept
+{
+    const int p = scope.writePos.load (std::memory_order_relaxed);
+    scope.buffer[(size_t) p].store (sample, std::memory_order_relaxed);
+    scope.writePos.store ((p + 1) & Scope::mask, std::memory_order_release);
+}
+
+int MoogSynthAudioProcessor::readScope (float* dest, int numSamples) const noexcept
+{
+    numSamples = juce::jmin (numSamples, Scope::size);
+    const int p = scope.writePos.load (std::memory_order_acquire);
+    for (int i = 0; i < numSamples; ++i)
+        dest[i] = scope.buffer[(size_t) ((p - numSamples + i) & Scope::mask)].load (std::memory_order_relaxed);
+    return numSamples;
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -188,16 +211,23 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // ---- Master volume + soft limiter --------------------------------------
     masterGain.setTargetValue (apvts.getRawParameterValue (ParamID::masterVolume)->load());
 
+    const int numCh = buffer.getNumChannels();
+
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
         const float g = masterGain.getNextValue();
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        float mono = 0.0f;
+
+        for (int ch = 0; ch < numCh; ++ch)
         {
             float s = buffer.getSample (ch, i) * g;
             // Soft saturating limiter to tame peaks without hard digital clipping.
             s = std::tanh (s * 1.2f);
             buffer.setSample (ch, i, s);
+            mono += s;
         }
+
+        pushScope (numCh > 0 ? mono / (float) numCh : 0.0f);
     }
 }
 

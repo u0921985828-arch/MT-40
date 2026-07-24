@@ -9,8 +9,20 @@
 <body>
   <div id="chassis">
     <header id="brand">
-      <span class="logo">MoogVA</span>
-      <span class="model">SYNTHESIZER · MODEL VA</span>
+      <div class="brand-text">
+        <span class="logo">MoogVA</span>
+        <span class="model">SYNTHESIZER · MODEL VA</span>
+      </div>
+      <div id="displays">
+        <div class="display">
+          <canvas id="scope" width="240" height="58"></canvas>
+          <span class="disp-label">SCOPE</span>
+        </div>
+        <div class="display">
+          <canvas id="spectrum" width="240" height="58"></canvas>
+          <span class="disp-label">SPECTRUM</span>
+        </div>
+      </div>
     </header>
 
     <main id="panels">

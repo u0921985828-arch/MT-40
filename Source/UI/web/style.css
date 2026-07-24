@@ -38,12 +38,32 @@ html, body {
 
 #brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: 14px;
-  padding: 6px 26px;
+  padding: 4px 26px;
 }
+#brand .brand-text { display: flex; align-items: baseline; gap: 14px; }
 #brand .logo { font-size: 26px; font-weight: 800; letter-spacing: 1px; color: var(--label); }
 #brand .model { font-size: 12px; letter-spacing: 3px; color: var(--label-dim); }
+
+#displays { display: flex; gap: 12px; }
+.display {
+  position: relative;
+  background: #05100a;
+  border: 1px solid #000;
+  border-radius: 5px;
+  padding: 3px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.display canvas { display: block; border-radius: 3px; }
+.disp-label {
+  position: absolute;
+  top: 4px; right: 8px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(120, 230, 160, 0.55);
+}
 
 #panels {
   flex: 1;
