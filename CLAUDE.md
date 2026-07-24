@@ -14,8 +14,9 @@ todo lo siguiente hasta nueva orden:
   pero sin narrarlo. Una sola respuesta al terminar: ENTREGABLE + EXPLICACIÓN BREVE
   (1–5 líneas: qué y por qué). Bloques largos (auditoría, decisiones, verificación)
   solo bajo demanda.
-- **Resumen de cambios**: al cerrar una tarea sustancial, una línea con ficheros
-  tocados y estado de build/commit (p. ej. `commit abc123 · VST3+Standalone OK`).
+- **Un solo mensaje final por tarea**: al terminar cada tarea/petición, UN único
+  mensaje de **máximo 2 líneas** explicando lo hecho (qué + estado build/commit).
+  Nada más de texto de cierre.
 - **Tokens/coste**: no se pueden medir con exactitud desde el chat. Para verlos, usar
   el comando `/cost` de Claude Code (tokens y coste de la sesión). No inventar cifras.
 - Trabajo por fases cuando aplique: primero todo el código, luego toda la UI, y una

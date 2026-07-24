@@ -51,41 +51,113 @@ function formatValue(id, v) {
 // ---------------------------------------------------------------------------
 // Knobs  ->  WebSliderRelay
 // ---------------------------------------------------------------------------
-function knobFaceHtml() {
-  let ticks = "";
-  for (let t = 0; t <= 10; t++) {
-    const a = (-135 + t * 27) * Math.PI / 180;
-    const r1 = 47;
-    const r2 = t % 5 === 0 ? 39 : 43;
-    const x1 = 50 + r1 * Math.sin(a), y1 = 50 - r1 * Math.cos(a);
-    const x2 = 50 + r2 * Math.sin(a), y2 = 50 - r2 * Math.cos(a);
-    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"${t % 5 === 0 ? ' class="maj"' : ""}/>`;
+// ---------------------------------------------------------------------------
+// Procedural material textures (walnut wood + brushed metal) as data-URIs.
+// ---------------------------------------------------------------------------
+function makeWoodTexture() {
+  const w = 512, h = 256, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, "#5a3a1e"); g.addColorStop(0.5, "#3a2413"); g.addColorStop(1, "#2a1a0d");
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  let seed = 7;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i = 0; i < 340; i++) {
+    const yy = rnd() * h, amp = 3 + rnd() * 9, freq = 0.006 + rnd() * 0.02, ph = rnd() * 6.28;
+    x.beginPath();
+    for (let px = 0; px <= w; px += 4) x.lineTo(px, yy + Math.sin(px * freq + ph) * amp);
+    x.strokeStyle = `rgba(${20 + rnd() * 30},${12 + rnd() * 20},${6 + rnd() * 10},${0.05 + rnd() * 0.12})`;
+    x.lineWidth = 0.6 + rnd() * 1.6; x.stroke();
   }
-  return `<div class="knob-face">
-            <svg class="ticks" viewBox="0 0 100 100">${ticks}</svg>
-            <div class="skirt"><div class="dial"><span class="pointer"></span></div></div>
-          </div>`;
+  return c.toDataURL("image/png");
+}
+function makeMetalTexture() {
+  const w = 512, h = 96, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  x.fillStyle = "#232327"; x.fillRect(0, 0, w, h);
+  let seed = 3; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i = 0; i < 1400; i++) {
+    const yy = rnd() * h, len = 40 + rnd() * 300, xx = rnd() * w, gray = 40 + rnd() * 90;
+    x.strokeStyle = `rgba(${gray},${gray},${gray + 4},${0.05 + rnd() * 0.08})`;
+    x.lineWidth = 0.6; x.beginPath(); x.moveTo(xx, yy); x.lineTo(xx + len, yy + (rnd() - 0.5) * 1.2); x.stroke();
+  }
+  return c.toDataURL("image/png");
+}
+function installTextures() {
+  const root = document.documentElement.style;
+  try { root.setProperty("--wood-tex", `url(${makeWoodTexture()})`); } catch (e) {}
+  try { root.setProperty("--metal-tex", `url(${makeMetalTexture()})`); } catch (e) {}
+}
+
+// Photoreal knob rendered on a canvas: brushed-metal skirt with a bevel,
+// black pointer cap with a specular highlight, tick ring and a cast shadow.
+function drawKnob(ctx, size, norm) {
+  const cx = size / 2, cy = size / 2, R = size / 2;
+  ctx.clearRect(0, 0, size, size);
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = size * 0.09; ctx.shadowOffsetY = size * 0.05;
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.92, 0, Math.PI * 2); ctx.fillStyle = "#000"; ctx.fill();
+  ctx.restore();
+
+  let gs = ctx.createRadialGradient(cx, cy - R * 0.5, R * 0.1, cx, cy, R);
+  gs.addColorStop(0, "#9a9aa0"); gs.addColorStop(0.45, "#55555b"); gs.addColorStop(0.8, "#2b2b30"); gs.addColorStop(1, "#0a0a0c");
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.97, 0, Math.PI * 2); ctx.fillStyle = gs; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.9, Math.PI * 1.05, Math.PI * 1.95); ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = R * 0.05; ctx.stroke();
+
+  for (let i = 0; i <= 10; i++) {
+    const a = (-135 + i * 27) * Math.PI / 180, maj = i % 5 === 0;
+    const r1 = R * 0.99, r2 = R * (maj ? 0.82 : 0.88);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.sin(a) * r1, cy - Math.cos(a) * r1);
+    ctx.lineTo(cx + Math.sin(a) * r2, cy - Math.cos(a) * r2);
+    ctx.strokeStyle = maj ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)";
+    ctx.lineWidth = maj ? 1.6 : 1; ctx.stroke();
+  }
+
+  const br = R * 0.7;
+  let gb = ctx.createRadialGradient(cx - br * 0.35, cy - br * 0.5, br * 0.1, cx, cy, br);
+  gb.addColorStop(0, "#50505a"); gb.addColorStop(0.5, "#1c1c20"); gb.addColorStop(1, "#040405");
+  ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.fillStyle = gb; ctx.fill();
+
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.clip();
+  ctx.beginPath(); ctx.ellipse(cx, cy - br * 0.45, br * 0.72, br * 0.4, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.22)"; ctx.fill(); ctx.restore();
+
+  ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.strokeStyle = "rgba(0,0,0,0.85)"; ctx.lineWidth = 1; ctx.stroke();
+
+  const a = (-135 + norm * 270) * Math.PI / 180;
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx + Math.sin(a) * br * 0.2, cy - Math.cos(a) * br * 0.2);
+  ctx.lineTo(cx + Math.sin(a) * br * 0.92, cy - Math.cos(a) * br * 0.92);
+  ctx.lineCap = "round"; ctx.lineWidth = Math.max(2, br * 0.16); ctx.strokeStyle = "#f4f4f4"; ctx.stroke();
+  ctx.restore();
 }
 
 function setupKnob(el) {
   const id = el.dataset.param;
   const caption = el.dataset.caption ?? "";
+  const size = el.classList.contains("small") ? 40 : 50;
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
 
-  el.innerHTML = knobFaceHtml() +
-    `<span class="caption">${caption}</span><span class="value">--</span>`;
-  const dial = el.querySelector(".dial");
+  el.innerHTML = `<canvas class="kcv"></canvas><span class="caption">${caption}</span><span class="value">--</span>`;
+  const cv = el.querySelector(".kcv");
+  cv.width = size * dpr; cv.height = size * dpr; cv.style.width = size + "px"; cv.style.height = size + "px";
+  const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
   const valueEl = el.querySelector(".value");
 
   let state;
   try {
     state = getSliderState(id);
   } catch (e) {
-    return; // not running inside the JUCE backend
+    drawKnob(ctx, size, 0.5);
+    return;
   }
 
   const render = () => {
     const norm = state.getNormalisedValue();
-    dial.style.setProperty("--rot", (-135 + norm * 270).toFixed(1) + "deg");
+    drawKnob(ctx, size, norm);
     valueEl.textContent = formatValue(id, state.getScaledValue());
   };
   state.valueChangedEvent.addListener(render);
@@ -399,6 +471,7 @@ function setupWheel(el) {
 // Boot
 // ---------------------------------------------------------------------------
 (async () => {
+  installTextures();
   await loadFrontend();
 
   document.querySelectorAll(".knob").forEach(setupKnob);
