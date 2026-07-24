@@ -163,7 +163,8 @@ inline float MonoSynthEngine::renderSample()
     const float pitchModSemis  = c.modOscOn    ? modSrc * effMod * 7.0f : 0.0f;
     const float cutoffModOctave = c.modFilterOn ? modSrc * effMod * 4.0f : 0.0f;
 
-    const float baseNote = glidingNoteNumber + c.masterTune + pitchBendSemitones + pitchModSemis;
+    const float baseNote = glidingNoteNumber + c.masterTune + pitchBendSemitones
+                           + externalBendSemitones + pitchModSemis;
 
     const float m1 = ParamChoices::rangeMultiplier (c.osc1Range);
     const float m2 = ParamChoices::rangeMultiplier (c.osc2Range);

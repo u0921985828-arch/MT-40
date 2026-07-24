@@ -7,132 +7,136 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div id="chassis">
+  <div id="cabinet">
+    <!-- Top brand + displays strip -->
     <header id="brand">
       <div class="brand-text">
         <span class="logo">MoogVA</span>
-        <span class="model">SYNTHESIZER &middot; MODEL VA</span>
-        <div id="presetbar">
-          <select id="presetSelect" title="Preset"></select>
-          <button id="presetSave" title="Save preset">SAVE</button>
-        </div>
+        <span class="model">MODEL&nbsp;VA</span>
+      </div>
+      <div id="presetbar">
+        <select id="presetSelect" title="Preset"></select>
+        <button id="presetSave" title="Save preset">SAVE</button>
       </div>
       <div id="displays">
-        <div class="display">
-          <canvas id="scope" width="240" height="58"></canvas>
-          <span class="disp-label">SCOPE</span>
-        </div>
-        <div class="display">
-          <canvas id="spectrum" width="240" height="58"></canvas>
-          <span class="disp-label">SPECTRUM</span>
-        </div>
-        <div class="display vu">
-          <div class="vu-bar"><div class="vu-fill" id="vuL"></div></div>
-          <div class="vu-bar"><div class="vu-fill" id="vuR"></div></div>
-          <span class="disp-label">OUT</span>
-        </div>
+        <div class="display"><canvas id="scope" width="220" height="52"></canvas><span class="disp-label">SCOPE</span></div>
+        <div class="display"><canvas id="spectrum" width="220" height="52"></canvas><span class="disp-label">SPECTRUM</span></div>
+        <div class="display vu"><div class="vu-bar"><div class="vu-fill" id="vuL"></div></div><div class="vu-bar"><div class="vu-fill" id="vuR"></div></div><span class="disp-label">OUT</span></div>
       </div>
     </header>
 
-    <main id="panels">
-      <!-- Controllers -->
-      <section class="panel" id="controllers">
+    <!-- Main control panel: five sections left-to-right -->
+    <main id="panel">
+      <!-- CONTROLLERS -->
+      <section class="sect" id="controllers">
+        <div class="sect-body">
+          <div class="krow">
+            <div class="knob" data-param="MASTER_TUNE" data-caption="Tune"></div>
+            <div class="knob" data-param="GLIDE_TIME" data-caption="Glide"></div>
+          </div>
+          <div class="krow">
+            <div class="knob" data-param="MOD_MIX" data-caption="Mod Mix"></div>
+            <div class="knob" data-param="PITCH_BEND_RANGE" data-caption="Bend"></div>
+          </div>
+          <div class="knob" data-param="DRIFT_AMOUNT" data-caption="Drift"></div>
+          <div class="swrow">
+            <div class="rocker mini" data-param="MOD_OSC_ON" data-caption="Osc Mod"></div>
+            <div class="rocker mini" data-param="GLIDE_ON" data-caption="Glide"></div>
+          </div>
+        </div>
         <h2>Controllers</h2>
-        <div class="row">
-          <div class="knob" data-param="MASTER_TUNE"   data-caption="Tune"></div>
-          <div class="knob" data-param="GLIDE_TIME"     data-caption="Glide"></div>
-          <div class="knob" data-param="PITCH_BEND_RANGE" data-caption="Bend Rng"></div>
-        </div>
-        <div class="switch-row">
-          <div class="rocker" data-param="GLIDE_ON" data-caption="Glide"></div>
-        </div>
       </section>
 
-      <!-- Oscillator Bank -->
-      <section class="panel wide" id="oscillators">
+      <!-- OSCILLATOR BANK -->
+      <section class="sect" id="oscillators">
+        <div class="sect-body">
+          <div class="osc-row">
+            <span class="osc-label">1</span>
+            <div class="combo" data-param="OSC1_RANGE" data-caption="Range"></div>
+            <div class="combo wide" data-param="OSC1_WAVE" data-caption="Waveform"></div>
+          </div>
+          <div class="osc-row">
+            <span class="osc-label">2</span>
+            <div class="combo" data-param="OSC2_RANGE" data-caption="Range"></div>
+            <div class="knob small" data-param="OSC2_DETUNE" data-caption="Tune"></div>
+            <div class="combo wide" data-param="OSC2_WAVE" data-caption="Waveform"></div>
+          </div>
+          <div class="osc-row">
+            <span class="osc-label">3</span>
+            <div class="combo" data-param="OSC3_RANGE" data-caption="Range"></div>
+            <div class="knob small" data-param="OSC3_DETUNE" data-caption="Tune"></div>
+            <div class="combo wide" data-param="OSC3_WAVE" data-caption="Waveform"></div>
+            <div class="rocker mini" data-param="OSC3_KB_CONTROL" data-caption="Kbd"></div>
+          </div>
+        </div>
         <h2>Oscillator Bank</h2>
-        <div class="osc-row">
-          <span class="osc-label">OSC 1</span>
-          <div class="combo" data-param="OSC1_WAVE"  data-caption="Wave"></div>
-          <div class="combo" data-param="OSC1_RANGE" data-caption="Range"></div>
-        </div>
-        <div class="osc-row">
-          <span class="osc-label">OSC 2</span>
-          <div class="combo" data-param="OSC2_WAVE"  data-caption="Wave"></div>
-          <div class="combo" data-param="OSC2_RANGE" data-caption="Range"></div>
-          <div class="knob small" data-param="OSC2_COARSE" data-caption="Coarse"></div>
-          <div class="knob small" data-param="OSC2_DETUNE" data-caption="Fine"></div>
-        </div>
-        <div class="osc-row">
-          <span class="osc-label">OSC 3</span>
-          <div class="combo" data-param="OSC3_WAVE"  data-caption="Wave"></div>
-          <div class="combo" data-param="OSC3_RANGE" data-caption="Range"></div>
-          <div class="knob small" data-param="OSC3_COARSE"   data-caption="Coarse"></div>
-          <div class="knob small" data-param="OSC3_DETUNE"   data-caption="Fine"></div>
-          <div class="knob small" data-param="OSC3_MOD_DEPTH" data-caption="Mod"></div>
-          <div class="rocker mini" data-param="OSC3_LFO_MODE" data-caption="LFO"></div>
-        </div>
       </section>
 
-      <!-- Mixer -->
-      <section class="panel" id="mixer">
-        <h2>Mixer</h2>
-        <div class="mix-grid">
-          <div class="mix-col">
-            <div class="knob" data-param="MIX_OSC1_VOL" data-caption="Osc 1"></div>
-            <div class="rocker mini" data-param="MIX_OSC1_ON"></div>
-          </div>
-          <div class="mix-col">
-            <div class="knob" data-param="MIX_OSC2_VOL" data-caption="Osc 2"></div>
-            <div class="rocker mini" data-param="MIX_OSC2_ON"></div>
-          </div>
-          <div class="mix-col">
-            <div class="knob" data-param="MIX_OSC3_VOL" data-caption="Osc 3"></div>
-            <div class="rocker mini" data-param="MIX_OSC3_ON"></div>
-          </div>
-          <div class="mix-col">
-            <div class="knob" data-param="MIX_NOISE_VOL" data-caption="Noise"></div>
+      <!-- MIXER -->
+      <section class="sect" id="mixer">
+        <div class="sect-body mix-body">
+          <div class="mix-ch"><div class="knob small" data-param="MIX_OSC1_VOL" data-caption="Osc 1"></div><div class="rocker mini" data-param="MIX_OSC1_ON"></div></div>
+          <div class="mix-ch"><div class="knob small" data-param="MIX_OSC2_VOL" data-caption="Osc 2"></div><div class="rocker mini" data-param="MIX_OSC2_ON"></div></div>
+          <div class="mix-ch"><div class="knob small" data-param="MIX_OSC3_VOL" data-caption="Osc 3"></div><div class="rocker mini" data-param="MIX_OSC3_ON"></div></div>
+          <div class="mix-ch"><div class="knob small" data-param="MIX_EXT_VOL" data-caption="Ext"></div><div class="rocker mini" data-param="MIX_EXT_ON"></div></div>
+          <div class="mix-ch">
+            <div class="knob small" data-param="MIX_NOISE_VOL" data-caption="Noise"></div>
             <div class="rocker mini" data-param="MIX_NOISE_ON"></div>
-          </div>
-          <div class="mix-col">
-            <div class="knob" data-param="MIX_FEEDBACK" data-caption="Feedbk"></div>
-            <div class="rocker mini" data-param="MIX_FEEDBACK_ON"></div>
+            <div class="combo tiny" data-param="NOISE_TYPE"></div>
           </div>
         </div>
-        <div class="combo" data-param="NOISE_TYPE" data-caption="Noise Type"></div>
+        <h2>Mixer</h2>
       </section>
 
-      <!-- Modifiers: Filter + Filter Envelope -->
-      <section class="panel wide" id="filter">
+      <!-- MODIFIERS -->
+      <section class="sect" id="modifiers">
+        <div class="sect-body">
+          <div class="krow">
+            <div class="knob" data-param="FILTER_CUTOFF" data-caption="Cutoff"></div>
+            <div class="knob" data-param="FILTER_RESO" data-caption="Emphasis"></div>
+            <div class="knob" data-param="FILTER_ENV" data-caption="Contour"></div>
+          </div>
+          <div class="krow">
+            <div class="combo" data-param="FILTER_KEYTRACK" data-caption="Kbd Ctrl"></div>
+            <div class="knob small" data-param="FILTER_DRIVE" data-caption="Drive"></div>
+            <div class="knob small" data-param="BASS_THIN" data-caption="Bass"></div>
+            <div class="rocker mini" data-param="MOD_FILTER_ON" data-caption="Flt Mod"></div>
+          </div>
+          <div class="krow env">
+            <div class="knob small" data-param="FILTER_ATTACK" data-caption="Attack"></div>
+            <div class="knob small" data-param="FILTER_DECAY" data-caption="Decay"></div>
+            <div class="knob small" data-param="FILTER_SUSTAIN" data-caption="Sustain"></div>
+            <div class="knob small" data-param="FILTER_RELEASE" data-caption="Release"></div>
+          </div>
+        </div>
         <h2>Modifiers &mdash; Filter</h2>
-        <div class="row">
-          <div class="knob" data-param="FILTER_CUTOFF" data-caption="Cutoff"></div>
-          <div class="knob" data-param="FILTER_RESO"   data-caption="Reso"></div>
-          <div class="knob" data-param="FILTER_ENV"    data-caption="Contour"></div>
-          <div class="combo" data-param="FILTER_KEYTRACK" data-caption="Key Trk"></div>
-        </div>
-        <div class="row env-row">
-          <div class="knob small" data-param="FILTER_ATTACK"  data-caption="Attack"></div>
-          <div class="knob small" data-param="FILTER_DECAY"   data-caption="Decay"></div>
-          <div class="knob small" data-param="FILTER_SUSTAIN" data-caption="Sustain"></div>
-          <div class="knob small" data-param="FILTER_RELEASE" data-caption="Release"></div>
-        </div>
       </section>
 
-      <!-- Output: Loudness Envelope + Master -->
-      <section class="panel" id="output">
-        <h2>Output &mdash; Loudness</h2>
-        <div class="row env-row">
-          <div class="knob small" data-param="AMP_ATTACK"  data-caption="Attack"></div>
-          <div class="knob small" data-param="AMP_DECAY"   data-caption="Decay"></div>
-          <div class="knob small" data-param="AMP_SUSTAIN" data-caption="Sustain"></div>
-          <div class="knob small" data-param="AMP_RELEASE" data-caption="Release"></div>
+      <!-- OUTPUT -->
+      <section class="sect" id="output">
+        <div class="sect-body">
           <div class="knob" data-param="MASTER_VOLUME" data-caption="Volume"></div>
+          <div class="krow env">
+            <div class="knob small" data-param="AMP_ATTACK" data-caption="Attack"></div>
+            <div class="knob small" data-param="AMP_DECAY" data-caption="Decay"></div>
+          </div>
+          <div class="krow env">
+            <div class="knob small" data-param="AMP_SUSTAIN" data-caption="Sustain"></div>
+            <div class="knob small" data-param="AMP_RELEASE" data-caption="Release"></div>
+          </div>
         </div>
+        <h2>Output &mdash; Loudness</h2>
       </section>
     </main>
 
-    <div id="keyboard"></div>
+    <!-- Bottom: wheels + keyboard -->
+    <div id="lower">
+      <div id="wheels">
+        <div class="wheel" data-wheel="pitch"><div class="wheel-face"></div><span class="wheel-label">PITCH</span></div>
+        <div class="wheel" data-wheel="mod" data-param="MOD_WHEEL"><div class="wheel-face"></div><span class="wheel-label">MOD</span></div>
+      </div>
+      <div id="keyboard"></div>
+    </div>
   </div>
 
   <script src="/js/main.js"></script>

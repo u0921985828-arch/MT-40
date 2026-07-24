@@ -24,6 +24,7 @@ public:
     MonoSynthEngine() = default;
 
     void setParameters (const SynthParameters* p) noexcept { params = p; }
+    void setExternalBend (float semitones) noexcept { externalBendSemitones = semitones; }
     void prepare (double sampleRate, int samplesPerBlock);
     void reset() noexcept;
 
@@ -52,6 +53,7 @@ private:
     float glidingNoteNumber { 60.0f };
     float velocityGain { 1.0f };
     float pitchBendSemitones { 0.0f };
+    float externalBendSemitones { 0.0f }; // from the on-screen pitch wheel
     float modWheelMidi { 0.0f };
 
     float feedbackSample { 0.0f };

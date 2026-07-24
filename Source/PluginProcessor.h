@@ -50,6 +50,9 @@ public:
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
     PresetManager& getPresetManager() noexcept { return presetManager; }
 
+    /** Pitch-wheel value from the on-screen wheel, -1..+1. */
+    void setUiPitchBend (float normalised) noexcept { uiPitchBend.store (normalised); }
+
     /** Copies the most recent `numSamples` of output into `dest` (oldest first)
         for the visualiser. Safe to call from the message thread. */
     int readScope (float* dest, int numSamples) const noexcept;
@@ -71,6 +74,7 @@ private:
 
     SynthParameters synthParams;
     MonoSynthEngine engine;
+    std::atomic<float> uiPitchBend { 0.0f };
 
     // Master output: 4x oversampled soft limiter + DC blocker.
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;

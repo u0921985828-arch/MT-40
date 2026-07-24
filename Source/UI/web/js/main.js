@@ -339,6 +339,54 @@ function setupPresets() {
 }
 
 // ---------------------------------------------------------------------------
+// Pitch / Mod wheels
+// ---------------------------------------------------------------------------
+function setupWheel(el) {
+  const face = el.querySelector(".wheel-face");
+  const kind = el.dataset.wheel;              // "pitch" | "mod"
+  const isPitch = kind === "pitch";
+
+  // Visual travel: --wy from 4px (top) to 76px (bottom).
+  const setVisual = (norm) => { if (face) face.style.setProperty("--wy", (4 + (1 - norm) * 72) + "px"); };
+
+  let pitchBendFn = null, modState = null;
+  if (isPitch) {
+    try { pitchBendFn = getNativeFunction("pitchBend"); } catch (e) {}
+    setVisual(0.5);
+  } else {
+    try {
+      modState = getSliderState(el.dataset.param);
+      const render = () => setVisual(modState.getNormalisedValue());
+      modState.valueChangedEvent.addListener(render);
+      modState.propertiesChangedEvent.addListener(render);
+      render();
+    } catch (e) { setVisual(0); }
+  }
+
+  let dragging = false, startY = 0, startNorm = 0.5;
+  el.addEventListener("pointerdown", (e) => {
+    dragging = true; startY = e.clientY;
+    startNorm = isPitch ? 0.5 : (modState ? modState.getNormalisedValue() : 0);
+    el.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    let norm = Math.min(1, Math.max(0, startNorm + (startY - e.clientY) / 120));
+    setVisual(norm);
+    if (isPitch && pitchBendFn) pitchBendFn(norm * 2 - 1);        // -1..+1
+    else if (modState) modState.setNormalisedValue(norm);
+  });
+  const end = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    if (isPitch) { setVisual(0.5); if (pitchBendFn) pitchBendFn(0); } // spring back
+    if (e.pointerId != null && el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 (async () => {
@@ -347,6 +395,7 @@ function setupPresets() {
   document.querySelectorAll(".knob").forEach(setupKnob);
   document.querySelectorAll(".rocker").forEach(setupRocker);
   document.querySelectorAll(".combo").forEach(setupCombo);
+  document.querySelectorAll(".wheel").forEach(setupWheel);
   setupKeyboard();
   setupVisualiser();
   setupPresets();

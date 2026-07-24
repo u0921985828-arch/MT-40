@@ -208,6 +208,8 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Merge notes played on the on-screen keyboard with incoming host MIDI.
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
 
+    engine.setExternalBend (uiPitchBend.load()
+                            * apvts.getRawParameterValue (ParamID::pitchBendRange)->load());
     engine.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
     // ---- Master volume -----------------------------------------------------

@@ -90,6 +90,14 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
                 if (args.size() >= 1)
                     processorRef.getPresetManager().savePreset (args[0].toString());
                 complete (juce::var());
+            })
+        .withNativeFunction ("pitchBend",
+            [this] (const juce::Array<juce::var>& args,
+                    juce::WebBrowserComponent::NativeFunctionCompletion complete)
+            {
+                if (args.size() >= 1)
+                    processorRef.setUiPitchBend (juce::jlimit (-1.0f, 1.0f, (float) args[0]));
+                complete (juce::var());
             });
 
     for (auto* r : sliderRelays) options = options.withOptionsFrom (*r);
@@ -110,8 +118,8 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
     webView->goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
 
     setResizable (true, true);
-    setResizeLimits (960, 600, 1800, 1100);
-    setSize (1120, 700);
+    setResizeLimits (1040, 660, 1900, 1200);
+    setSize (1200, 780);
 
     startTimerHz (30); // drive the visualiser
 }
