@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 #include "DSP/PolyphonicSynthesizer.h"
 
 /**
@@ -57,6 +58,12 @@ private:
 
     juce::AudioProcessorValueTreeState apvts;
     juce::MidiKeyboardState keyboardState;
+
+    // Master output: 4x oversampled soft limiter + DC blocker.
+    std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
+    static constexpr size_t oversamplingFactor = 2; // 2^2 = 4x
+    float dcX1[2] { 0.0f, 0.0f };
+    float dcY1[2] { 0.0f, 0.0f };
 
     // Lock-free single-producer / single-consumer ring buffer feeding the
     // WebView oscilloscope + spectrum display.

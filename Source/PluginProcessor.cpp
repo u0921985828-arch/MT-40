@@ -164,6 +164,16 @@ void MoogSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     synth.prepareToPlay (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
     masterGain.reset (sampleRate, 0.02);
 
+    const auto numOut = (size_t) juce::jmax (1, getTotalNumOutputChannels());
+    oversampler = std::make_unique<juce::dsp::Oversampling<float>> (
+        numOut, oversamplingFactor,
+        juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple);
+    oversampler->initProcessing ((size_t) samplesPerBlock);
+    setLatencySamples (juce::roundToInt (oversampler->getLatencyInSamples()));
+
+    for (auto& d : dcX1) d = 0.0f;
+    for (auto& d : dcY1) d = 0.0f;
+
     for (auto& s : scope.buffer)
         s.store (0.0f, std::memory_order_relaxed);
     scope.writePos.store (0, std::memory_order_relaxed);
@@ -208,7 +218,7 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
-    // ---- Master volume + soft limiter --------------------------------------
+    // ---- Master volume -----------------------------------------------------
     masterGain.setTargetValue (apvts.getRawParameterValue (ParamID::masterVolume)->load());
 
     const int numCh = buffer.getNumChannels();
@@ -216,17 +226,41 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
         const float g = masterGain.getNextValue();
-        float mono = 0.0f;
-
         for (int ch = 0; ch < numCh; ++ch)
+            buffer.setSample (ch, i, buffer.getSample (ch, i) * g);
+    }
+
+    // ---- Oversampled soft limiter (bandlimits the saturation harmonics) ----
+    if (oversampler != nullptr)
+    {
+        juce::dsp::AudioBlock<float> block (buffer);
+        auto osBlock = oversampler->processSamplesUp (block);
+
+        for (size_t ch = 0; ch < osBlock.getNumChannels(); ++ch)
         {
-            float s = buffer.getSample (ch, i) * g;
-            // Soft saturating limiter to tame peaks without hard digital clipping.
-            s = std::tanh (s * 1.2f);
-            buffer.setSample (ch, i, s);
-            mono += s;
+            auto* d = osBlock.getChannelPointer (ch);
+            for (size_t i = 0; i < osBlock.getNumSamples(); ++i)
+                d[i] = std::tanh (d[i] * 1.2f);
         }
 
+        oversampler->processSamplesDown (block);
+    }
+
+    // ---- DC blocker + scope feed -------------------------------------------
+    constexpr float R = 0.9975f;
+    for (int i = 0; i < buffer.getNumSamples(); ++i)
+    {
+        float mono = 0.0f;
+        for (int ch = 0; ch < numCh; ++ch)
+        {
+            const float x = buffer.getSample (ch, i);
+            const int c = juce::jmin (ch, 1);
+            const float y = x - dcX1[c] + R * dcY1[c];
+            dcX1[c] = x;
+            dcY1[c] = y;
+            buffer.setSample (ch, i, y);
+            mono += y;
+        }
         pushScope (numCh > 0 ? mono / (float) numCh : 0.0f);
     }
 }
