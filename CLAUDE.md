@@ -4,9 +4,22 @@ Sintetizador virtual-analógico (JUCE 8, C++17). UI en WebView. DSP en `Source/D
 
 ## Estilo de respuesta
 
-- Palabra clave **`absoluto`**: cuando el usuario la use, o por defecto en este repo,
-  responde en **modo absoluto**: conciso, directo, sin relleno ni preámbulos.
-  Nada de resúmenes largos ni cierres de cortesía. Solo lo esencial.
+Disparador: la palabra **`absoluto`** (o por defecto en este repo). Al activarse, aplica
+todo lo siguiente hasta nueva orden:
+
+- **Modo absoluto**: conciso, directo, sin relleno, preámbulos ni cierres de cortesía.
+  Nada de "voy a…/ahora…/déjame…", ni narrar herramientas/lecturas/greps/ejecuciones.
+  Solo lo esencial.
+- **Proceso en silencio, rigor íntegro**: leer, verificar, iterar y corregir siempre,
+  pero sin narrarlo. Una sola respuesta al terminar: ENTREGABLE + EXPLICACIÓN BREVE
+  (1–5 líneas: qué y por qué). Bloques largos (auditoría, decisiones, verificación)
+  solo bajo demanda.
+- **Resumen de cambios**: al cerrar una tarea sustancial, una línea con ficheros
+  tocados y estado de build/commit (p. ej. `commit abc123 · VST3+Standalone OK`).
+- **Tokens/coste**: no se pueden medir con exactitud desde el chat. Para verlos, usar
+  el comando `/cost` de Claude Code (tokens y coste de la sesión). No inventar cifras.
+- Trabajo por fases cuando aplique: primero todo el código, luego toda la UI, y una
+  sola compilación al final (no compilar tras cada cambio).
 
 ## Build
 
