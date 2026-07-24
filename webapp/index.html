@@ -12,13 +12,20 @@
   body{
     font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--label);
     overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;
-    display:flex;flex-direction:column;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 40%,#1a0f06,#0a0603);
+  }
+  /* Fixed design canvas, uniformly scaled to fit any screen. */
+  #stage{
+    width:var(--dw,1280px);height:var(--dh,720px);flex:none;position:relative;
+    display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;overflow:hidden;
+    transform-origin:center center;transform:scale(var(--sc,1));
     background:
       var(--wood-tex,none),
       linear-gradient(100deg,rgba(90,58,30,.35),rgba(42,26,13,.35)),
       linear-gradient(100deg,#5a3a1e,#3a2413 45%,#2a1a0d 100%);
-    background-size:512px 256px,cover,cover;
-    background-blend-mode:overlay,normal,normal;
+    background-size:512px 256px,cover,cover;background-blend-mode:overlay,normal,normal;
+    box-shadow:0 24px 70px rgba(0,0,0,.85),inset 0 0 80px rgba(0,0,0,.5);
   }
   .kcv{display:block;margin:0 auto;}
 
@@ -85,10 +92,12 @@
 
   /* Switch */
   .sw{display:flex;flex-direction:column;align-items:center;gap:3px;}
-  .sw .cap{width:40px;height:22px;border-radius:3px;border:1px solid #000;
-    background:linear-gradient(180deg,#48484d,#202023);box-shadow:inset 0 -6px 8px rgba(0,0,0,.55),inset 0 2px 2px rgba(255,255,255,.09);}
-  .sw.on.blue .cap{background:linear-gradient(0deg,#1c4e7d,var(--blue));box-shadow:inset 0 6px 8px rgba(0,0,0,.3),0 0 6px rgba(47,116,179,.6);}
-  .sw.on.orange .cap{background:linear-gradient(0deg,#8f3313,var(--orange));box-shadow:inset 0 6px 8px rgba(0,0,0,.3),0 0 6px rgba(207,90,42,.6);}
+  .sw .cap{position:relative;width:40px;height:22px;border-radius:4px;border:1px solid #000;
+    background:linear-gradient(180deg,#3a3a40,#141417);box-shadow:inset 0 1px 1px rgba(255,255,255,.12),inset 0 -2px 4px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.6);}
+  .sw.mini .cap{width:30px;height:18px;}
+  .sw .cap::before{content:"";position:absolute;inset:2px;border-radius:3px;background:linear-gradient(180deg,#4c4c54,#25252a);box-shadow:inset 0 1px 1px rgba(255,255,255,.16),inset 0 -3px 4px rgba(0,0,0,.5);transition:background .08s,box-shadow .08s;}
+  .sw.on.blue .cap::before{background:linear-gradient(180deg,#57a2e2,#1c4e7d);box-shadow:inset 0 1px 2px rgba(190,225,255,.55),0 0 9px rgba(47,116,179,.8);}
+  .sw.on.orange .cap::before{background:linear-gradient(180deg,#f07d40,#8f3313);box-shadow:inset 0 1px 2px rgba(255,205,160,.55),0 0 9px rgba(207,90,42,.8);}
   .sw .lab{font-size:9px;color:var(--dim);text-transform:uppercase;}
 
   /* Combo */
@@ -110,7 +119,7 @@
   .mch .mlbl{width:40px;text-align:right;font-size:9.5px;color:var(--dim);text-transform:uppercase;}
 
   /* Wheels + keyboard */
-  #foot{display:flex;align-items:stretch;gap:8px;height:clamp(150px,30vh,300px);flex:0 0 auto;padding:6px 8px 8px;}
+  #foot{display:flex;align-items:stretch;gap:8px;height:210px;flex:0 0 auto;padding:6px 8px 8px;}
   #wheels{display:flex;gap:8px;}
   .wheel{display:flex;flex-direction:column;align-items:center;gap:3px;touch-action:none;}
   .wface{width:26px;flex:1;border-radius:13px;border:1px solid #000;position:relative;
@@ -141,12 +150,14 @@
   <p style="letter-spacing:1px;color:#8a7f63">tap to start audio</p>
 </div>
 
+<div id="stage">
 <header>
   <div>
     <div class="logo">MoogVA</div>
     <div class="model">MODEL VA</div>
   </div>
   <div class="right">
+    <select class="preset" id="res" title="Resolución"></select>
     <select class="preset" id="preset"></select>
     <div class="vu"><i><b id="vuL"></b></i><i><b id="vuR"></b></i></div>
   </div>
@@ -165,6 +176,7 @@
     <button id="octDn">−</button>
   </div>
   <div id="kbd"></div>
+</div>
 </div>
 
 <script type="application/json" id="bank">
@@ -5118,6 +5130,19 @@ document.getElementById("octDn").addEventListener("click",()=>{if(startNote>24){
 const vuL=document.getElementById("vuL"),vuR=document.getElementById("vuR");let vd=0;
 function vu(){ if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; const h=Math.min(1,vd)*100+"%"; vuL.style.height=h; vuR.style.height=h;} requestAnimationFrame(vu);}
 requestAnimationFrame(vu);
+
+//====================================================================
+// RESOLUTION PRESETS + uniform scale-to-fit (any screen)
+//====================================================================
+const RES=[{n:"16:9 · 1280×720",w:1280,h:720},{n:"16:10 · 1200×760",w:1200,h:760},{n:"Compacto · 1040×660",w:1040,h:660}];
+let resIdx=0;const stageEl=document.getElementById("stage");
+function setScale(){const r=RES[resIdx];const sc=Math.min(window.innerWidth/r.w,window.innerHeight/r.h);stageEl.style.setProperty("--sc",sc.toFixed(4));}
+function applyRes(){const r=RES[resIdx];stageEl.style.setProperty("--dw",r.w+"px");stageEl.style.setProperty("--dh",r.h+"px");setScale();}
+(function(){const s=document.getElementById("res");RES.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=r.n;s.appendChild(o);});
+  s.addEventListener("change",()=>{resIdx=+s.value;applyRes();});})();
+window.addEventListener("resize",setScale);
+window.addEventListener("orientationchange",()=>setTimeout(setScale,200));
+applyRes();
 
 //====================================================================
 // POWER GATE
