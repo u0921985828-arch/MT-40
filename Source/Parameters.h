@@ -4,91 +4,91 @@
 #include <array>
 
 /**
-    Centralised definition of every APVTS parameter identifier used across the
-    plugin.  Keeping the IDs in one place avoids stringly-typed mismatches
-    between the DSP (which reads the values) and the UI (which attaches to them).
-
-    The layout itself is built in PluginProcessor::createParameterLayout().
+    Centralised APVTS parameter identifiers, aligned with the Minimoog Model D
+    control layout: Controllers, Oscillator Bank, Mixer, Modifiers (filter +
+    filter envelope), Output (loudness envelope). Plus a few "analog character"
+    controls (drift / drive / bass-thinning) that are switchable per preset.
 */
 namespace ParamID
 {
-    // ---- Global / Controllers ------------------------------------------------
+    // ---- Controllers ---------------------------------------------------------
     static constexpr auto masterVolume   = "MASTER_VOLUME";
-    static constexpr auto masterTune     = "MASTER_TUNE";     // Osc 1 master pitch, in semitones
+    static constexpr auto masterTune     = "MASTER_TUNE";      // semitones
     static constexpr auto glideOn        = "GLIDE_ON";
-    static constexpr auto glideTime      = "GLIDE_TIME";      // seconds
+    static constexpr auto glideTime      = "GLIDE_TIME";       // seconds
     static constexpr auto pitchBendRange = "PITCH_BEND_RANGE"; // semitones
+    static constexpr auto modWheel       = "MOD_WHEEL";        // 0..1 (also MIDI CC1)
+    static constexpr auto modMix         = "MOD_MIX";          // 0 = Osc3, 1 = Noise
+    static constexpr auto modOscOn       = "MOD_OSC_ON";       // route mod -> oscillator pitch
+    static constexpr auto modFilterOn    = "MOD_FILTER_ON";    // route mod -> filter cutoff
 
-    // ---- Oscillator 1 --------------------------------------------------------
+    // ---- Oscillator Bank -----------------------------------------------------
     static constexpr auto osc1Wave  = "OSC1_WAVE";
     static constexpr auto osc1Range = "OSC1_RANGE";
 
-    // ---- Oscillator 2 --------------------------------------------------------
     static constexpr auto osc2Wave   = "OSC2_WAVE";
     static constexpr auto osc2Range  = "OSC2_RANGE";
-    static constexpr auto osc2Detune = "OSC2_DETUNE";  // fine tune, semitones (-7..+7)
-    static constexpr auto osc2Coarse = "OSC2_COARSE";  // coarse tune, semitones (-24..+24)
+    static constexpr auto osc2Detune = "OSC2_DETUNE";  // semitones (-7..+7)
 
-    // ---- Oscillator 3 --------------------------------------------------------
-    static constexpr auto osc3Wave    = "OSC3_WAVE";
-    static constexpr auto osc3Range   = "OSC3_RANGE";
-    static constexpr auto osc3Detune  = "OSC3_DETUNE";
-    static constexpr auto osc3Coarse  = "OSC3_COARSE";
-    static constexpr auto osc3LfoMode = "OSC3_LFO_MODE";   // Osc 3 acts as a modulation LFO
-    static constexpr auto osc3ModDepth = "OSC3_MOD_DEPTH"; // amount routed to filter/pitch
+    static constexpr auto osc3Wave      = "OSC3_WAVE";
+    static constexpr auto osc3Range     = "OSC3_RANGE";
+    static constexpr auto osc3Detune    = "OSC3_DETUNE";
+    static constexpr auto osc3KbControl = "OSC3_KB_CONTROL"; // follow keyboard (off = free/LFO)
 
     // ---- Mixer ---------------------------------------------------------------
     static constexpr auto mixOsc1Vol  = "MIX_OSC1_VOL";
     static constexpr auto mixOsc2Vol  = "MIX_OSC2_VOL";
     static constexpr auto mixOsc3Vol  = "MIX_OSC3_VOL";
     static constexpr auto mixNoiseVol = "MIX_NOISE_VOL";
-    static constexpr auto mixFeedback = "MIX_FEEDBACK";   // feedback drive / overdrive
+    static constexpr auto mixExtVol   = "MIX_EXT_VOL";   // external input / feedback level
 
-    static constexpr auto mixOsc1On     = "MIX_OSC1_ON";
-    static constexpr auto mixOsc2On     = "MIX_OSC2_ON";
-    static constexpr auto mixOsc3On     = "MIX_OSC3_ON";
-    static constexpr auto mixNoiseOn    = "MIX_NOISE_ON";
-    static constexpr auto mixFeedbackOn = "MIX_FEEDBACK_ON";
-    static constexpr auto noiseType     = "NOISE_TYPE";   // 0 = white, 1 = pink
+    static constexpr auto mixOsc1On  = "MIX_OSC1_ON";
+    static constexpr auto mixOsc2On  = "MIX_OSC2_ON";
+    static constexpr auto mixOsc3On  = "MIX_OSC3_ON";
+    static constexpr auto mixNoiseOn = "MIX_NOISE_ON";
+    static constexpr auto mixExtOn   = "MIX_EXT_ON";
+    static constexpr auto noiseType  = "NOISE_TYPE";     // 0 = white, 1 = pink
 
-    // ---- Filter --------------------------------------------------------------
+    // ---- Modifiers: Filter ---------------------------------------------------
     static constexpr auto filterCutoff   = "FILTER_CUTOFF";
-    static constexpr auto filterReso     = "FILTER_RESO";
-    static constexpr auto filterEnv      = "FILTER_ENV";       // contour amount
-    static constexpr auto filterKeyTrack = "FILTER_KEYTRACK";  // 0%, 50%, 100%
+    static constexpr auto filterReso     = "FILTER_RESO";      // "emphasis"
+    static constexpr auto filterEnv      = "FILTER_ENV";       // amount of contour
+    static constexpr auto filterKeyTrack = "FILTER_KEYTRACK";  // 0 / 33 / 66 / 100 %
 
-    // ---- Filter Envelope (ENV 1) --------------------------------------------
     static constexpr auto filterAttack  = "FILTER_ATTACK";
     static constexpr auto filterDecay   = "FILTER_DECAY";
     static constexpr auto filterSustain = "FILTER_SUSTAIN";
     static constexpr auto filterRelease = "FILTER_RELEASE";
 
-    // ---- Amp / Loudness Envelope (ENV 2) ------------------------------------
+    // ---- Output: Loudness envelope ------------------------------------------
     static constexpr auto ampAttack  = "AMP_ATTACK";
-    static constexpr auto ampDecay    = "AMP_DECAY";
+    static constexpr auto ampDecay   = "AMP_DECAY";
     static constexpr auto ampSustain = "AMP_SUSTAIN";
     static constexpr auto ampRelease = "AMP_RELEASE";
+
+    // ---- Analog character (switchable per preset) ---------------------------
+    static constexpr auto driftAmount = "DRIFT_AMOUNT"; // oscillator analog drift
+    static constexpr auto filterDrive = "FILTER_DRIVE"; // mixer -> filter overdrive (growl)
+    static constexpr auto bassThin    = "BASS_THIN";    // resonance bass-thinning
 }
 
 namespace ParamChoices
 {
-    // Waveform selector shared by all three oscillators.
+    // Six Minimoog waveshapes shared by all three oscillators.
     inline juce::StringArray waveforms()
     {
-        return { "Triangle", "Saw", "Square", "Wide Pulse", "Narrow Pulse" };
+        return { "Triangle", "Tri-Saw", "Saw", "Square", "Wide Pulse", "Narrow Pulse" };
     }
 
-    // Foot ranges for the oscillator bank.  LO is only meaningful for Osc 3
-    // (used as a sub-audio LFO) but is exposed everywhere for consistency.
     inline juce::StringArray ranges()
     {
         return { "LO", "32'", "16'", "8'", "4'", "2'" };
     }
 
-    // Keyboard tracking amounts for the ladder filter.
+    // Minimoog keyboard-control switches give four tracking amounts.
     inline juce::StringArray keyTracking()
     {
-        return { "0%", "50%", "100%" };
+        return { "0%", "33%", "66%", "100%" };
     }
 
     inline juce::StringArray noiseTypes()
@@ -96,8 +96,6 @@ namespace ParamChoices
         return { "White", "Pink" };
     }
 
-    // Maps a range choice index to a frequency multiplier relative to 8'.
-    // LO drops several octaves so Osc 3 can act as an LFO.
     inline float rangeMultiplier (int rangeIndex)
     {
         switch (rangeIndex)
@@ -105,10 +103,22 @@ namespace ParamChoices
             case 0: return 1.0f / 64.0f; // LO / LFO
             case 1: return 0.25f;        // 32'
             case 2: return 0.5f;         // 16'
-            case 3: return 1.0f;         // 8'  (reference)
+            case 3: return 1.0f;         // 8'
             case 4: return 2.0f;         // 4'
             case 5: return 4.0f;         // 2'
             default: return 1.0f;
+        }
+    }
+
+    inline float keyTrackAmount (int index)
+    {
+        switch (index)
+        {
+            case 0: return 0.0f;
+            case 1: return 0.33f;
+            case 2: return 0.66f;
+            case 3: return 1.0f;
+            default: return 0.0f;
         }
     }
 }

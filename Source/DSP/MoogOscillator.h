@@ -17,6 +17,7 @@ public:
     enum class Waveform
     {
         triangle = 0,
+        triSaw,        // Minimoog "shark-fin": asymmetric triangle leaning to a saw
         saw,
         square,
         widePulse,
@@ -72,6 +73,16 @@ public:
                 const float sq = pulse (t, dt, 0.5f);
                 triIntegrator = (float) (4.0 * dt) * sq + (1.0f - (float) dt) * triIntegrator;
                 value = triIntegrator;
+                break;
+            }
+
+            case Waveform::triSaw:
+            {
+                // Integrating an asymmetric pulse yields the shark-fin shape
+                // (a triangle skewed toward a sawtooth ramp).
+                const float sq = pulse (t, dt, 0.3f);
+                triIntegrator = (float) (4.0 * dt) * sq + (1.0f - (float) dt) * triIntegrator;
+                value = triIntegrator * 1.1f;
                 break;
             }
         }

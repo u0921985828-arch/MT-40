@@ -33,6 +33,7 @@ public:
     void reset() noexcept
     {
         std::fill (std::begin (z), std::end (z), 0.0f);
+        hpState = 0.0f;
     }
 
     void setCutoff (float cutoffHz) noexcept
@@ -52,14 +53,34 @@ public:
         k = resonance * 4.2f; // reach self-oscillation near the top
     }
 
-    /** Extra input drive applied before the ladder (feedback / overdrive). */
-    void setDrive (float driveAmount) noexcept
+    /** Mixer -> filter overdrive (0 = clean/linear input, up = growl). */
+    void setInputDrive (float driveAmount) noexcept
     {
-        drive = juce::jmax (0.0f, driveAmount);
+        inputDrive = juce::jlimit (0.0f, 1.0f, driveAmount);
+    }
+
+    /** Resonance-dependent bass-thinning (0 = full lows, 1 = strong thinning). */
+    void setBassThin (float amount) noexcept
+    {
+        bassThin = juce::jlimit (0.0f, 1.0f, amount);
     }
 
     inline float processSample (float input) noexcept
     {
+        // Non-linear input drive (the classic Minimoog "growl" when the mixer
+        // pushes the filter input). Clean and unity when inputDrive == 0.
+        float driven = input;
+        if (inputDrive > 0.0001f)
+            driven = std::tanh (driven * (1.0f + inputDrive * 5.0f));
+
+        // Resonance-dependent bass-thinning via a one-pole high-pass blend.
+        const float thin = bassThin * resonance;
+        if (thin > 0.0001f)
+        {
+            hpState += hpCoef * (driven - hpState);
+            driven -= thin * hpState;
+        }
+
         float output = 0.0f;
 
         // 2x oversampling of the non-linear difference equation.
@@ -67,7 +88,7 @@ public:
         {
             // The through-path stays linear (accurate tuning, unity passband);
             // the soft transistor non-linearity lives in the resonance feedback.
-            const float xin = input * (1.0f + drive);
+            const float xin = driven;
 
             // --- Analytic zero-delay-feedback solve --------------------------
             // Each one-pole stage:  y = G*u + (1-G)*z   ->   b_i = (1-G)*z_i.
@@ -111,13 +132,18 @@ private:
         G2 = G * G;
         G3 = G2 * G;
         G4 = G2 * G2;
+
+        // ~150 Hz one-pole for the bass-thinning high-pass.
+        hpCoef = (float) (1.0 - std::exp (-2.0 * juce::MathConstants<double>::pi * 150.0 / fs));
     }
 
     double fs { 44100.0 };
     float  cutoff { 1000.0f };
     float  resonance { 0.0f };
-    float  k { 0.0f };       // feedback amount (0..~4.2)
-    float  drive { 0.0f };
+    float  k { 0.0f };            // feedback amount (0..~4.2)
+    float  inputDrive { 0.0f };   // mixer -> filter overdrive
+    float  bassThin { 0.0f };     // resonance-dependent bass-thinning
+    float  hpState { 0.0f }, hpCoef { 0.03f };
 
     float  G { 0.0f }, oneMinusG { 1.0f }, G2 { 0.0f }, G3 { 0.0f }, G4 { 0.0f };
     float  z[4] { 0.0f, 0.0f, 0.0f, 0.0f };

@@ -2,7 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
-#include "DSP/PolyphonicSynthesizer.h"
+#include "DSP/MonoSynthEngine.h"
+#include "DSP/SynthParameters.h"
 #include "PresetManager.h"
 
 /**
@@ -68,6 +69,9 @@ private:
     PresetManager presetManager { apvts };
     juce::MidiKeyboardState keyboardState;
 
+    SynthParameters synthParams;
+    MonoSynthEngine engine;
+
     // Master output: 4x oversampled soft limiter + DC blocker.
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
     static constexpr size_t oversamplingFactor = 2; // 2^2 = 4x
@@ -85,7 +89,6 @@ private:
     } scope;
 
     std::atomic<float> meter[2] { { 0.0f }, { 0.0f } };
-    PolyphonicSynthesizer synth;
 
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
 

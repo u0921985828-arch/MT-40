@@ -51,7 +51,7 @@ juce_add_binary_data(MoogWebAssets
 target_sources(MoogVASynth PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
-    Source/DSP/SynthVoice.cpp)
+    Source/DSP/MonoSynthEngine.cpp)
 
 target_include_directories(MoogVASynth PRIVATE Source)
 

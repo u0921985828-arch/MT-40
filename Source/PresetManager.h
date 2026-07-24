@@ -79,33 +79,36 @@ private:
 
     static const std::vector<Preset>& factoryPresets()
     {
+        // Waveform indices: Triangle 0, Tri-Saw 1, Saw 2, Square 3, Wide 4, Narrow 5.
         static const std::vector<Preset> presets
         {
             { "Init", {} },
             { "Fat Bass", {
-                { ParamID::osc1Wave, 1 }, { ParamID::osc1Range, 2 },
-                { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 1 }, { ParamID::osc2Detune, 0.1f },
+                { ParamID::osc1Wave, 2 }, { ParamID::osc1Range, 2 },
+                { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 2 }, { ParamID::osc2Detune, 0.1f },
                 { ParamID::mixOsc1Vol, 0.9f }, { ParamID::mixOsc2Vol, 0.7f },
                 { ParamID::filterCutoff, 900.0f }, { ParamID::filterReso, 0.35f },
                 { ParamID::filterEnv, 0.7f }, { ParamID::filterDecay, 350.0f },
+                { ParamID::filterDrive, 0.35f }, { ParamID::driftAmount, 0.3f },
                 { ParamID::ampDecay, 600.0f }, { ParamID::ampSustain, 0.9f } } },
             { "Screaming Lead", {
-                { ParamID::osc1Wave, 2 }, { ParamID::osc1Range, 3 },
-                { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 1 }, { ParamID::osc2Detune, 0.2f },
+                { ParamID::osc1Wave, 3 }, { ParamID::osc1Range, 3 },
+                { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 2 }, { ParamID::osc2Detune, 0.2f },
                 { ParamID::filterCutoff, 2500.0f }, { ParamID::filterReso, 0.55f },
                 { ParamID::filterEnv, 0.6f }, { ParamID::glideOn, 1 }, { ParamID::glideTime, 0.08f },
-                { ParamID::ampSustain, 0.85f } } },
+                { ParamID::filterDrive, 0.5f }, { ParamID::ampSustain, 0.85f } } },
             { "Brass", {
-                { ParamID::osc1Wave, 1 }, { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 1 },
+                { ParamID::osc1Wave, 2 }, { ParamID::mixOsc2On, 1 }, { ParamID::osc2Wave, 2 },
                 { ParamID::osc2Detune, 0.07f }, { ParamID::filterCutoff, 1400.0f },
                 { ParamID::filterReso, 0.25f }, { ParamID::filterEnv, 0.75f },
                 { ParamID::filterAttack, 60.0f }, { ParamID::filterDecay, 800.0f },
                 { ParamID::ampAttack, 40.0f }, { ParamID::ampSustain, 0.8f } } },
             { "Resonant Drone", {
                 { ParamID::osc1Wave, 3 }, { ParamID::osc1Range, 1 },
-                { ParamID::mixOsc3On, 1 }, { ParamID::osc3LfoMode, 1 }, { ParamID::osc3ModDepth, 0.35f },
+                { ParamID::mixOsc3On, 1 }, { ParamID::osc3KbControl, 0 },
+                { ParamID::modMix, 0.0f }, { ParamID::modFilterOn, 1 }, { ParamID::modWheel, 0.4f },
                 { ParamID::filterCutoff, 500.0f }, { ParamID::filterReso, 0.8f },
-                { ParamID::ampSustain, 1.0f }, { ParamID::ampRelease, 1200.0f } } },
+                { ParamID::bassThin, 0.5f }, { ParamID::ampSustain, 1.0f }, { ParamID::ampRelease, 1200.0f } } },
         };
         return presets;
     }

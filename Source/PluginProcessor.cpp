@@ -32,7 +32,8 @@ MoogSynthAudioProcessor::MoogSynthAudioProcessor()
                           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
-    synth.setup (apvts);
+    synthParams.connect (apvts);
+    engine.setParameters (&synthParams);
 
     for (auto& s : scope.buffer)
         s.store (0.0f, std::memory_order_relaxed);
@@ -49,55 +50,40 @@ MoogSynthAudioProcessor::createParameterLayout()
 
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    // ---- Global / Controllers -----------------------------------------------
+    // ---- Controllers --------------------------------------------------------
     params.push_back (std::make_unique<APF> (ParamID::masterVolume, "Master Volume",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.8f));
-
     params.push_back (std::make_unique<APF> (ParamID::masterTune, "Master Tune",
                                              juce::NormalisableRange<float> (-12.0f, 12.0f, 0.01f), 0.0f,
                                              Attr().withLabel ("st")));
-
     params.push_back (std::make_unique<APB> (ParamID::glideOn, "Glide On", false));
-
     params.push_back (std::make_unique<APF> (ParamID::glideTime, "Glide Time",
                                              logRange (0.0f, 5.0f, 0.5f), 0.05f,
                                              Attr().withLabel ("s")));
-
-    params.push_back (std::make_unique<APInt> (ParamID::pitchBendRange, "Pitch Bend Range",
-                                               0, 24, 2));
-
-    // ---- Oscillator 1 -------------------------------------------------------
-    params.push_back (std::make_unique<APC> (ParamID::osc1Wave, "Osc 1 Waveform",
-                                             ParamChoices::waveforms(), 1));
-    params.push_back (std::make_unique<APC> (ParamID::osc1Range, "Osc 1 Range",
-                                             ParamChoices::ranges(), 3));
-
-    // ---- Oscillator 2 -------------------------------------------------------
-    params.push_back (std::make_unique<APC> (ParamID::osc2Wave, "Osc 2 Waveform",
-                                             ParamChoices::waveforms(), 1));
-    params.push_back (std::make_unique<APC> (ParamID::osc2Range, "Osc 2 Range",
-                                             ParamChoices::ranges(), 3));
-    params.push_back (std::make_unique<APF> (ParamID::osc2Detune, "Osc 2 Fine Tune",
-                                             juce::NormalisableRange<float> (-7.0f, 7.0f, 0.01f), 0.0f,
-                                             Attr().withLabel ("st")));
-    params.push_back (std::make_unique<APF> (ParamID::osc2Coarse, "Osc 2 Coarse Tune",
-                                             juce::NormalisableRange<float> (-24.0f, 24.0f, 1.0f), 0.0f,
-                                             Attr().withLabel ("st")));
-
-    // ---- Oscillator 3 -------------------------------------------------------
-    params.push_back (std::make_unique<APC> (ParamID::osc3Wave, "Osc 3 Waveform",
-                                             ParamChoices::waveforms(), 1));
-    params.push_back (std::make_unique<APC> (ParamID::osc3Range, "Osc 3 Range",
-                                             ParamChoices::ranges(), 3));
-    params.push_back (std::make_unique<APF> (ParamID::osc3Detune, "Osc 3 Fine Tune",
-                                             juce::NormalisableRange<float> (-7.0f, 7.0f, 0.01f), 0.0f,
-                                             Attr().withLabel ("st")));
-    params.push_back (std::make_unique<APF> (ParamID::osc3Coarse, "Osc 3 Coarse Tune",
-                                             juce::NormalisableRange<float> (-24.0f, 24.0f, 1.0f), 0.0f,
-                                             Attr().withLabel ("st")));
-    params.push_back (std::make_unique<APB> (ParamID::osc3LfoMode, "Osc 3 LFO Mode", false));
-    params.push_back (std::make_unique<APF> (ParamID::osc3ModDepth, "Osc 3 Mod Depth",
+    params.push_back (std::make_unique<APInt> (ParamID::pitchBendRange, "Pitch Bend Range", 0, 24, 2));
+    params.push_back (std::make_unique<APF> (ParamID::modWheel, "Mod Wheel",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+    params.push_back (std::make_unique<APF> (ParamID::modMix, "Modulation Mix",
+                                             juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+    params.push_back (std::make_unique<APB> (ParamID::modOscOn, "Oscillator Modulation", false));
+    params.push_back (std::make_unique<APB> (ParamID::modFilterOn, "Filter Modulation", false));
+
+    // ---- Oscillator Bank ----------------------------------------------------
+    params.push_back (std::make_unique<APC> (ParamID::osc1Wave, "Osc 1 Waveform", ParamChoices::waveforms(), 2));
+    params.push_back (std::make_unique<APC> (ParamID::osc1Range, "Osc 1 Range", ParamChoices::ranges(), 3));
+
+    params.push_back (std::make_unique<APC> (ParamID::osc2Wave, "Osc 2 Waveform", ParamChoices::waveforms(), 2));
+    params.push_back (std::make_unique<APC> (ParamID::osc2Range, "Osc 2 Range", ParamChoices::ranges(), 3));
+    params.push_back (std::make_unique<APF> (ParamID::osc2Detune, "Osc 2 Tune",
+                                             juce::NormalisableRange<float> (-7.0f, 7.0f, 0.01f), 0.0f,
+                                             Attr().withLabel ("st")));
+
+    params.push_back (std::make_unique<APC> (ParamID::osc3Wave, "Osc 3 Waveform", ParamChoices::waveforms(), 2));
+    params.push_back (std::make_unique<APC> (ParamID::osc3Range, "Osc 3 Range", ParamChoices::ranges(), 3));
+    params.push_back (std::make_unique<APF> (ParamID::osc3Detune, "Osc 3 Tune",
+                                             juce::NormalisableRange<float> (-7.0f, 7.0f, 0.01f), 0.0f,
+                                             Attr().withLabel ("st")));
+    params.push_back (std::make_unique<APB> (ParamID::osc3KbControl, "Osc 3 Keyboard Control", true));
 
     // ---- Mixer --------------------------------------------------------------
     params.push_back (std::make_unique<APF> (ParamID::mixOsc1Vol, "Osc 1 Volume",
@@ -108,29 +94,27 @@ MoogSynthAudioProcessor::createParameterLayout()
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
     params.push_back (std::make_unique<APF> (ParamID::mixNoiseVol, "Noise Volume",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
-    params.push_back (std::make_unique<APF> (ParamID::mixFeedback, "Feedback Drive",
-                                             juce::NormalisableRange<float> (0.0f, 2.0f), 0.0f));
+    params.push_back (std::make_unique<APF> (ParamID::mixExtVol, "External / Feedback",
+                                             juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
 
-    params.push_back (std::make_unique<APB> (ParamID::mixOsc1On,     "Osc 1 On",     true));
-    params.push_back (std::make_unique<APB> (ParamID::mixOsc2On,     "Osc 2 On",     false));
-    params.push_back (std::make_unique<APB> (ParamID::mixOsc3On,     "Osc 3 On",     false));
-    params.push_back (std::make_unique<APB> (ParamID::mixNoiseOn,    "Noise On",     false));
-    params.push_back (std::make_unique<APB> (ParamID::mixFeedbackOn, "Feedback On",  false));
-    params.push_back (std::make_unique<APC> (ParamID::noiseType, "Noise Type",
-                                             ParamChoices::noiseTypes(), 0));
+    params.push_back (std::make_unique<APB> (ParamID::mixOsc1On,  "Osc 1 On",   true));
+    params.push_back (std::make_unique<APB> (ParamID::mixOsc2On,  "Osc 2 On",   false));
+    params.push_back (std::make_unique<APB> (ParamID::mixOsc3On,  "Osc 3 On",   false));
+    params.push_back (std::make_unique<APB> (ParamID::mixNoiseOn, "Noise On",   false));
+    params.push_back (std::make_unique<APB> (ParamID::mixExtOn,   "External On", false));
+    params.push_back (std::make_unique<APC> (ParamID::noiseType, "Noise Type", ParamChoices::noiseTypes(), 0));
 
-    // ---- Filter -------------------------------------------------------------
+    // ---- Modifiers: Filter --------------------------------------------------
     params.push_back (std::make_unique<APF> (ParamID::filterCutoff, "Cutoff Frequency",
                                              logRange (20.0f, 20000.0f, 1000.0f), 12000.0f,
                                              Attr().withStringFromValueFunction (hzValueToText)));
-    params.push_back (std::make_unique<APF> (ParamID::filterReso, "Resonance",
+    params.push_back (std::make_unique<APF> (ParamID::filterReso, "Emphasis",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.1f));
-    params.push_back (std::make_unique<APF> (ParamID::filterEnv, "Contour Amount",
+    params.push_back (std::make_unique<APF> (ParamID::filterEnv, "Amount of Contour",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.5f));
-    params.push_back (std::make_unique<APC> (ParamID::filterKeyTrack, "Keyboard Tracking",
-                                             ParamChoices::keyTracking(), 1));
+    params.push_back (std::make_unique<APC> (ParamID::filterKeyTrack, "Keyboard Control",
+                                             ParamChoices::keyTracking(), 2));
 
-    // ---- Filter Envelope (ENV 1) -------------------------------------------
     params.push_back (std::make_unique<APF> (ParamID::filterAttack, "Filter Attack",
                                              logRange (1.0f, 10000.0f, 200.0f), 20.0f,
                                              Attr().withStringFromValueFunction (msValueToText)));
@@ -143,7 +127,7 @@ MoogSynthAudioProcessor::createParameterLayout()
                                              logRange (1.0f, 10000.0f, 200.0f), 200.0f,
                                              Attr().withStringFromValueFunction (msValueToText)));
 
-    // ---- Amp / Loudness Envelope (ENV 2) -----------------------------------
+    // ---- Output: Loudness envelope ------------------------------------------
     params.push_back (std::make_unique<APF> (ParamID::ampAttack, "Amp Attack",
                                              logRange (1.0f, 10000.0f, 200.0f), 10.0f,
                                              Attr().withStringFromValueFunction (msValueToText)));
@@ -156,12 +140,20 @@ MoogSynthAudioProcessor::createParameterLayout()
                                              logRange (1.0f, 10000.0f, 200.0f), 150.0f,
                                              Attr().withStringFromValueFunction (msValueToText)));
 
+    // ---- Analog character ---------------------------------------------------
+    params.push_back (std::make_unique<APF> (ParamID::driftAmount, "Analog Drift",
+                                             juce::NormalisableRange<float> (0.0f, 1.0f), 0.25f));
+    params.push_back (std::make_unique<APF> (ParamID::filterDrive, "Filter Drive",
+                                             juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+    params.push_back (std::make_unique<APF> (ParamID::bassThin, "Bass Thinning",
+                                             juce::NormalisableRange<float> (0.0f, 1.0f), 0.3f));
+
     return { params.begin(), params.end() };
 }
 
 void MoogSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    synth.prepareToPlay (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+    engine.prepare (sampleRate, samplesPerBlock);
     masterGain.reset (sampleRate, 0.02);
 
     const auto numOut = (size_t) juce::jmax (1, getTotalNumOutputChannels());
@@ -216,7 +208,7 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Merge notes played on the on-screen keyboard with incoming host MIDI.
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
 
-    synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    engine.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
     // ---- Master volume -----------------------------------------------------
     masterGain.setTargetValue (apvts.getRawParameterValue (ParamID::masterVolume)->load());
