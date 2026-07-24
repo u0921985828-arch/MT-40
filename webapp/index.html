@@ -18,7 +18,7 @@
   /* Fixed design canvas, uniformly scaled to fit any screen. */
   #stage{
     width:var(--dw,1280px);height:var(--dh,720px);flex:none;position:relative;
-    display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;overflow:hidden;
+    display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;overflow:visible;
     transform-origin:center center;transform:scale(1);
     background:
       var(--wood-tex,none),
@@ -46,7 +46,9 @@
   .logo{font-family:Georgia,serif;font-size:22px;font-weight:700;text-shadow:0 1px 2px #000;}
   .model{font-size:9px;letter-spacing:3px;color:var(--dim);}
   header .right{display:flex;gap:8px;align-items:center;}
-  select.preset{background:#100f0d;color:var(--label);border:1px solid #000;border-radius:5px;padding:5px 7px;font:inherit;font-size:12px;}
+  #res{min-width:150px;}
+  #preset{min-width:150px;}
+  .preset-dd .dd-btn{font-size:12px;padding:5px 20px 5px 8px;}
   .vu{display:flex;gap:3px;align-items:flex-end;height:26px;}
   .vu i{width:6px;height:100%;background:#0a1a10;border-radius:2px;overflow:hidden;display:flex;align-items:flex-end;}
   .vu i b{display:block;width:100%;height:0;background:linear-gradient(0deg,#34d058,#d9d040 78%,#e0402a);}
@@ -102,14 +104,40 @@
 
   /* Combo */
   .cmb{display:flex;flex-direction:column;align-items:center;gap:3px;}
-  .cmb select,select.preset{-webkit-appearance:none;appearance:none;
-    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b6ab8a'/%3E%3C/svg%3E") no-repeat right 7px center,linear-gradient(180deg,#2b2b30,#141416);
-    color:var(--label);border:1px solid #000;border-top-color:#3a3a42;border-radius:4px;padding:4px 20px 4px 8px;font-size:11px;font-family:inherit;width:88px;letter-spacing:.3px;cursor:pointer;
-    box-shadow:inset 0 1px 1px rgba(255,255,255,.09),inset 0 -3px 6px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.5);text-shadow:0 1px 0 rgba(0,0,0,.85);}
-  select.preset{width:auto;font-size:12px;}
-  .cmb select:focus,select.preset:focus{outline:none;border-color:var(--accent-blue);}
-  .cmb.wide select{width:104px;}
+  .cmb .dd{width:88px;}
+  .cmb.wide .dd{width:104px;}
   .cmb .lab{font-size:9px;color:var(--dim);text-transform:uppercase;}
+
+  /* Metal dropdown (in-DOM replacement for native <select>) */
+  .dd{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .dd-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:4px;
+    color:var(--label);border:1px solid #000;border-top-color:#3a3a42;border-radius:4px;
+    background:linear-gradient(180deg,#2b2b30,#141416);
+    padding:4px 8px;font-size:11px;font-family:inherit;letter-spacing:.3px;cursor:pointer;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.09),inset 0 -3px 6px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.5);
+    text-shadow:0 1px 0 rgba(0,0,0,.85);}
+  .dd-btn:hover{border-top-color:#4c4c56;}
+  .dd.open .dd-btn{border-color:var(--accent-blue);}
+  .dd-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dd-arw{flex:none;width:10px;height:6px;margin-left:2px;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b6ab8a'/%3E%3C/svg%3E") no-repeat center;}
+  .dd.open .dd-arw{transform:rotate(180deg);}
+  .dd-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
+    min-width:100%;max-height:230px;overflow-y:auto;overflow-x:hidden;
+    padding:3px;border:1px solid #000;border-top-color:#3a3a42;border-radius:5px;
+    background:linear-gradient(180deg,#34343a,#141416);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.09),0 10px 24px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.6);
+    scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+  .dd.open .dd-menu{display:block;}
+  .dd.up .dd-menu{top:auto;bottom:calc(100% + 4px);}
+  .dd-group{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--accent-orange);
+    padding:5px 7px 2px;text-shadow:0 1px 0 rgba(0,0,0,.85);}
+  .dd-opt{padding:6px 8px;font-size:11px;color:var(--label);border-radius:3px;white-space:nowrap;cursor:pointer;text-shadow:0 1px 0 rgba(0,0,0,.8);}
+  .dd-opt:hover{background:linear-gradient(180deg,#3a4a5e,#223245);color:#fff;}
+  .dd-opt.sel{background:linear-gradient(180deg,#1f4f7d,#163a5c);color:#fff;box-shadow:inset 0 0 0 1px rgba(47,116,179,.6);}
+  .dd-menu::-webkit-scrollbar{width:8px;}
+  .dd-menu::-webkit-scrollbar-thumb{background:#4a4a52;border-radius:4px;}
+  .dd-menu::-webkit-scrollbar-track{background:transparent;}
 
   /* Oscillator rows */
   .osc{display:flex;align-items:center;gap:8px;}
@@ -157,8 +185,8 @@
     <div class="model">MODEL VA</div>
   </div>
   <div class="right">
-    <select class="preset" id="res" title="Resolución"></select>
-    <select class="preset" id="preset"></select>
+    <div class="dd preset-dd" id="res" title="Resolución"></div>
+    <div class="dd preset-dd" id="preset"></div>
     <div class="vu"><i><b id="vuL"></b></i><i><b id="vuR"></b></i></div>
   </div>
 </header>
@@ -4964,13 +4992,46 @@ function swEl(spec){
   el._render=render;
   return el;
 }
+// ---- Metal in-DOM dropdown (replaces native <select>) -----------------
+let __openDD=null;
+function closeAllDD(){ if(__openDD){__openDD.classList.remove("open");__openDD=null;} }
+document.addEventListener("pointerdown",e=>{ if(!e.target.closest(".dd")) closeAllDD(); },true);
+function makeDropdown(host,caption){
+  host.classList.add("dd");
+  host.innerHTML=`<button class="dd-btn" type="button"><span class="dd-lbl">--</span><span class="dd-arw"></span></button>`
+    +`<div class="dd-menu"></div>`+(caption?`<span class="lab">${caption}</span>`:"");
+  const btn=host.querySelector(".dd-btn"),lbl=host.querySelector(".dd-lbl"),menu=host.querySelector(".dd-menu");
+  const api={onSelect:()=>{}};
+  const commit=(val,label)=>{lbl.textContent=label;
+    menu.querySelectorAll(".dd-opt").forEach(it=>it.classList.toggle("sel",String(it.dataset.val)===String(val)));
+    closeAllDD();api.onSelect(val);};
+  const mkOpt=o=>{const it=document.createElement("div");it.className="dd-opt";it.textContent=o.label;it.dataset.val=o.value;
+    it.addEventListener("click",e=>{e.stopPropagation();commit(o.value,o.label);});return it;};
+  btn.addEventListener("click",e=>{e.stopPropagation();
+    const open=!host.classList.contains("open");closeAllDD();
+    if(open){host.classList.add("open");__openDD=host;
+      const r=btn.getBoundingClientRect();
+      host.classList.toggle("up",r.bottom+240>window.innerHeight&&r.top-240>0);
+      const sel=menu.querySelector(".dd-opt.sel");if(sel)sel.scrollIntoView({block:"nearest"});}});
+  api.setOptions=opts=>{menu.innerHTML="";opts.forEach(o=>menu.appendChild(mkOpt(o)));};
+  api.setGroups=groups=>{menu.innerHTML="";groups.forEach(g=>{
+    if(g.label){const h=document.createElement("div");h.className="dd-group";h.textContent=g.label;menu.appendChild(h);}
+    g.items.forEach(o=>menu.appendChild(mkOpt(o)));});};
+  api.setValue=val=>{let label="";
+    menu.querySelectorAll(".dd-opt").forEach(it=>{const on=String(it.dataset.val)===String(val);
+      it.classList.toggle("sel",on);if(on)label=it.textContent;});
+    if(label)lbl.textContent=label;};
+  return api;
+}
+
 function cmbEl(spec){
   const el=document.createElement("div");el.className="cmb"+(spec.wide?" wide":"");
-  el.innerHTML=`<select>${spec.opts.map((o,i)=>`<option value="${i}">${o}</option>`).join("")}</select><span class="lab">${spec.lab}</span>`;
-  const sel=el.querySelector("select");
-  const render=()=>{sel.value=String(P[spec.id]);};
+  const box=document.createElement("div");el.appendChild(box);
+  const dd=makeDropdown(box,spec.lab);
+  dd.setOptions(spec.opts.map((o,i)=>({label:o,value:i})));
+  dd.onSelect=v=>{P[spec.id]=parseInt(v);};
+  const render=()=>dd.setValue(P[spec.id]);
   render();
-  sel.addEventListener("change",()=>{P[spec.id]=parseInt(sel.value);});
   el._render=render;
   return el;
 }
@@ -5039,26 +5100,25 @@ document.querySelectorAll(".row,.sw-row,.osc,.mch").forEach(r=>{r.style.minHeigh
 const DEFAULTS=JSON.stringify(Object.assign({},P));
 const bankEl=document.getElementById("bank");
 const BANK = bankEl ? JSON.parse(bankEl.textContent) : {categories:[],presets:{}};
-const presetSel=document.getElementById("preset");
+const presetDD=makeDropdown(document.getElementById("preset"),"");
 function applyPresetParams(params){
   Object.assign(P, JSON.parse(DEFAULTS)); Object.assign(P, params);
   allControls.forEach(c=>c._render&&c._render());
 }
 (function buildPresetMenu(){
-  const init=document.createElement("option"); init.value="__init__"; init.textContent="Init"; presetSel.appendChild(init);
+  const groups=[{label:"",items:[{label:"Init",value:"__init__"}]}];
   (BANK.categories||[]).forEach(cat=>{
-    const og=document.createElement("optgroup"); og.label=cat;
-    (BANK.presets[cat]||[]).forEach(p=>{const o=document.createElement("option");o.value=cat+"|||"+p.name;o.textContent=p.name;og.appendChild(o);});
-    presetSel.appendChild(og);
+    groups.push({label:cat,items:(BANK.presets[cat]||[]).map(p=>({label:p.name,value:cat+"|||"+p.name}))});
   });
+  presetDD.setGroups(groups);
+  presetDD.setValue("__init__");
 })();
-presetSel.addEventListener("change",()=>{
-  const v=presetSel.value;
+presetDD.onSelect=v=>{
   if(v==="__init__"){applyPresetParams({});return;}
   const idx=v.indexOf("|||"); const cat=v.slice(0,idx), name=v.slice(idx+3);
   const pr=(BANK.presets[cat]||[]).find(p=>p.name===name);
   if(pr)applyPresetParams(pr.params);
-});
+};
 
 //====================================================================
 // WHEELS
@@ -5144,8 +5204,10 @@ function setScale(){
   stageEl.style.transform=`rotate(${portrait?90:0}deg) scale(${sc.toFixed(4)})`;
 }
 function applyRes(){const r=RES[resIdx];stageEl.style.setProperty("--dw",r.w+"px");stageEl.style.setProperty("--dh",r.h+"px");setScale();}
-(function(){const s=document.getElementById("res");RES.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=r.n;s.appendChild(o);});
-  s.addEventListener("change",()=>{resIdx=+s.value;applyRes();});})();
+(function(){const resDD=makeDropdown(document.getElementById("res"),"");
+  resDD.setOptions(RES.map((r,i)=>({label:r.n,value:i})));
+  resDD.setValue(resIdx);
+  resDD.onSelect=v=>{resIdx=+v;applyRes();};})();
 window.addEventListener("resize",setScale);
 window.addEventListener("orientationchange",()=>setTimeout(setScale,200));
 applyRes();

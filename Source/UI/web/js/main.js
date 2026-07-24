@@ -228,14 +228,92 @@ function setupRocker(el) {
 }
 
 // ---------------------------------------------------------------------------
+// Custom in-DOM dropdown (replaces native <select>, so it stays inside the
+// WebView, opens horizontally below the button, and keeps the metal design).
+// ---------------------------------------------------------------------------
+let __openDD = null;
+function closeAllDD() {
+  if (__openDD) { __openDD.classList.remove("open"); __openDD = null; }
+}
+// Capture-phase so a tap anywhere outside the open dropdown dismisses it.
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest(".dd")) closeAllDD();
+}, true);
+
+// Turns a host element into a metal dropdown. Returns an API to feed it flat
+// options { setOptions } or grouped options { setGroups }, set the current
+// value ({ setValue }), and receive picks (assign onSelect).
+function makeDropdown(host, caption) {
+  host.classList.add("dd");
+  host.innerHTML =
+    `<button class="dd-btn" type="button"><span class="dd-lbl">--</span><span class="dd-arw"></span></button>` +
+    `<div class="dd-menu"></div>` +
+    (caption ? `<span class="caption">${caption}</span>` : "");
+  const btn  = host.querySelector(".dd-btn");
+  const lbl  = host.querySelector(".dd-lbl");
+  const menu = host.querySelector(".dd-menu");
+  const api  = { onSelect: () => {} };
+
+  const commit = (val, label) => {
+    lbl.textContent = label;
+    menu.querySelectorAll(".dd-opt").forEach((it) =>
+      it.classList.toggle("sel", String(it.dataset.val) === String(val)));
+    closeAllDD();
+    api.onSelect(val);
+  };
+  const mkOpt = (o) => {
+    const it = document.createElement("div");
+    it.className = "dd-opt"; it.textContent = o.label; it.dataset.val = o.value;
+    it.addEventListener("click", (e) => { e.stopPropagation(); commit(o.value, o.label); });
+    return it;
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = !host.classList.contains("open");
+    closeAllDD();
+    if (open) {
+      host.classList.add("open"); __openDD = host;
+      // Flip upward when there isn't room below (rotated / near the bottom).
+      const r = btn.getBoundingClientRect();
+      host.classList.toggle("up", r.bottom + 220 > window.innerHeight && r.top - 220 > 0);
+      const sel = menu.querySelector(".dd-opt.sel");
+      if (sel) sel.scrollIntoView({ block: "nearest" });
+    }
+  });
+
+  api.setOptions = (opts) => {
+    menu.innerHTML = "";
+    opts.forEach((o) => menu.appendChild(mkOpt(o)));
+  };
+  api.setGroups = (groups) => {
+    menu.innerHTML = "";
+    groups.forEach((g) => {
+      if (g.label) {
+        const h = document.createElement("div");
+        h.className = "dd-group"; h.textContent = g.label; menu.appendChild(h);
+      }
+      g.items.forEach((o) => menu.appendChild(mkOpt(o)));
+    });
+  };
+  api.setValue = (val) => {
+    let label = "";
+    menu.querySelectorAll(".dd-opt").forEach((it) => {
+      const on = String(it.dataset.val) === String(val);
+      it.classList.toggle("sel", on);
+      if (on) label = it.textContent;
+    });
+    if (label) lbl.textContent = label;
+  };
+  return api;
+}
+
+// ---------------------------------------------------------------------------
 // Combo boxes  ->  WebComboBoxRelay
 // ---------------------------------------------------------------------------
 function setupCombo(el) {
   const id = el.dataset.param;
   const caption = el.dataset.caption ?? "";
-
-  el.innerHTML = `<select></select><span class="caption">${caption}</span>`;
-  const select = el.querySelector("select");
 
   let state;
   try {
@@ -244,26 +322,21 @@ function setupCombo(el) {
     return;
   }
 
+  const dd = makeDropdown(el, caption);
+  dd.onSelect = (v) => state.setChoiceIndex(parseInt(v, 10));
+
+  let count = -1;
   const rebuild = () => {
     const choices = state.properties.choices ?? [];
-    if (select.options.length !== choices.length) {
-      select.innerHTML = "";
-      choices.forEach((c, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent = c;
-        select.appendChild(opt);
-      });
+    if (choices.length !== count) {
+      count = choices.length;
+      dd.setOptions(choices.map((c, i) => ({ label: c, value: i })));
     }
-    select.value = String(state.getChoiceIndex());
+    dd.setValue(state.getChoiceIndex());
   };
   state.propertiesChangedEvent.addListener(rebuild);
   state.valueChangedEvent.addListener(rebuild);
   rebuild();
-
-  select.addEventListener("change", () =>
-    state.setChoiceIndex(parseInt(select.value, 10))
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -379,9 +452,9 @@ function setupVisualiser() {
 // Presets  <->  native getPresets / loadPreset / savePreset
 // ---------------------------------------------------------------------------
 function setupPresets() {
-  const select = document.getElementById("presetSelect");
+  const host = document.getElementById("presetSelect");
   const saveBtn = document.getElementById("presetSave");
-  if (!select || !saveBtn) return;
+  if (!host || !saveBtn) return;
 
   let getBank, loadPreset, savePreset;
   try {
@@ -390,30 +463,29 @@ function setupPresets() {
     savePreset = getNativeFunction("savePreset");
   } catch (e) { return; }
 
+  const dd = makeDropdown(host, "");
+  dd.onSelect = (v) => { if (v !== "__init__") loadPreset(v); };
+
   const refresh = async () => {
     const res = await getBank();
     let bank = { categories: [], presets: {} };
     try { bank = JSON.parse(res.bank || "{}"); } catch (e) {}
-    select.innerHTML = "";
-    const init = document.createElement("option");
-    init.value = "__init__"; init.textContent = "Init"; select.appendChild(init);
+    const groups = [{ label: "", items: [{ label: "Init", value: "__init__" }] }];
     (bank.categories || []).forEach((cat) => {
-      const og = document.createElement("optgroup"); og.label = cat;
-      (bank.presets[cat] || []).forEach((p) => {
-        const o = document.createElement("option");
-        o.value = cat + "|||" + p.name; o.textContent = p.name; og.appendChild(o);
+      groups.push({
+        label: cat,
+        items: (bank.presets[cat] || []).map((p) => ({
+          label: p.name, value: cat + "|||" + p.name,
+        })),
       });
-      select.appendChild(og);
     });
-    if (res.current) select.value = res.current;
+    dd.setGroups(groups);
+    if (res.current) dd.setValue(res.current);
   };
 
-  select.addEventListener("change", () => {
-    if (select.value !== "__init__") loadPreset(select.value);
-  });
   saveBtn.addEventListener("click", async () => {
     const name = window.prompt("Preset name:", "My Preset");
-    if (name) { await savePreset(name); await refresh(); select.value = "User|||" + name; }
+    if (name) { await savePreset(name); await refresh(); dd.setValue("User|||" + name); }
   });
 
   refresh();

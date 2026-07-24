@@ -58,7 +58,9 @@ html, body {
 .model { font-size: 11px; letter-spacing: 4px; color: var(--label-dim); white-space: nowrap; }
 
 #presetbar { display: flex; gap: 6px; align-items: center; }
-#presetSelect { background: #100f0d; color: var(--label); border: 1px solid #000; border-radius: 4px; padding: 4px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+#presetSelect { min-width: 190px; }
+#presetSelect .dd-btn { font-size: 12px; padding: 5px 22px 5px 9px; }
+#presetSelect .dd-menu { min-width: 210px; }
 #presetSave { background: linear-gradient(180deg, #45454a, #232326); color: var(--label); border: 1px solid #000; border-radius: 4px; padding: 5px 11px; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
 #presetSave:active { background: var(--accent-blue); }
 
@@ -87,7 +89,7 @@ html, body {
   background-size: cover, 512px 96px, cover;
   background-blend-mode: multiply, soft-light, normal;
   box-shadow: inset 0 2px 3px rgba(255,255,255,0.08), inset 0 0 46px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.6);
-  overflow: hidden;
+  overflow: visible;
 }
 .kcv { display: block; margin: 0 auto; }
 .sect {
@@ -96,7 +98,7 @@ html, body {
   padding: var(--sect-pad) 6px 4px;
   border-right: 1px solid rgba(0,0,0,0.6);
   box-shadow: inset -1px 0 0 rgba(255,255,255,0.03);
-  min-width: 0; overflow: hidden;
+  min-width: 0; overflow: visible;
 }
 .sect:last-child { border-right: none; }
 
@@ -165,7 +167,6 @@ html, body {
 .combo { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 78px; }
 .combo.wide { width: 108px; }
 .combo.tiny { width: 66px; }
-.combo select { width: 100%; background: #100f0d; color: var(--label); border: 1px solid #000; border-radius: 4px; padding: 3px 5px; font-size: 11px; font-family: inherit; cursor: pointer; }
 .combo .caption { font-size: 9px; color: var(--label-dim); text-transform: uppercase; }
 
 /* ---- Oscillator rows / mixer --------------------------------------- */
@@ -184,7 +185,7 @@ html, body {
 .mix-ch .knob.small .knob-face { width: 34px; height: 34px; }
 #mixer .combo.tiny { margin-left: 6px; }
 .combo.tiny { width: 52px; }
-.combo.tiny select { font-size: 9px; padding: 2px 3px; }
+.combo.tiny .dd-btn { font-size: 9px; padding: 3px 16px 3px 5px; }
 
 /* ---- Wheels + keyboard --------------------------------------------- */
 #lower { display: flex; gap: 12px; align-items: stretch; height: 118px; }
@@ -215,21 +216,47 @@ html, body {
 .sect { border-right: 1px solid #000; box-shadow: inset -1px 0 0 rgba(255,255,255,0.05), inset 1px 0 0 rgba(0,0,0,0.4); }
 .sect h2 { text-shadow: 0 1px 0 rgba(0,0,0,0.95), 0 -1px 0 rgba(255,255,255,0.06); }
 .rocker .cap { box-shadow: inset 0 -6px 8px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.12), 0 2px 3px rgba(0,0,0,0.5); }
-.combo select { background: linear-gradient(180deg,#17161400,#0000001a), #100f0d; box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.04); }
 
-/* ---- Metal-styled selection lists (combos + preset) ---------------- */
-.combo select, #presetSelect {
-  -webkit-appearance: none; appearance: none;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b6ab8a'/%3E%3C/svg%3E") no-repeat right 7px center,
-    linear-gradient(180deg, #2b2b30, #141416);
+/* ---- Metal dropdown (in-DOM replacement for native <select>) -------- */
+.dd { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.dd-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px;
   color: var(--label); border: 1px solid #000; border-top-color: #3a3a42; border-radius: 4px;
-  padding: 4px 20px 4px 8px; font-family: inherit; letter-spacing: 0.3px; cursor: pointer;
+  background: linear-gradient(180deg, #2b2b30, #141416);
+  padding: 4px 8px; font-family: inherit; font-size: 11px; letter-spacing: 0.3px; cursor: pointer;
   box-shadow: inset 0 1px 1px rgba(255,255,255,0.09), inset 0 -3px 6px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.5);
   text-shadow: 0 1px 0 rgba(0,0,0,0.85);
 }
-.combo select:hover, #presetSelect:hover { border-top-color: #4c4c56; }
-.combo select:focus, #presetSelect:focus { outline: none; border-color: var(--accent-blue); }
+.dd-btn:hover { border-top-color: #4c4c56; }
+.dd.open .dd-btn { border-color: var(--accent-blue); }
+.dd-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-arw { flex: none; width: 10px; height: 6px; margin-left: 2px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b6ab8a'/%3E%3C/svg%3E") no-repeat center; }
+.dd.open .dd-arw { transform: rotate(180deg); }
+
+.dd-menu {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+  min-width: 100%; max-height: 208px; overflow-y: auto; overflow-x: hidden;
+  padding: 3px; border: 1px solid #000; border-top-color: #3a3a42; border-radius: 5px;
+  background: linear-gradient(180deg, #34343a, #141416);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.09), 0 10px 24px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.6);
+}
+.dd.open .dd-menu { display: block; }
+.dd.up .dd-menu { top: auto; bottom: calc(100% + 4px); }
+.dd-group {
+  font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-orange);
+  padding: 5px 7px 2px; text-shadow: 0 1px 0 rgba(0,0,0,0.85);
+}
+.dd-opt {
+  padding: 5px 8px; font-size: 11px; color: var(--label); border-radius: 3px;
+  white-space: nowrap; cursor: pointer; text-shadow: 0 1px 0 rgba(0,0,0,0.8);
+}
+.dd-opt:hover { background: linear-gradient(180deg, #3a4a5e, #223245); color: #fff; }
+.dd-opt.sel { background: linear-gradient(180deg, #1f4f7d, #163a5c); color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(47,116,179,0.6); }
+.dd-menu::-webkit-scrollbar { width: 8px; }
+.dd-menu::-webkit-scrollbar-thumb { background: #4a4a52; border-radius: 4px; }
+.dd-menu::-webkit-scrollbar-track { background: transparent; }
 
 /* ---- Photoreal rocker switches (recessed metal frame + lit paddle) -- */
 .rocker .cap { position: relative; background: linear-gradient(180deg,#3a3a40,#141417);
