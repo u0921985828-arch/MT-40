@@ -62,6 +62,34 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
                 if (args.size() >= 1)
                     processorRef.getKeyboardState().noteOff (1, (int) args[0], 0.0f);
                 complete (juce::var());
+            })
+        .withNativeFunction ("getPresets",
+            [this] (const juce::Array<juce::var>&,
+                    juce::WebBrowserComponent::NativeFunctionCompletion complete)
+            {
+                juce::Array<juce::var> names;
+                for (const auto& n : processorRef.getPresetManager().getPresetNames())
+                    names.add (n);
+                auto* obj = new juce::DynamicObject();
+                obj->setProperty ("names", names);
+                obj->setProperty ("current", processorRef.getPresetManager().getCurrentPreset());
+                complete (juce::var (obj));
+            })
+        .withNativeFunction ("loadPreset",
+            [this] (const juce::Array<juce::var>& args,
+                    juce::WebBrowserComponent::NativeFunctionCompletion complete)
+            {
+                if (args.size() >= 1)
+                    processorRef.getPresetManager().loadPreset (args[0].toString());
+                complete (juce::var());
+            })
+        .withNativeFunction ("savePreset",
+            [this] (const juce::Array<juce::var>& args,
+                    juce::WebBrowserComponent::NativeFunctionCompletion complete)
+            {
+                if (args.size() >= 1)
+                    processorRef.getPresetManager().savePreset (args[0].toString());
+                complete (juce::var());
             });
 
     for (auto* r : sliderRelays) options = options.withOptionsFrom (*r);
@@ -140,9 +168,20 @@ void MoogSynthAudioProcessorEditor::timerCallback()
         spectrum.add (juce::jlimit (0.0f, 1.0f, juce::jmap (db, -90.0f, 0.0f, 0.0f, 1.0f)));
     }
 
+    // ---- Output level meters (peak-hold with decay) -----------------------
+    juce::Array<juce::var> levels;
+    for (int ch = 0; ch < 2; ++ch)
+    {
+        const float lvl = processorRef.getMeterLevel (ch);
+        meterDisplay[ch] = lvl > meterDisplay[ch] ? lvl
+                                                   : meterDisplay[ch] * 0.82f; // fall
+        levels.add (juce::jlimit (0.0f, 1.0f, meterDisplay[ch]));
+    }
+
     auto* payload = new juce::DynamicObject();
     payload->setProperty ("wave", wave);
     payload->setProperty ("spectrum", spectrum);
+    payload->setProperty ("levels", levels);
     webView->emitEventIfBrowserIsVisible ("visualiser", juce::var (payload));
 }
 

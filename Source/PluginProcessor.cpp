@@ -246,8 +246,10 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         oversampler->processSamplesDown (block);
     }
 
-    // ---- DC blocker + scope feed -------------------------------------------
+    // ---- DC blocker + metering + scope feed --------------------------------
     constexpr float R = 0.9975f;
+    float peak[2] { 0.0f, 0.0f };
+
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
         float mono = 0.0f;
@@ -260,9 +262,13 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             dcY1[c] = y;
             buffer.setSample (ch, i, y);
             mono += y;
+            peak[c] = juce::jmax (peak[c], std::abs (y));
         }
         pushScope (numCh > 0 ? mono / (float) numCh : 0.0f);
     }
+
+    meter[0].store (peak[0], std::memory_order_relaxed);
+    meter[1].store (numCh > 1 ? peak[1] : peak[0], std::memory_order_relaxed);
 }
 
 juce::AudioProcessorEditor* MoogSynthAudioProcessor::createEditor()

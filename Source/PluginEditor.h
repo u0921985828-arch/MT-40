@@ -37,6 +37,7 @@ private:
     juce::dsp::WindowingFunction<float> window { fftSize, juce::dsp::WindowingFunction<float>::hann };
     std::array<float, fftSize>     scopeSamples {};
     std::array<float, fftSize * 2> fftData {};
+    float meterDisplay[2] { 0.0f, 0.0f }; // peak-hold with decay
 
     // One relay + attachment per parameter, grouped by control type.
     juce::OwnedArray<juce::WebSliderRelay>        sliderRelays;

@@ -43,7 +43,19 @@ html, body {
   gap: 14px;
   padding: 4px 26px;
 }
-#brand .brand-text { display: flex; align-items: baseline; gap: 14px; }
+#brand .brand-text { display: flex; align-items: center; gap: 14px; }
+
+#presetbar { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
+#presetSelect {
+  background: #111; color: var(--label); border: 1px solid #000;
+  border-radius: 4px; padding: 4px 8px; font: inherit; font-size: 12px; cursor: pointer;
+}
+#presetSave {
+  background: linear-gradient(180deg, #45454a, #232326); color: var(--label);
+  border: 1px solid #000; border-radius: 4px; padding: 4px 10px;
+  font: inherit; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+}
+#presetSave:active { background: var(--accent-blue); }
 #brand .logo { font-size: 26px; font-weight: 800; letter-spacing: 1px; color: var(--label); }
 #brand .model { font-size: 12px; letter-spacing: 3px; color: var(--label-dim); }
 
@@ -63,6 +75,30 @@ html, body {
   font-size: 9px;
   letter-spacing: 2px;
   color: rgba(120, 230, 160, 0.55);
+}
+
+.display.vu {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  height: 66px;
+  width: 34px;
+  padding: 5px;
+}
+.vu-bar {
+  width: 10px;
+  height: 100%;
+  background: #0a1a10;
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.vu-fill {
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(0deg, #34d058 0%, #d9d040 78%, #e0402a 100%);
+  transition: height 0.05s linear;
 }
 
 #panels {

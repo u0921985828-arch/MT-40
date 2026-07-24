@@ -244,12 +244,55 @@ function setupVisualiser() {
     }
   };
 
+  const vuL = document.getElementById("vuL");
+  const vuR = document.getElementById("vuR");
+  const drawVU = (levels) => {
+    if (vuL) vuL.style.height = (levels[0] * 100).toFixed(1) + "%";
+    if (vuR) vuR.style.height = (levels[1] * 100).toFixed(1) + "%";
+  };
+
   try {
     window.__JUCE__.backend.addEventListener("visualiser", (payload) => {
       if (payload.wave) drawScope(payload.wave);
       if (payload.spectrum) drawSpectrum(payload.spectrum);
+      if (payload.levels) drawVU(payload.levels);
     });
   } catch (e) { /* dev browser */ }
+}
+
+// ---------------------------------------------------------------------------
+// Presets  <->  native getPresets / loadPreset / savePreset
+// ---------------------------------------------------------------------------
+function setupPresets() {
+  const select = document.getElementById("presetSelect");
+  const saveBtn = document.getElementById("presetSave");
+  if (!select || !saveBtn) return;
+
+  let getPresets, loadPreset, savePreset;
+  try {
+    getPresets = getNativeFunction("getPresets");
+    loadPreset = getNativeFunction("loadPreset");
+    savePreset = getNativeFunction("savePreset");
+  } catch (e) { return; }
+
+  const refresh = async () => {
+    const res = await getPresets();
+    select.innerHTML = "";
+    (res.names || []).forEach((n) => {
+      const opt = document.createElement("option");
+      opt.value = n; opt.textContent = n;
+      select.appendChild(opt);
+    });
+    if (res.current) select.value = res.current;
+  };
+
+  select.addEventListener("change", () => loadPreset(select.value));
+  saveBtn.addEventListener("click", async () => {
+    const name = window.prompt("Preset name:", select.value || "My Preset");
+    if (name) { await savePreset(name); await refresh(); select.value = name; }
+  });
+
+  refresh();
 }
 
 // ---------------------------------------------------------------------------
@@ -260,3 +303,4 @@ document.querySelectorAll(".rocker").forEach(setupRocker);
 document.querySelectorAll(".combo").forEach(setupCombo);
 setupKeyboard();
 setupVisualiser();
+setupPresets();

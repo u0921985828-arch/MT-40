@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include "DSP/PolyphonicSynthesizer.h"
+#include "PresetManager.h"
 
 /**
     Main audio processor for the Moog-style virtual-analog synthesiser.
@@ -46,10 +47,17 @@ public:
 
     juce::AudioProcessorValueTreeState& getAPVTS() noexcept { return apvts; }
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+    PresetManager& getPresetManager() noexcept { return presetManager; }
 
     /** Copies the most recent `numSamples` of output into `dest` (oldest first)
         for the visualiser. Safe to call from the message thread. */
     int readScope (float* dest, int numSamples) const noexcept;
+
+    /** Latest block peak level (0..1) for the given output channel. */
+    float getMeterLevel (int channel) const noexcept
+    {
+        return meter[(size_t) juce::jlimit (0, 1, channel)].load (std::memory_order_relaxed);
+    }
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
@@ -57,6 +65,7 @@ private:
     inline void pushScope (float sample) noexcept;
 
     juce::AudioProcessorValueTreeState apvts;
+    PresetManager presetManager { apvts };
     juce::MidiKeyboardState keyboardState;
 
     // Master output: 4x oversampled soft limiter + DC blocker.
@@ -74,6 +83,8 @@ private:
         std::array<std::atomic<float>, size> buffer;
         std::atomic<int> writePos { 0 };
     } scope;
+
+    std::atomic<float> meter[2] { { 0.0f }, { 0.0f } };
     PolyphonicSynthesizer synth;
 
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;

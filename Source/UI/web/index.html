@@ -12,6 +12,10 @@
       <div class="brand-text">
         <span class="logo">MoogVA</span>
         <span class="model">SYNTHESIZER · MODEL VA</span>
+        <div id="presetbar">
+          <select id="presetSelect" title="Preset"></select>
+          <button id="presetSave" title="Save preset">SAVE</button>
+        </div>
       </div>
       <div id="displays">
         <div class="display">
@@ -21,6 +25,11 @@
         <div class="display">
           <canvas id="spectrum" width="240" height="58"></canvas>
           <span class="disp-label">SPECTRUM</span>
+        </div>
+        <div class="display vu">
+          <div class="vu-bar"><div class="vu-fill" id="vuL"></div></div>
+          <div class="vu-bar"><div class="vu-fill" id="vuR"></div></div>
+          <span class="disp-label">OUT</span>
         </div>
       </div>
     </header>
