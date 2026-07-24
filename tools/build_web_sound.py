@@ -308,9 +308,10 @@ BRIDGE = CORE + r'''
 html = UI.replace('import * as Juce from "./js/juce/index.js";', BRIDGE)
 
 # a small "tap to enable sound" hint chip + the worklet script tag
-hint = ('<div id="audioHint" style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);'
-        'z-index:9999;font:600 13px system-ui,sans-serif;color:#f4eee1;background:rgba(20,17,13,.9);'
-        'border:1px solid #4a4438;border-radius:999px;padding:8px 16px;box-shadow:0 6px 20px rgba(0,0,0,.5)">'
+hint = ('<div id="audioHint" style="position:absolute;left:50%;bottom:9%;transform:translateX(-50%);'
+        'pointer-events:none;z-index:50;font:600 1.05cqw/1 system-ui,sans-serif;color:#f4eee1;'
+        'white-space:nowrap;background:rgba(18,15,11,.82);border:.08cqw solid rgba(255,255,255,.14);'
+        'border-radius:999px;padding:.6cqw 1.5cqw;box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.55);backdrop-filter:blur(2px)">'
         '\U0001F50A  Toca el teclado para activar el sonido</div>')
 worklet_tag = '<script id="st40worklet" type="text/worklet">' + WORKLET + '</script>'
 
