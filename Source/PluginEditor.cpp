@@ -118,8 +118,8 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
     webView->goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
 
     setResizable (true, true);
-    setResizeLimits (1040, 660, 1900, 1200);
-    setSize (1200, 780);
+    setResizeLimits (1040, 560, 1900, 1000);
+    setSize (1200, 660);
 
     startTimerHz (30); // drive the visualiser
 }
