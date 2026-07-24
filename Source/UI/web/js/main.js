@@ -478,9 +478,38 @@ function makePresetTree(host, onSelect) {
     into.appendChild(it); opts.push({ el: it, val: o.value });
   };
   const positionSub = (fo, sub) => {
-    const r = fo.getBoundingClientRect();
-    fo.classList.toggle("left", window.innerWidth - r.right < 200);
-    sub.style.maxHeight = Math.max(120, Math.min(320, window.innerHeight - r.top - 12)) + "px";
+    // Descendants inherit their parent folder's direction so the cascade keeps
+    // flowing the same way instead of doubling back over the parent column.
+    const pf = fo.parentElement.closest(".dd-folder");
+    let left;
+    if (pf) left = pf.classList.contains("left");
+    else { const r = fo.getBoundingClientRect(); left = window.innerWidth - r.right < 200; }
+    fo.classList.toggle("left", left);
+    if (!sub.classList.contains("nav")) {
+      const r = fo.getBoundingClientRect();
+      sub.style.maxHeight = Math.max(120, Math.min(320, window.innerHeight - r.top - 12)) + "px";
+    }
+  };
+
+  const mkFolder = (f, into) => {
+    const fo = document.createElement("div"); fo.className = "dd-folder";
+    fo.innerHTML = `<span class="dd-fl">${f.label}</span><span class="dd-chev"></span>`;
+    const sub = document.createElement("div"); sub.className = "dd-sub";
+    (f.folders || []).forEach((sf) => mkFolder(sf, sub));
+    (f.items || []).forEach((o) => mkOpt(o, sub));
+    if (f.folders && f.folders.length) sub.classList.add("nav");
+    fo.appendChild(sub);
+    fo.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const parent = fo.parentElement, willOpen = !fo.classList.contains("open");
+      parent.querySelectorAll(":scope > .dd-folder.open").forEach((x) => {
+        x.classList.remove("open");
+        x.querySelectorAll(".dd-folder.open").forEach((y) => y.classList.remove("open"));
+      });
+      if (willOpen) { fo.classList.add("open"); positionSub(fo, sub); }
+      else fo.querySelectorAll(".dd-folder.open").forEach((y) => y.classList.remove("open"));
+    });
+    into.appendChild(fo);
   };
 
   const build = (data) => {
@@ -490,20 +519,7 @@ function makePresetTree(host, onSelect) {
       menu.appendChild(h);
     }
     (data.flat || []).forEach((o) => mkOpt(o, menu));
-    (data.folders || []).forEach((f) => {
-      const fo = document.createElement("div"); fo.className = "dd-folder";
-      fo.innerHTML = `<span class="dd-fl">${f.label}</span><span class="dd-chev"></span>`;
-      const sub = document.createElement("div"); sub.className = "dd-sub";
-      f.items.forEach((o) => mkOpt(o, sub));
-      fo.appendChild(sub);
-      fo.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willOpen = !fo.classList.contains("open");
-        menu.querySelectorAll(".dd-folder.open").forEach((x) => x.classList.remove("open"));
-        if (willOpen) { fo.classList.add("open"); positionSub(fo, sub); }
-      });
-      menu.appendChild(fo);
-    });
+    (data.folders || []).forEach((f) => mkFolder(f, menu));
   };
 
   btn.addEventListener("click", (e) => {
@@ -544,14 +560,20 @@ function setupPresets() {
 
   const refresh = async () => {
     const res = await getBank();
-    let bank = { categories: [], presets: {} };
+    let bank = { libraries: [] };
     try { bank = JSON.parse(res.bank || "{}"); } catch (e) {}
+    const libs = bank.libraries
+      || [{ name: "Default", categories: bank.categories || [], presets: bank.presets || {} }];
     tree.build({
-      lib: "Default",
       flat: [{ label: "Init", value: "__init__" }],
-      folders: (bank.categories || []).map((cat) => ({
-        label: cat,
-        items: (bank.presets[cat] || []).map((p) => ({ label: p.name, value: cat + "|||" + p.name })),
+      folders: libs.map((lib) => ({
+        label: lib.name,
+        folders: (lib.categories || []).map((cat) => ({
+          label: cat,
+          items: (lib.presets[cat] || []).map((p) => ({
+            label: p.name, value: lib.name + "|||" + cat + "|||" + p.name,
+          })),
+        })),
       })),
     });
     if (res.current) tree.setValue(res.current);
@@ -559,7 +581,7 @@ function setupPresets() {
 
   saveBtn.addEventListener("click", async () => {
     const name = window.prompt("Preset name:", "My Preset");
-    if (name) { await savePreset(name); await refresh(); tree.setValue("User|||" + name); }
+    if (name) { await savePreset(name); await refresh(); tree.setValue("User|||User|||" + name); }
   });
 
   refresh();

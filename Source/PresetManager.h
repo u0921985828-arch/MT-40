@@ -24,28 +24,22 @@ public:
         loadBank();
     }
 
-    /** Full menu (bank categories + a User folder) as a JSON string for the UI. */
+    /** Full bank (libraries + a User library) as a JSON string for the UI. */
     juce::String getBankJson() const
     {
         auto* root = new juce::DynamicObject();
-        juce::Array<juce::var> cats;
+        juce::Array<juce::var> libs;
 
-        auto* presetsObj = new juce::DynamicObject();
+        // Copy the embedded libraries verbatim.
         if (auto* bankObj = bankVar.getDynamicObject())
         {
-            if (auto* srcPresets = bankObj->getProperty ("presets").getDynamicObject())
-            {
-                const auto catsVar = bankObj->getProperty ("categories");
-                if (catsVar.isArray())
-                    for (const auto& c : *catsVar.getArray())
-                    {
-                        cats.add (c);
-                        presetsObj->setProperty (c.toString(), srcPresets->getProperty (c.toString()));
-                    }
-            }
+            const auto libsVar = bankObj->getProperty ("libraries");
+            if (libsVar.isArray())
+                for (const auto& l : *libsVar.getArray())
+                    libs.add (l);
         }
 
-        // User folder.
+        // A "User" library holding saved presets (single "User" category).
         juce::Array<juce::var> userArr;
         for (const auto& f : presetDir().findChildFiles (juce::File::findFiles, false, "*.xml"))
         {
@@ -55,28 +49,36 @@ public:
         }
         if (! userArr.isEmpty())
         {
-            cats.add ("User");
-            presetsObj->setProperty ("User", userArr);
+            auto* userLib = new juce::DynamicObject();
+            juce::Array<juce::var> userCats; userCats.add ("User");
+            auto* userPresets = new juce::DynamicObject();
+            userPresets->setProperty ("User", userArr);
+            userLib->setProperty ("name", "User");
+            userLib->setProperty ("categories", userCats);
+            userLib->setProperty ("presets", juce::var (userPresets));
+            libs.add (juce::var (userLib));
         }
 
-        root->setProperty ("categories", cats);
-        root->setProperty ("presets", juce::var (presetsObj));
+        root->setProperty ("libraries", libs);
         return juce::JSON::toString (juce::var (root), true);
     }
 
     juce::String getCurrentPreset() const { return currentPreset; }
 
-    /** id is "Category|||Name" (bank or User). */
+    /** id is "Library|||Category|||Name" (bank or User). */
     void loadPreset (const juce::String& id)
     {
-        const auto sep = id.indexOf ("|||");
-        if (sep < 0)
+        juce::StringArray parts;
+        parts.addTokens (id, "|||", "");
+        parts.removeEmptyStrings();
+        if (parts.size() < 3)
             return;
 
-        const auto category = id.substring (0, sep);
-        const auto name     = id.substring (sep + 3);
+        const auto library  = parts[0];
+        const auto category = parts[1];
+        const auto name     = parts[2];
 
-        if (category == "User")
+        if (library == "User")
         {
             const auto file = presetDir().getChildFile (name + ".xml");
             if (file.existsAsFile())
@@ -88,7 +90,7 @@ public:
             return;
         }
 
-        applyFromBank (category, name);
+        applyFromBank (library, category, name);
         currentPreset = id;
     }
 
@@ -98,7 +100,7 @@ public:
             return;
         if (auto xml = apvts.copyState().createXml())
             xml->writeTo (presetDir().getChildFile (name + ".xml"));
-        currentPreset = "User|||" + name;
+        currentPreset = "User|||User|||" + name;
     }
 
 private:
@@ -116,29 +118,38 @@ private:
         }
     }
 
-    void applyFromBank (const juce::String& category, const juce::String& name)
+    void applyFromBank (const juce::String& library, const juce::String& category, const juce::String& name)
     {
         auto* bankObj = bankVar.getDynamicObject();
         if (bankObj == nullptr) return;
-        auto* presets = bankObj->getProperty ("presets").getDynamicObject();
-        if (presets == nullptr) return;
+        const auto libsVar = bankObj->getProperty ("libraries");
+        if (! libsVar.isArray()) return;
 
-        const auto arr = presets->getProperty (category);
-        if (! arr.isArray()) return;
-
-        for (const auto& item : *arr.getArray())
+        for (const auto& libVar : *libsVar.getArray())
         {
-            if (auto* obj = item.getDynamicObject())
+            auto* lib = libVar.getDynamicObject();
+            if (lib == nullptr || lib->getProperty ("name").toString() != library) continue;
+
+            auto* presets = lib->getProperty ("presets").getDynamicObject();
+            if (presets == nullptr) return;
+            const auto arr = presets->getProperty (category);
+            if (! arr.isArray()) return;
+
+            for (const auto& item : *arr.getArray())
             {
-                if (obj->getProperty ("name").toString() == name)
+                if (auto* obj = item.getDynamicObject())
                 {
-                    resetToDefaults();
-                    if (auto* params = obj->getProperty ("params").getDynamicObject())
-                        for (const auto& kv : params->getProperties())
-                            applyParam (kv.name.toString(), (float) (double) kv.value);
-                    return;
+                    if (obj->getProperty ("name").toString() == name)
+                    {
+                        resetToDefaults();
+                        if (auto* params = obj->getProperty ("params").getDynamicObject())
+                            for (const auto& kv : params->getProperties())
+                                applyParam (kv.name.toString(), (float) (double) kv.value);
+                        return;
+                    }
                 }
             }
+            return;
         }
     }
 
