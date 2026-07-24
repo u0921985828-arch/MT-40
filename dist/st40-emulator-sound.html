@@ -924,7 +924,7 @@ function makeST40(fs){
           k.style.clipPath=`polygon(${lx}% 0,${rx}% 0,${rx}% ${notchY}%,100% ${notchY}%,100% 100%,0 100%,0 ${notchY}%,${lx}% ${notchY}%)`;
         } });
       for(let n=low;n<=high;n++){ if(!isB(n))continue; const idx=whites.indexOf(n-1);
-        const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); att(root.lastChild,n); }
+        const bw=w*0.6; const cx=X0+(idx+1)*w-bw/2; P("bkey",cx,Y0,bw,(Y1-Y0)*0.62); attMelody(root.lastChild,n,99); }
     })();
     // bass manual 36..50 — discrete keys matching the hardware: black keys in a
     // separate upper band, white-key letters ABOVE the white keys, and thin

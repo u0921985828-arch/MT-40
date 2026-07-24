@@ -102,14 +102,16 @@ void ST40AudioProcessor::handleNoteOn (int note, float velocity)
 
     if (mode == 2 && isChordZone (note))
     {
-        // Chord/bass trigger zone: start the rhythm and update the chord.
-        rhythm.noteOnInSplitZone();
+        // Chord/bass trigger zone. Register the key and update the chord root
+        // BEFORE starting the rhythm, so the very first bass hit of step 0 uses
+        // this chord rather than the stale/default root.
         // Dedup: a repeated Note-On (retrigger, no intervening Note-Off) must
         // not leave an orphaned entry that keeps the chord stuck.
         if (std::find (heldChordZoneNotes.begin(), heldChordZoneNotes.end(), note)
                 == heldChordZoneNotes.end())
             heldChordZoneNotes.push_back (note);
         recomputeChord();
+        rhythm.noteOnInSplitZone();
         return;
     }
 
@@ -122,21 +124,19 @@ void ST40AudioProcessor::handleNoteOn (int note, float velocity)
 
 void ST40AudioProcessor::handleNoteOff (int note)
 {
-    const int mode = static_cast<int> (*pMode);
-
-    if (mode == 2 && isChordZone (note))
+    // Release the note from whichever path actually owns it, independent of the
+    // current mode: the mode (or CC85 / automation) may have changed since the
+    // Note-On, so branching on the *current* mode here would leak a stuck note.
+    auto it = std::find (heldChordZoneNotes.begin(), heldChordZoneNotes.end(), note);
+    if (it != heldChordZoneNotes.end())
     {
-        auto it = std::find (heldChordZoneNotes.begin(), heldChordZoneNotes.end(), note);
-        if (it != heldChordZoneNotes.end())
-            heldChordZoneNotes.erase (it);
-
+        heldChordZoneNotes.erase (it);
         if (heldChordZoneNotes.empty())
             rhythm.allSplitNotesReleased();
-
         recomputeChord();
-        return;
     }
 
+    // Harmless if the note was never a melodic voice.
     melodic.noteOff (note);
 }
 
