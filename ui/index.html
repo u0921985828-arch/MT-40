@@ -373,15 +373,15 @@
       return k.querySelector(".dial"); }
     const D=3.2;
     const volDial=knob(18.2,3.5,D);
-    T(15.2,5.3,"min",0.9,"dim"); T(19.6,5.3,"max",0.9,"dim");
+    T(15.2,5.3,"min",0.85,"dim"); T(19.6,5.3,"max",0.85,"dim");
     const tempoDial=knob(30,3.3,D);
-    T(25.8,5.0,"slow",0.82,"dim"); T(31.9,5.0,"fast",0.82,"dim");
+    T(25.8,5.0,"slow",0.85,"dim"); T(31.9,5.0,"fast",0.85,"dim");
     // "tempo" plates over the slow–fast rule (panel-cream knockout), sitting
     // above the transport buttons so it collides with neither.
     const tmpL=T(28.5,5.15,"tempo",0.78,"txt",3);
     tmpL.style.background="#f4ede1"; tmpL.style.borderRadius=".25cqw"; tmpL.style.lineHeight="1.05";
     const rbvDial=knob(41,3.2,D);
-    T(36.9,4.85,"min",0.82,"dim"); T(42.8,4.85,"max",0.82,"dim");
+    T(36.9,4.85,"min",0.85,"dim"); T(42.8,4.85,"max",0.85,"dim");
     T(38.3,5.3,"<b>rhythm/bass</b>",0.66,"txt",5.4); T(39.5,5.78,"volume",0.62,"txt",3);
 
     // ================= RHYTHM buttons + LED + slider =================
@@ -404,7 +404,7 @@
     RHY.forEach((nm,i)=>{ const fx=38.3+i*(9.3/5);
       P("rtick",fx,7.35,null,null).style.width=".3cqw";
       const two=(nm==="slow rock");
-      const t=T(fx-1.9,two?6.35:6.72,two?"slow<br>rock":nm,two?0.5:0.52,"txt",3.8);
+      const t=T(fx-1.9,two?6.3:6.68,two?"slow<br>rock":nm,two?0.56:0.6,"txt",3.8);
       t.style.whiteSpace="nowrap"; t.style.lineHeight=two?"1.0":"1.1"; });
 
     // ================= TONE (memory / mode) =================
@@ -428,7 +428,7 @@
     const vibSw=slideSwitch(74.8,4.7,5.4,2.7,"brownsw",2,["off","on"],"vibrato");
 
     // ================= POWER + brand =================
-    P("badge",87.0,1.9,9.8,2.7,'<b>ARTIFACTS</b>');
+    P("badge",87.0,1.9,9.8,2.7,'<b>ST-40</b>');
     P("led",84.9,4.0,0.9,0.9);
     const pwrSw=slideSwitch(82.6,4.7,5.6,2.7,"darksw",2,["off","on"],""); pwrSw.set(1);
 
