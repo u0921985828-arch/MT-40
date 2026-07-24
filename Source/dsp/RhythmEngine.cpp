@@ -25,13 +25,13 @@ void RhythmEngine::prepare (double sampleRate) noexcept
     patterns[5] = {
         "Rock",
         //         1 . . . 2 . . . 3 . . . 4 . . . | bar 2 ...
-        { X,_,_,_, _,_,X,_, X,_,_,_, _,_,_,_,   X,_,_,_, _,_,X,_, X,_,_,_, _,_,X,_ }, // kick
-        { _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_,   _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_ }, // snare
-        { X,_,X,_, X,_,X,_, X,_,X,_, X,_,X,_,   X,_,X,_, X,_,X,_, X,_,X,_, X,_,X,_ }, // closed hat
-        { _,_,_,_, _,_,_,_, _,_,_,_, _,_,X,_,   _,_,_,_, _,_,_,_, _,_,_,_, _,_,X,_ }, // open hat
-        // bass: the bass riff (offsets from root, kRest = tie/rest)
-        { 0,kRest,0,kRest, 7,kRest,0,kRest, 0,kRest,3,kRest, 7,kRest,5,kRest,
-          0,kRest,0,kRest, 7,kRest,0,kRest, 0,kRest,3,kRest, 5,kRest,3,kRest }
+        { X,_,_,_, _,_,_,_, X,_,_,_, _,_,_,_,   X,_,_,_, _,_,_,_, X,_,_,_, _,_,_,_ }, // kick  (steppers 1&3)
+        { _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_,   _,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_ }, // snare (2&4)
+        { X,_,X,_, X,_,X,_, X,_,X,_, X,_,X,_,   X,_,X,_, X,_,X,_, X,_,X,_, X,_,_,_ }, // closed hat (eighths)
+        { _,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_,   _,_,_,_, _,_,_,_, _,_,_,_, _,_,X,_ }, // open hat (bar-2 turnaround)
+        // bass: the Sleng Teng E-minor climb (root-relative offsets 0=E,3=G,5=A,7=B).
+        { 0,kRest,kRest,kRest, 0,kRest,3,kRest, kRest,kRest,5,kRest, 7,kRest,5,kRest,
+          0,kRest,kRest,kRest, 0,kRest,3,kRest, kRest,kRest,5,kRest, 7,kRest,3,kRest }
     };
 
     // Rhythm 3: "Slow Rock" (unchanged position)
@@ -221,7 +221,7 @@ void RhythmEngine::fireStep (int step) noexcept
     const int off = p.bass[step];
     if (off != kRest)
     {
-        const int root = (chordRoot >= 0) ? chordRoot : 45; // default A2
+        const int root = (chordRoot >= 0) ? chordRoot : 40; // default E2 (Sleng Teng)
         bass.trigger (root + off);
     }
 }

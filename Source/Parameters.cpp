@@ -29,7 +29,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (std::make_unique<AudioParameterFloat> (
         ParameterID { ParamIDs::tempo, 1 }, "Tempo",
-        NormalisableRange<float> (40.0f, 240.0f, 1.0f), 90.0f));
+        NormalisableRange<float> (40.0f, 240.0f, 1.0f), 82.0f));
 
     layout.add (std::make_unique<AudioParameterBool> (
         ParameterID { ParamIDs::vibrato, 1 }, "Vibrato", false));
@@ -45,7 +45,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         StringArray { "Off", "Play", "Chord" }, 2));
 
     layout.add (std::make_unique<AudioParameterChoice> (
-        ParameterID { ParamIDs::rhythmIdx, 1 }, "Rhythm", rhythmChoices, 0));
+        ParameterID { ParamIDs::rhythmIdx, 1 }, "Rhythm", rhythmChoices, 5));
 
     layout.add (std::make_unique<AudioParameterChoice> (
         ParameterID { ParamIDs::patchIdx, 1 }, "Preset", presetChoices, 0));

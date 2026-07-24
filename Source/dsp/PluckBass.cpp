@@ -4,9 +4,9 @@
 void PluckBass::prepare (double sampleRate) noexcept
 {
     fs = sampleRate;
-    lpf.setLowPass (fs, 800.0, 0.707); // 12 dB/oct pluck tone
+    lpf.setLowPass (fs, 1300.0, 0.95); // deep, round "digital" bass body
     env.prepare (fs);
-    env.setDecay (0.22);               // med-fast pluck decay, zero sustain
+    env.setDecay (0.60);               // long-ish decay so eighth notes connect
     reset();
 }
 
@@ -27,7 +27,7 @@ void PluckBass::trigger (int midiNote) noexcept
     phase = 0.0;
     env.trigger();
     attackGain = 0.0f;
-    attackInc = static_cast<float> (1.0 / (0.003 * fs)); // ~3 ms fast attack
+    attackInc = static_cast<float> (1.0 / (0.004 * fs)); // ~4 ms fast attack
 }
 
 void PluckBass::release() noexcept
@@ -40,8 +40,8 @@ float PluckBass::process() noexcept
 {
     if (! env.isActive()) return 0.0f;
 
-    // Pure square wave.
-    const float sq = (phase < 0.5) ? 1.0f : -1.0f;
+    // Pulse wave with a slight duty asymmetry for body.
+    const float sq = (phase < 0.45) ? 1.0f : -1.0f;
     phase += inc; if (phase >= 1.0) phase -= 1.0;
 
     if (attackGain < 1.0f)
@@ -50,6 +50,7 @@ float PluckBass::process() noexcept
         if (attackGain > 1.0f) attackGain = 1.0f;
     }
 
-    const float filtered = lpf.process (sq);
-    return filtered * env.getNextSample() * attackGain;
+    // Soft drive for punch, then the pluck envelope and click-free attack ramp.
+    const float filtered = std::tanh (1.4f * lpf.process (sq));
+    return filtered * env.getNextSample() * attackGain * 1.15f;
 }

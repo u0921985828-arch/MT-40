@@ -91,7 +91,7 @@ private:
     std::array<Pattern, kNumRhythms> patterns;
 
     double fs = 44100.0;
-    double bpm = 90.0;
+    double bpm = 82.0;
     double samplesPerStep = 0.0;
     double stepPhase = 0.0;   // sample counter within the current step
     int currentStep = 0;
@@ -102,8 +102,8 @@ private:
     bool fillWasHeld = false;
     bool pendingNormalOnBarLine = false;
 
-    int activeRhythm = 0;
+    int activeRhythm = 5;
     int chordRoot = -1;
     float rhythmGain = 0.8f;
-    float bassGain = 0.8f;
+    float bassGain = 0.85f;
 };
