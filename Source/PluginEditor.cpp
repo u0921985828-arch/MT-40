@@ -1,74 +1,118 @@
 #include "PluginEditor.h"
+#include "WebAssets.h"
+
+namespace
+{
+    juce::String mimeForExtension (const juce::String& filename)
+    {
+        if (filename.endsWith (".html")) return "text/html";
+        if (filename.endsWith (".css"))  return "text/css";
+        if (filename.endsWith (".js"))   return "text/javascript";
+        if (filename.endsWith (".svg"))  return "image/svg+xml";
+        if (filename.endsWith (".json")) return "application/json";
+        return "application/octet-stream";
+    }
+}
 
 MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProcessor& p)
-    : AudioProcessorEditor (&p),
-      processorRef (p),
-      controllers (p.getAPVTS()),
-      oscillators (p.getAPVTS()),
-      mixer       (p.getAPVTS()),
-      filter      (p.getAPVTS()),
-      output      (p.getAPVTS()),
-      keyboard    (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
+    : AudioProcessorEditor (&p), processorRef (p)
 {
-    setLookAndFeel (&lookAndFeel);
+    // ---- Build a relay for every parameter, remembering the pairing --------
+    std::vector<std::pair<juce::RangedAudioParameter*, juce::WebSliderRelay*>>       sliderPairs;
+    std::vector<std::pair<juce::RangedAudioParameter*, juce::WebToggleButtonRelay*>> togglePairs;
+    std::vector<std::pair<juce::RangedAudioParameter*, juce::WebComboBoxRelay*>>     comboPairs;
 
-    addAndMakeVisible (controllers);
-    addAndMakeVisible (oscillators);
-    addAndMakeVisible (mixer);
-    addAndMakeVisible (filter);
-    addAndMakeVisible (output);
-    addAndMakeVisible (keyboard);
+    for (auto* param : processorRef.getParameters())
+    {
+        auto* ranged = dynamic_cast<juce::RangedAudioParameter*> (param);
+        auto* withID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param);
+        if (ranged == nullptr || withID == nullptr)
+            continue;
+
+        const auto id = withID->paramID;
+
+        if (dynamic_cast<juce::AudioParameterBool*> (param) != nullptr)
+            togglePairs.push_back ({ ranged, toggleRelays.add (new juce::WebToggleButtonRelay (id)) });
+        else if (dynamic_cast<juce::AudioParameterChoice*> (param) != nullptr)
+            comboPairs.push_back ({ ranged, comboRelays.add (new juce::WebComboBoxRelay (id)) });
+        else
+            sliderPairs.push_back ({ ranged, sliderRelays.add (new juce::WebSliderRelay (id)) });
+    }
+
+    // ---- Assemble the WebBrowserComponent options --------------------------
+    auto options = juce::WebBrowserComponent::Options {}
+        .withNativeIntegrationEnabled()
+        .withResourceProvider ([this] (const auto& url) { return getResource (url); })
+        .withNativeFunction ("noteOn",
+            [this] (const juce::Array<juce::var>& args,
+                    juce::WebBrowserComponent::NativeFunctionCompletion complete)
+            {
+                if (args.size() >= 1)
+                {
+                    const int   note = (int) args[0];
+                    const float vel  = args.size() >= 2 ? (float) args[1] : 0.8f;
+                    processorRef.getKeyboardState().noteOn (1, note, vel);
+                }
+                complete (juce::var());
+            })
+        .withNativeFunction ("noteOff",
+            [this] (const juce::Array<juce::var>& args,
+                    juce::WebBrowserComponent::NativeFunctionCompletion complete)
+            {
+                if (args.size() >= 1)
+                    processorRef.getKeyboardState().noteOff (1, (int) args[0], 0.0f);
+                complete (juce::var());
+            });
+
+    for (auto* r : sliderRelays) options = options.withOptionsFrom (*r);
+    for (auto* r : toggleRelays) options = options.withOptionsFrom (*r);
+    for (auto* r : comboRelays)  options = options.withOptionsFrom (*r);
+
+    webView = std::make_unique<juce::WebBrowserComponent> (options);
+    addAndMakeVisible (*webView);
+
+    // ---- Bind each relay to its parameter ----------------------------------
+    for (auto& [param, relay] : sliderPairs)
+        sliderAttachments.add (new juce::WebSliderParameterAttachment (*param, *relay));
+    for (auto& [param, relay] : togglePairs)
+        toggleAttachments.add (new juce::WebToggleButtonParameterAttachment (*param, *relay));
+    for (auto& [param, relay] : comboPairs)
+        comboAttachments.add (new juce::WebComboBoxParameterAttachment (*param, *relay));
+
+    webView->goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
 
     setResizable (true, true);
-    setResizeLimits (900, 560, 1600, 1000);
-    setSize (1080, 640);
-}
-
-MoogSynthAudioProcessorEditor::~MoogSynthAudioProcessorEditor()
-{
-    setLookAndFeel (nullptr);
-}
-
-void MoogSynthAudioProcessorEditor::paint (juce::Graphics& g)
-{
-    // Walnut side frame.
-    g.fillAll (LookAndFeelMoog::woodwork);
-
-    // Inner dark-metal chassis with a subtle brushed gradient.
-    auto chassisBounds = getLocalBounds().reduced (18, 12).toFloat();
-    juce::ColourGradient grad (LookAndFeelMoog::chassis.brighter (0.06f),
-                               chassisBounds.getTopLeft(),
-                               LookAndFeelMoog::chassis.darker (0.15f),
-                               chassisBounds.getBottomRight(), false);
-    g.setGradientFill (grad);
-    g.fillRoundedRectangle (chassisBounds, 8.0f);
-
-    g.setColour (juce::Colours::black.withAlpha (0.5f));
-    g.drawRoundedRectangle (chassisBounds, 8.0f, 1.5f);
-
-    // Title / branding.
-    g.setColour (LookAndFeelMoog::labelText);
-    g.setFont (juce::Font (juce::FontOptions (22.0f, juce::Font::bold)));
-    g.drawText ("MoogVA  SYNTHESIZER", chassisBounds.removeFromTop (34).toNearestInt(),
-                juce::Justification::centred, false);
+    setResizeLimits (960, 600, 1800, 1100);
+    setSize (1120, 700);
 }
 
 void MoogSynthAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced (24, 20);
-    area.removeFromTop (30); // title strip
+    if (webView != nullptr)
+        webView->setBounds (getLocalBounds());
+}
 
-    // On-screen keyboard along the bottom.
-    keyboard.setBounds (area.removeFromBottom (80).reduced (0, 4));
-    area.removeFromBottom (6);
+std::optional<juce::WebBrowserComponent::Resource>
+MoogSynthAudioProcessorEditor::getResource (const juce::String& url) const
+{
+    // Normalise the request to a base filename (assets have unique basenames).
+    const auto path = url == "/" ? juce::String ("index.html")
+                                 : url.fromLastOccurrenceOf ("/", false, false);
 
-    // Two rows of control sections.
-    auto topRow = area.removeFromTop (area.getHeight() * 55 / 100);
+    for (int i = 0; i < WebAssets::namedResourceListSize; ++i)
+    {
+        if (juce::String (WebAssets::originalFilenames[i]) == path)
+        {
+            int dataSize = 0;
+            const char* data = WebAssets::getNamedResource (WebAssets::namedResourceList[i], dataSize);
 
-    controllers.setBounds (topRow.removeFromLeft (topRow.getWidth() * 30 / 100).reduced (4));
-    oscillators.setBounds (topRow.reduced (4));
+            const auto* bytes = reinterpret_cast<const std::byte*> (data);
+            return juce::WebBrowserComponent::Resource {
+                std::vector<std::byte> (bytes, bytes + dataSize),
+                mimeForExtension (path)
+            };
+        }
+    }
 
-    mixer.setBounds  (area.removeFromLeft (area.getWidth() * 28 / 100).reduced (4));
-    filter.setBounds (area.removeFromLeft (area.getWidth() * 62 / 100).reduced (4));
-    output.setBounds (area.reduced (4));
+    return std::nullopt;
 }

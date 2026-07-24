@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoogVA Synth</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="chassis">
+    <header id="brand">
+      <span class="logo">MoogVA</span>
+      <span class="model">SYNTHESIZER · MODEL VA</span>
+    </header>
+
+    <main id="panels">
+      <!-- Controllers -->
+      <section class="panel" id="controllers">
+        <h2>Controllers</h2>
+        <div class="row">
+          <div class="knob" data-param="MASTER_TUNE"   data-caption="Tune"></div>
+          <div class="knob" data-param="GLIDE_TIME"     data-caption="Glide"></div>
+          <div class="knob" data-param="PITCH_BEND_RANGE" data-caption="Bend Rng"></div>
+        </div>
+        <div class="switch-row">
+          <div class="rocker" data-param="GLIDE_ON" data-caption="Glide"></div>
+        </div>
+      </section>
+
+      <!-- Oscillator Bank -->
+      <section class="panel wide" id="oscillators">
+        <h2>Oscillator Bank</h2>
+        <div class="osc-row">
+          <span class="osc-label">OSC 1</span>
+          <div class="combo" data-param="OSC1_WAVE"  data-caption="Wave"></div>
+          <div class="combo" data-param="OSC1_RANGE" data-caption="Range"></div>
+        </div>
+        <div class="osc-row">
+          <span class="osc-label">OSC 2</span>
+          <div class="combo" data-param="OSC2_WAVE"  data-caption="Wave"></div>
+          <div class="combo" data-param="OSC2_RANGE" data-caption="Range"></div>
+          <div class="knob small" data-param="OSC2_COARSE" data-caption="Coarse"></div>
+          <div class="knob small" data-param="OSC2_DETUNE" data-caption="Fine"></div>
+        </div>
+        <div class="osc-row">
+          <span class="osc-label">OSC 3</span>
+          <div class="combo" data-param="OSC3_WAVE"  data-caption="Wave"></div>
+          <div class="combo" data-param="OSC3_RANGE" data-caption="Range"></div>
+          <div class="knob small" data-param="OSC3_COARSE"   data-caption="Coarse"></div>
+          <div class="knob small" data-param="OSC3_DETUNE"   data-caption="Fine"></div>
+          <div class="knob small" data-param="OSC3_MOD_DEPTH" data-caption="Mod"></div>
+          <div class="rocker mini" data-param="OSC3_LFO_MODE" data-caption="LFO"></div>
+        </div>
+      </section>
+
+      <!-- Mixer -->
+      <section class="panel" id="mixer">
+        <h2>Mixer</h2>
+        <div class="mix-grid">
+          <div class="mix-col">
+            <div class="knob" data-param="MIX_OSC1_VOL" data-caption="Osc 1"></div>
+            <div class="rocker mini" data-param="MIX_OSC1_ON"></div>
+          </div>
+          <div class="mix-col">
+            <div class="knob" data-param="MIX_OSC2_VOL" data-caption="Osc 2"></div>
+            <div class="rocker mini" data-param="MIX_OSC2_ON"></div>
+          </div>
+          <div class="mix-col">
+            <div class="knob" data-param="MIX_OSC3_VOL" data-caption="Osc 3"></div>
+            <div class="rocker mini" data-param="MIX_OSC3_ON"></div>
+          </div>
+          <div class="mix-col">
+            <div class="knob" data-param="MIX_NOISE_VOL" data-caption="Noise"></div>
+            <div class="rocker mini" data-param="MIX_NOISE_ON"></div>
+          </div>
+          <div class="mix-col">
+            <div class="knob" data-param="MIX_FEEDBACK" data-caption="Feedbk"></div>
+            <div class="rocker mini" data-param="MIX_FEEDBACK_ON"></div>
+          </div>
+        </div>
+        <div class="combo" data-param="NOISE_TYPE" data-caption="Noise Type"></div>
+      </section>
+
+      <!-- Modifiers: Filter + Filter Envelope -->
+      <section class="panel wide" id="filter">
+        <h2>Modifiers — Filter</h2>
+        <div class="row">
+          <div class="knob" data-param="FILTER_CUTOFF" data-caption="Cutoff"></div>
+          <div class="knob" data-param="FILTER_RESO"   data-caption="Reso"></div>
+          <div class="knob" data-param="FILTER_ENV"    data-caption="Contour"></div>
+          <div class="combo" data-param="FILTER_KEYTRACK" data-caption="Key Trk"></div>
+        </div>
+        <div class="row env-row">
+          <div class="knob small" data-param="FILTER_ATTACK"  data-caption="Attack"></div>
+          <div class="knob small" data-param="FILTER_DECAY"   data-caption="Decay"></div>
+          <div class="knob small" data-param="FILTER_SUSTAIN" data-caption="Sustain"></div>
+          <div class="knob small" data-param="FILTER_RELEASE" data-caption="Release"></div>
+        </div>
+      </section>
+
+      <!-- Output: Loudness Envelope + Master -->
+      <section class="panel" id="output">
+        <h2>Output — Loudness</h2>
+        <div class="row env-row">
+          <div class="knob small" data-param="AMP_ATTACK"  data-caption="Attack"></div>
+          <div class="knob small" data-param="AMP_DECAY"   data-caption="Decay"></div>
+          <div class="knob small" data-param="AMP_SUSTAIN" data-caption="Sustain"></div>
+          <div class="knob small" data-param="AMP_RELEASE" data-caption="Release"></div>
+          <div class="knob" data-param="MASTER_VOLUME" data-caption="Volume"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="keyboard"></div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

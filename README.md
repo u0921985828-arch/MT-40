@@ -27,17 +27,28 @@ Feedback ───────┘            ▲                              �
 | `PolyphonicSynthesizer.h` | 16-voice manager (built on `juce::Synthesiser`, handles MIDI + voice stealing). |
 | `SynthParameters.h` | Cached atomic pointers into the APVTS for lock-free audio-thread reads. |
 
-## UI (`Source/UI`)
+## UI — WebView (`Source/UI/web`)
 
-`LookAndFeelMoog` renders vintage black pointer knobs, coloured rocker
-switches and a walnut-framed dark-metal chassis. The editor is laid out in the
-five classic Minimoog sections: **Controllers**, **Oscillators Bank**,
-**Mixer**, **Modifiers** (filter + filter envelope) and **Output** (loudness
-envelope + master volume), plus an on-screen keyboard.
+The editor is a **JUCE 8 WebView** (`juce::WebBrowserComponent`) rendering an
+embedded HTML/CSS/JS front-end. The web assets are compiled into the binary
+with `juce_add_binary_data` and served at runtime by a `ResourceProvider`, so
+the plugin stays fully self-contained.
 
-Every control is bound to the `AudioProcessorValueTreeState` defined in
-`PluginProcessor::createParameterLayout()` (see `Source/Parameters.h` for the
-parameter IDs).
+- `index.html` / `style.css` — the vintage Minimoog layout (walnut frame, dark
+  metal panels, pointer knobs, coloured rocker switches) in the five classic
+  sections: **Controllers**, **Oscillator Bank**, **Mixer**, **Modifiers**
+  (filter + filter envelope) and **Output** (loudness envelope + master), plus
+  an on-screen keyboard.
+- `js/main.js` — builds the knobs/switches/combos and binds each to its
+  parameter through the JUCE frontend library.
+- `js/juce/index.js` — the JUCE WebView frontend library (vendored).
+
+Every control is bridged to the `AudioProcessorValueTreeState` in
+`PluginEditor.cpp`: each parameter gets a relay
+(`WebSliderRelay` / `WebToggleButtonRelay` / `WebComboBoxRelay`) and a matching
+`Web…ParameterAttachment`, generated automatically from the parameter list. The
+on-screen keyboard calls back into the processor through native functions
+(`noteOn` / `noteOff`). Parameter IDs live in `Source/Parameters.h`.
 
 ## Building
 
@@ -54,10 +65,11 @@ Artifacts (VST3 / AU / Standalone) are written under
 
 ### Linux dependencies
 
-On Debian/Ubuntu, JUCE needs the usual GUI/audio dev packages:
+On Debian/Ubuntu, JUCE needs the usual GUI/audio dev packages plus GTK and
+WebKitGTK for the WebView editor:
 
 ```bash
 sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev \
   libxcomposite-dev libasound2-dev libfreetype6-dev libfontconfig1-dev \
-  libgl1-mesa-dev
+  libgl1-mesa-dev libgtk-3-dev libwebkit2gtk-4.1-dev
 ```

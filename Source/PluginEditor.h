@@ -1,40 +1,40 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_utils/juce_audio_utils.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 #include "PluginProcessor.h"
-#include "UI/LookAndFeelMoog.h"
-#include "UI/Components/ControllerPanel.h"
-#include "UI/Components/OscillatorPanel.h"
-#include "UI/Components/MixerPanel.h"
-#include "UI/Components/FilterPanel.h"
-#include "UI/Components/OutputPanel.h"
 
 /**
-    Main plugin editor.  Lays out the five Minimoog-style control sections on a
-    walnut-framed dark-metal chassis.
+    WebView-based plugin editor.
+
+    The entire UI is an embedded HTML/CSS/JS front-end (served from binary
+    resources) rendered by a juce::WebBrowserComponent.  Every APVTS parameter
+    is bridged to the web page through a relay + parameter attachment, and the
+    on-screen keyboard talks back to the processor via native functions.
 */
 class MoogSynthAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
     explicit MoogSynthAudioProcessorEditor (MoogSynthAudioProcessor&);
-    ~MoogSynthAudioProcessorEditor() override;
+    ~MoogSynthAudioProcessorEditor() override = default;
 
-    void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
+    std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url) const;
+
     MoogSynthAudioProcessor& processorRef;
-    LookAndFeelMoog lookAndFeel;
 
-    ControllerPanel  controllers;
-    OscillatorPanel  oscillators;
-    MixerPanel       mixer;
-    FilterPanel      filter;
-    OutputPanel      output;
+    // One relay + attachment per parameter, grouped by control type.
+    juce::OwnedArray<juce::WebSliderRelay>        sliderRelays;
+    juce::OwnedArray<juce::WebToggleButtonRelay>  toggleRelays;
+    juce::OwnedArray<juce::WebComboBoxRelay>      comboRelays;
 
-    juce::MidiKeyboardState keyboardState;
-    juce::MidiKeyboardComponent keyboard;
+    juce::OwnedArray<juce::WebSliderParameterAttachment>       sliderAttachments;
+    juce::OwnedArray<juce::WebToggleButtonParameterAttachment> toggleAttachments;
+    juce::OwnedArray<juce::WebComboBoxParameterAttachment>     comboAttachments;
+
+    std::unique_ptr<juce::WebBrowserComponent> webView;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MoogSynthAudioProcessorEditor)
 };
