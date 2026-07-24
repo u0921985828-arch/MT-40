@@ -1,9 +1,36 @@
-import {
-  getSliderState,
-  getToggleState,
-  getComboBoxState,
-  getNativeFunction,
-} from "./juce/index.js";
+// The JUCE frontend library touches window.__JUCE__ at evaluation time, so wait
+// for the native backend to be injected, then load the frontend as a classic
+// script (WebKitGTK mishandles ESM sub-resources served by the ResourceProvider,
+// returning an empty module namespace). The classic build assigns window.JUCEGLUE.
+function waitForBackend(timeoutMs = 5000) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    (function poll() {
+      const j = window.__JUCE__;
+      if (j && j.backend && j.initialisationData && j.initialisationData.__juce__sliders)
+        return resolve(true);
+      if (Date.now() - start > timeoutMs) return resolve(false);
+      setTimeout(poll, 20);
+    })();
+  });
+}
+
+// Loads the JUCE frontend and evaluates it in global scope, which defines the
+// getSliderState / getToggleState / getComboBoxState / getNativeFunction globals
+// used below. Fetch+eval sidesteps WebKitGTK ResourceProvider quirks with ESM
+// sub-resources and dynamically injected <script> tags. Note: the holder names
+// must NOT be pre-declared with let/const here, or eval throws "duplicate
+// variable" against the frontend's own declarations.
+async function loadFrontend() {
+  await waitForBackend();
+  if (window.JUCEGLUE) return;
+  try {
+    const resp = await fetch("/js/juce/index-classic.js");
+    (0, eval)(await resp.text());
+  } catch (e) {
+    console.warn("JUCE frontend failed to load; UI runs unbound.", e);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Value formatting for the knob read-outs.
@@ -24,13 +51,28 @@ function formatValue(id, v) {
 // ---------------------------------------------------------------------------
 // Knobs  ->  WebSliderRelay
 // ---------------------------------------------------------------------------
+function knobFaceHtml() {
+  let ticks = "";
+  for (let t = 0; t <= 10; t++) {
+    const a = (-135 + t * 27) * Math.PI / 180;
+    const r1 = 47;
+    const r2 = t % 5 === 0 ? 39 : 43;
+    const x1 = 50 + r1 * Math.sin(a), y1 = 50 - r1 * Math.cos(a);
+    const x2 = 50 + r2 * Math.sin(a), y2 = 50 - r2 * Math.cos(a);
+    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"${t % 5 === 0 ? ' class="maj"' : ""}/>`;
+  }
+  return `<div class="knob-face">
+            <svg class="ticks" viewBox="0 0 100 100">${ticks}</svg>
+            <div class="skirt"><div class="dial"><span class="pointer"></span></div></div>
+          </div>`;
+}
+
 function setupKnob(el) {
   const id = el.dataset.param;
   const caption = el.dataset.caption ?? "";
 
-  el.innerHTML = `<div class="dial"></div>
-                  <span class="caption">${caption}</span>
-                  <span class="value">--</span>`;
+  el.innerHTML = knobFaceHtml() +
+    `<span class="caption">${caption}</span><span class="value">--</span>`;
   const dial = el.querySelector(".dial");
   const valueEl = el.querySelector(".value");
 
@@ -96,6 +138,7 @@ function setupRocker(el) {
 
   el.innerHTML = `<div class="cap"></div>` +
     (caption ? `<span class="caption">${caption}</span>` : "");
+  el.classList.add (id.startsWith("MIX_") ? "accent-blue" : "accent-orange");
 
   let state;
   try {
@@ -298,9 +341,13 @@ function setupPresets() {
 // ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
-document.querySelectorAll(".knob").forEach(setupKnob);
-document.querySelectorAll(".rocker").forEach(setupRocker);
-document.querySelectorAll(".combo").forEach(setupCombo);
-setupKeyboard();
-setupVisualiser();
-setupPresets();
+(async () => {
+  await loadFrontend();
+
+  document.querySelectorAll(".knob").forEach(setupKnob);
+  document.querySelectorAll(".rocker").forEach(setupRocker);
+  document.querySelectorAll(".combo").forEach(setupCombo);
+  setupKeyboard();
+  setupVisualiser();
+  setupPresets();
+})();

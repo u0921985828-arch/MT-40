@@ -5,9 +5,9 @@ namespace
 {
     juce::String mimeForExtension (const juce::String& filename)
     {
-        if (filename.endsWith (".html")) return "text/html";
-        if (filename.endsWith (".css"))  return "text/css";
-        if (filename.endsWith (".js"))   return "text/javascript";
+        if (filename.endsWith (".html")) return "text/html;charset=utf-8";
+        if (filename.endsWith (".css"))  return "text/css;charset=utf-8";
+        if (filename.endsWith (".js"))   return "text/javascript;charset=utf-8";
         if (filename.endsWith (".svg"))  return "image/svg+xml";
         if (filename.endsWith (".json")) return "application/json";
         return "application/octet-stream";
