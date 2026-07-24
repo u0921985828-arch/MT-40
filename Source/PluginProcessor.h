@@ -6,6 +6,7 @@
 #include "dsp/RhythmEngine.h"
 #include "dsp/AutoChord.h"
 #include "dsp/Presets.h"
+#include "dsp/DCBlocker.h"
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -94,6 +95,8 @@ private:
     double sampleRate = 44100.0;
     double lfoPhase = 0.0;
     int currentPatch = -1;
+    float masterGainS = 0.85f;   // smoothed master gain (anti-zipper)
+    DCBlocker dcBlocker;         // master DC removal
 
     // Cached parameter pointers.
     std::atomic<float>* pMaster = nullptr;

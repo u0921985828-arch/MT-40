@@ -243,5 +243,7 @@ float RhythmEngine::process() noexcept
     const float drums = kick.process() + snare.process() + hat.process();
     const float bassOut = bass.process();
 
-    return drums * rhythmGain + bassOut * bassGain;
+    rhythmGainS += (rhythmGain - rhythmGainS) * 0.0015f;
+    bassGainS   += (bassGain   - bassGainS)   * 0.0015f;
+    return drums * rhythmGainS + bassOut * bassGainS;
 }

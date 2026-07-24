@@ -106,4 +106,6 @@ private:
     int chordRoot = -1;
     float rhythmGain = 0.8f;
     float bassGain = 0.85f;
+    float rhythmGainS = 0.8f;   // smoothed (anti-zipper)
+    float bassGainS = 0.85f;
 };

@@ -184,10 +184,12 @@ class Bass{constructor(fs){this.fs=fs;this.lpf=new Biquad();this.lpf.lp(fs,1300,
  trig(n){this.inc=440*Math.pow(2,(n-69)/12)/this.fs;this.ph=0;this.env.trig();this.ag=0;this.ai=1/(0.004*this.fs);}
  active(){return this.env.active();}
  p(){if(!this.env.active())return 0;const sq=(this.ph<0.45)?1:-1;this.ph+=this.inc;if(this.ph>=1)this.ph-=1;if(this.ag<1){this.ag+=this.ai;if(this.ag>1)this.ag=1;}return Math.tanh(1.4*this.lpf.p(sq))*this.env.n()*this.ag*1.15;}}
+// One-pole DC blocker (~3.5 Hz high-pass) on the master output.
+class DCBlocker{constructor(){this.x1=0;this.y1=0;this.R=0.9995;} reset(){this.x1=0;this.y1=0;} p(x){const y=x-this.x1+this.R*this.y1;this.x1=x;this.y1=y;return y;}}
 function detectChord(held){if(!held.length)return null;let root=held[0];for(const n of held)if(n>root)root=n;let add=0;for(const n of held)if(n<root)add++;
  let t;if(add===0)t=[root,root+4,root+7];else if(add===1)t=[root,root+3,root+7];else if(add===2)t=[root,root+4,root+7,root+10];else t=[root,root+3,root+7,root+10];return {root:root,tones:t};}
 class Rhythm{constructor(fs){this.fs=fs;this.noise=new LFSR(0xACE1);this.kick=new Kick(fs);this.snare=new Snare(fs,this.noise);this.hat=new Hat(fs,this.noise);this.bass=new Bass(fs);
- this.bpm=82;this.sps=0;this.setTempo(82);this.phase=0;this.step=0;this.trans=0;this.fill=0;this.fh=false;this.fw=false;this.pend=false;this.rIdx=5;this.root=-1;this.rg=0.8;this.bg=0.85;}
+ this.bpm=82;this.sps=0;this.setTempo(82);this.phase=0;this.step=0;this.trans=0;this.fill=0;this.fh=false;this.fw=false;this.pend=false;this.rIdx=5;this.root=-1;this.rg=0.8;this.bg=0.85;this.rgS=0.8;this.bgS=0.85;}
  setTempo(b){this.bpm=Math.max(40,Math.min(240,b));this.sps=this.fs/((this.bpm/60)*4);}
  setRhythm(i){this.rIdx=Math.max(0,Math.min(5,i));} setChordRoot(r){this.root=r;}
  synchro(){if(this.trans===0)this.trans=1;}
@@ -201,13 +203,15 @@ class Rhythm{constructor(fs){this.fs=fs;this.noise=new LFSR(0xACE1);this.kick=ne
   if(p.ho[st]!==0)this.hat.open();else if(p.hc[st]!==0)this.hat.closed();
   const off=p.b[st];if(off!==REST){const root=(this.root>=0)?this.root:40;this.bass.trig(root+off);}}
  p(){if(this.trans===2){this.phase+=1;if(this.phase>=this.sps){this.phase-=this.sps;this.adv();}}
-  const drums=this.kick.p()+this.snare.p()+this.hat.p();const b=this.bass.p();return drums*this.rg+b*this.bg;}}
+  const drums=this.kick.p()+this.snare.p()+this.hat.p();const b=this.bass.p();
+  this.rgS+=(this.rg-this.rgS)*0.0015;this.bgS+=(this.bg-this.bgS)*0.0015;return drums*this.rgS+b*this.bgS;}}
 
 // The complete ST-40 signal chain as a realm-agnostic object (no AudioWorklet
 // or DOM references) so it can run inside a worklet OR on the main thread.
 function makeST40(fs){
  const mel=new Alloc(fs), chord=new Alloc(fs), rhythm=new Rhythm(fs);
- let held=[], activeChord=[], master=0.85, vib=false, sus=false, lfoPh=0, lastTr=-1;
+ let held=[], activeChord=[], master=0.85, masterS=0.85, vib=false, sus=false, lfoPh=0, lastTr=-1;
+ const dcb=new DCBlocker();
  mel.setPreset(PRESETS[0]); chord.setPreset(PRESETS[0]);
  function recompute(){const c=detectChord(held);
   if(!c){for(const t of activeChord)chord.off(t);activeChord=[];rhythm.setChordRoot(-1);return;}
@@ -227,7 +231,7 @@ function makeST40(fs){
    else if(t==='fill')rhythm.setFill(!!m.b);else if(t==='param')param(m.id,m.v);},
   block(L,Rr,n,onTransport){for(let i=0;i<n;i++){let lfo=0;if(vib)lfo=Math.sin(2*Math.PI*lfoPh);lfoPh+=5.5/fs;if(lfoPh>=1)lfoPh-=1;
     const depth=vib?0.2:0;const mv=mel.render(lfo,depth)+chord.render(lfo,depth);const rhy=rhythm.p();
-    const s=Math.tanh((mv*0.45+rhy*0.6)*master);L[i]=s;if(Rr)Rr[i]=s;}
+    masterS+=(master-masterS)*0.0015;const s=dcb.p(Math.tanh((mv*0.45+rhy*0.6)*masterS));L[i]=s;if(Rr)Rr[i]=s;}
    const tr=rhythm.trans;if(tr!==lastTr){lastTr=tr;if(onTransport)onTransport(tr);}}
  };
 }

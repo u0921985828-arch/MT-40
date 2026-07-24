@@ -36,6 +36,8 @@ void ST40AudioProcessor::prepareToPlay (double sr, int)
     rhythm.prepare (sr);
     keyboardCollector.reset (sr);
     lfoPhase = 0.0;
+    masterGainS = *pMaster;
+    dcBlocker.reset();
     currentPatch = -1;
     heldChordZoneNotes.clear();
     activeChordTones.clear();
@@ -238,13 +240,15 @@ float ST40AudioProcessor::renderNextSample()
                     + chordVoices.render (lfo, vibratoDepth);
     const float rhy = rhythm.process(); // already includes rhythm+bass gains
 
-    const float master = *pMaster;
+    // Smooth the master gain (anti-zipper on fast automation).
+    masterGainS += (*pMaster - masterGainS) * 0.0015f;
     // Sum the busses, trim headroom, then soft-clip the master output. The
     // rhythm bus can transiently sum several simultaneous hits above unity;
     // the tanh stage models the ST-40's analog output saturation and keeps
-    // the signal bounded to [-1, 1] instead of clipping harshly.
-    const float mix = (mel * 0.45f + rhy * 0.6f) * master;
-    return std::tanh (mix);
+    // the signal bounded to [-1, 1] instead of clipping harshly. A DC blocker
+    // removes any residual offset from the asymmetric waveforms.
+    const float mix = (mel * 0.45f + rhy * 0.6f) * masterGainS;
+    return dcBlocker.process (std::tanh (mix));
 }
 
 void ST40AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
