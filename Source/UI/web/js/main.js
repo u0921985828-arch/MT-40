@@ -274,9 +274,11 @@ function makeDropdown(host, caption) {
     closeAllDD();
     if (open) {
       host.classList.add("open"); __openDD = host;
-      // Flip upward when there isn't room below (rotated / near the bottom).
+      // Always open downward; cap the height to the room left in the window so
+      // the menu stays inside the frame and scrolls internally when tall.
       const r = btn.getBoundingClientRect();
-      host.classList.toggle("up", r.bottom + 220 > window.innerHeight && r.top - 220 > 0);
+      const avail = window.innerHeight - r.bottom - 12;
+      menu.style.maxHeight = Math.max(96, Math.min(240, avail)) + "px";
       const sel = menu.querySelector(".dd-opt.sel");
       if (sel) sel.scrollIntoView({ block: "nearest" });
     }

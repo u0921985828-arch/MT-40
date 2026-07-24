@@ -24,7 +24,7 @@
   /* Fixed design canvas, uniformly scaled to fit any screen. */
   #stage{
     width:var(--dw,1280px);height:var(--dh,720px);flex:none;position:relative;
-    display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;overflow:visible;
+    display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:10px;overflow:hidden;
     transform-origin:center center;transform:scale(1);
     background:
       var(--wood-tex,none),
@@ -61,7 +61,7 @@
 
   /* Control panel — sections scroll horizontally on small screens */
   #panel{flex:1;min-height:0;display:flex;flex-wrap:wrap;gap:0;
-    overflow-x:hidden;overflow-y:auto;touch-action:pan-y;align-content:flex-start;justify-content:center;
+    overflow:visible;touch-action:pan-y;align-content:flex-start;justify-content:center;
     border-top:3px solid #0a0a0b;border-bottom:3px solid #0a0a0b;
     background:
       radial-gradient(ellipse at 50% 42%,rgba(0,0,0,0) 45%,rgba(0,0,0,.5) 100%),
@@ -135,7 +135,6 @@
     box-shadow:inset 0 1px 1px rgba(255,255,255,.09),0 10px 24px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.6);
     scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
   .dd.open .dd-menu{display:block;}
-  .dd.up .dd-menu{top:auto;bottom:calc(100% + 4px);}
   .dd-group{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--accent-orange);
     padding:5px 7px 2px;text-shadow:0 1px 0 rgba(0,0,0,.85);}
   .dd-opt{padding:6px 8px;font-size:11px;color:var(--label);border-radius:3px;white-space:nowrap;cursor:pointer;text-shadow:0 1px 0 rgba(0,0,0,.8);}
@@ -5016,8 +5015,12 @@ function makeDropdown(host,caption){
   btn.addEventListener("click",e=>{e.stopPropagation();
     const open=!host.classList.contains("open");closeAllDD();
     if(open){host.classList.add("open");__openDD=host;
-      const r=btn.getBoundingClientRect();
-      host.classList.toggle("up",r.bottom+240>window.innerHeight&&r.top-240>0);
+      // Always open downward; cap height to the space left inside the frame
+      // (stage-space, so it's unaffected by the landscape rotation/scale).
+      const stage=document.getElementById("stage");
+      let y=0,n=btn;while(n&&n!==stage){y+=n.offsetTop;n=n.offsetParent;}
+      const avail=stage.clientHeight-(y+btn.offsetHeight)-14;
+      menu.style.maxHeight=Math.max(96,Math.min(240,avail))+"px";
       const sel=menu.querySelector(".dd-opt.sel");if(sel)sel.scrollIntoView({block:"nearest"});}});
   api.setOptions=opts=>{menu.innerHTML="";opts.forEach(o=>menu.appendChild(mkOpt(o)));};
   api.setGroups=groups=>{menu.innerHTML="";groups.forEach(g=>{
