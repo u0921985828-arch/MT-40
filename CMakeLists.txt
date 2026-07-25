@@ -24,11 +24,28 @@ else()
     FetchContent_MakeAvailable(JUCE)
 endif()
 
+# -----------------------------------------------------------------------------
+# Plugin formats
+#
+# VST3, AU and Standalone always build.  AAX (Pro Tools) is optional because it
+# needs Avid's AAX SDK, which cannot be redistributed. To enable it, point
+# AAX_SDK_PATH at your local AAX SDK checkout:
+#   cmake -B build -DCMAKE_BUILD_TYPE=Release -DAAX_SDK_PATH=/path/to/aax-sdk
+# -----------------------------------------------------------------------------
+set(MOOGVA_FORMATS VST3 AU Standalone)
+if(DEFINED AAX_SDK_PATH AND EXISTS "${AAX_SDK_PATH}")
+    juce_set_aax_sdk_path("${AAX_SDK_PATH}")
+    list(APPEND MOOGVA_FORMATS AAX)
+    message(STATUS "MoogVA: AAX enabled (SDK: ${AAX_SDK_PATH})")
+elseif(DEFINED AAX_SDK_PATH)
+    message(WARNING "MoogVA: AAX_SDK_PATH set but not found: ${AAX_SDK_PATH} — AAX skipped")
+endif()
+
 juce_add_plugin(MoogVASynth
     COMPANY_NAME            "MoogVA"
     PLUGIN_MANUFACTURER_CODE Mova
     PLUGIN_CODE             Mvas
-    FORMATS                 VST3 AU Standalone
+    FORMATS                 ${MOOGVA_FORMATS}
     PRODUCT_NAME            "MoogVA Synth"
     IS_SYNTH                TRUE
     NEEDS_MIDI_INPUT        TRUE
