@@ -30,6 +30,12 @@ android {
 }
 
 dependencies {
+    // Align every transitive Kotlin stdlib module to one version. AndroidX pulls
+    // kotlin-stdlib 1.8.x while older transitive deps request kotlin-stdlib-jdk7/
+    // jdk8 1.6.x; without this BOM the two collide (duplicate classes) and the
+    // dex step fails at checkDebugDuplicateClasses.
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.24"))
+
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.webkit:webkit:1.11.0")
 }
