@@ -21457,9 +21457,9 @@ function applyPresetParams(params){
 function makePresetTree(host, data, onSelect){
   host.classList.add("dd","pdd");
   host.innerHTML=`<div class="pdd-row">`
-    +`<button class="dd-nav prev" type="button" title="Anterior">‹</button>`
+    +`<button class="dd-nav prev" type="button" title="Anterior">\u2039</button>`
     +`<button class="dd-btn" type="button"><span class="dd-lbl">Init</span><span class="dd-arw"></span></button>`
-    +`<button class="dd-nav next" type="button" title="Siguiente">›</button>`
+    +`<button class="dd-nav next" type="button" title="Siguiente">\u203A</button>`
     +`</div><div class="dd-menu pmenu"></div>`;
   const btn=host.querySelector(".dd-btn"),lbl=host.querySelector(".dd-lbl"),menu=host.querySelector(".dd-menu");
   const opts=[];         // {el,val} for menu items (for .sel highlighting)

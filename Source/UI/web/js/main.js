@@ -500,9 +500,9 @@ function makePresetTree(host, onSelect) {
   host.classList.add("dd", "pdd");
   host.innerHTML =
     `<div class="pdd-row">` +
-    `<button class="dd-nav prev" type="button" title="Previous">‹</button>` +
+    `<button class="dd-nav prev" type="button" title="Previous">\u2039</button>` +
     `<button class="dd-btn" type="button"><span class="dd-lbl">Init</span><span class="dd-arw"></span></button>` +
-    `<button class="dd-nav next" type="button" title="Next">›</button>` +
+    `<button class="dd-nav next" type="button" title="Next">\u203A</button>` +
     `</div><div class="dd-menu pmenu"></div>`;
   const btn = host.querySelector(".dd-btn");
   const lbl = host.querySelector(".dd-lbl");
