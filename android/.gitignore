@@ -1,0 +1,9 @@
+# Android build output
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+
+# Web app is copied from ../webapp/index.html at build time (syncWebApp task)
+app/src/main/assets/index.html

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoogVA Synth</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="cabinet">
+    <!-- Top brand + displays strip -->
+    <header id="brand">
+      <div class="brand-text">
+        <span class="logo">MoogVA</span>
+        <span class="model">MODEL&nbsp;VA</span>
+      </div>
+      <div id="presetbar">
+        <div id="presetSelect" class="dd preset-dd" title="Preset"></div>
+        <button id="presetSave" title="Save preset">SAVE</button>
+      </div>
+      <div id="displays">
+        <div class="display"><canvas id="scope" width="220" height="52"></canvas><span class="disp-label">SCOPE</span></div>
+        <div class="display"><canvas id="spectrum" width="220" height="52"></canvas><span class="disp-label">SPECTRUM</span></div>
+        <div class="display vu"><div class="vu-bar"><div class="vu-fill" id="vuL"></div><div class="vu-peak" id="vuLp"></div></div><div class="vu-bar"><div class="vu-fill" id="vuR"></div><div class="vu-peak" id="vuRp"></div></div><span class="disp-label">OUT</span></div>
+      </div>
+    </header>
+
+    <!-- Main control panel: five sections left-to-right -->
+    <main id="panel">
+      <!-- CONTROLLERS -->
+      <section class="sect" id="controllers">
+        <div class="sect-body">
+          <div class="krow">
+            <div class="knob" data-param="MASTER_TUNE" data-caption="Tune"></div>
+            <div class="knob" data-param="GLIDE_TIME" data-caption="Glide"></div>
+          </div>
+          <div class="krow">
+            <div class="knob" data-param="MOD_MIX" data-caption="Mod Mix"></div>
+            <div class="knob" data-param="PITCH_BEND_RANGE" data-caption="Bend"></div>
+          </div>
+          <div class="knob" data-param="DRIFT_AMOUNT" data-caption="Drift"></div>
+          <div class="swrow">
+            <div class="rocker mini" data-param="MOD_OSC_ON" data-caption="Osc Mod"></div>
+            <div class="rocker mini" data-param="GLIDE_ON" data-caption="Glide"></div>
+            <div class="rocker mini" data-param="POLY_ON" data-caption="Poly"></div>
+          </div>
+        </div>
+        <h2>Controllers</h2>
+      </section>
+
+      <!-- OSCILLATOR BANK -->
+      <section class="sect" id="oscillators">
+        <div class="sect-body">
+          <div class="osc-row">
+            <span class="osc-label">1</span>
+            <div class="combo" data-param="OSC1_RANGE" data-caption="Range"></div>
+            <div class="osc-fixed" title="Osc 1 is the pitch reference"><div class="of-dial"></div><span class="caption">Tune</span><span class="value">REF</span></div>
+            <div class="combo wide" data-param="OSC1_WAVE" data-caption="Waveform"></div>
+          </div>
+          <div class="osc-row">
+            <span class="osc-label">2</span>
+            <div class="combo" data-param="OSC2_RANGE" data-caption="Range"></div>
+            <div class="knob small" data-param="OSC2_DETUNE" data-caption="Tune"></div>
+            <div class="combo wide" data-param="OSC2_WAVE" data-caption="Waveform"></div>
+          </div>
+          <div class="osc-row">
+            <span class="osc-label">3</span>
+            <div class="combo" data-param="OSC3_RANGE" data-caption="Range"></div>
+            <div class="knob small" data-param="OSC3_DETUNE" data-caption="Tune"></div>
+            <div class="combo wide" data-param="OSC3_WAVE" data-caption="Waveform"></div>
+            <div class="rocker mini" data-param="OSC3_KB_CONTROL" data-caption="Kbd"></div>
+          </div>
+        </div>
+        <h2>Oscillator Bank</h2>
+      </section>
+
+      <!-- MIXER -->
+      <section class="sect" id="mixer">
+        <div class="sect-body">
+          <div class="mix-grid">
+            <div class="mrow"><span class="mlbl">Osc 1</span><div class="knob small mk" data-param="MIX_OSC1_VOL"></div><div class="rocker mini" data-param="MIX_OSC1_ON"></div><span class="mspace"></span></div>
+            <div class="mrow"><span class="mlbl">Osc 2</span><div class="knob small mk" data-param="MIX_OSC2_VOL"></div><div class="rocker mini" data-param="MIX_OSC2_ON"></div><span class="mspace"></span></div>
+            <div class="mrow"><span class="mlbl">Osc 3</span><div class="knob small mk" data-param="MIX_OSC3_VOL"></div><div class="rocker mini" data-param="MIX_OSC3_ON"></div><span class="mspace"></span></div>
+            <div class="mrow"><span class="mlbl">Ext</span><div class="knob small mk" data-param="MIX_EXT_VOL"></div><div class="rocker mini" data-param="MIX_EXT_ON"></div><span class="mspace"></span></div>
+            <div class="mrow"><span class="mlbl">Noise</span><div class="knob small mk" data-param="MIX_NOISE_VOL"></div><div class="rocker mini" data-param="MIX_NOISE_ON"></div><div class="combo tiny" data-param="NOISE_TYPE"></div></div>
+          </div>
+        </div>
+        <h2>Mixer</h2>
+      </section>
+
+      <!-- MODIFIERS -->
+      <section class="sect" id="modifiers">
+        <div class="sect-body">
+          <div class="krow">
+            <div class="knob" data-param="FILTER_CUTOFF" data-caption="Cutoff"></div>
+            <div class="knob" data-param="FILTER_RESO" data-caption="Emphasis"></div>
+            <div class="knob" data-param="FILTER_ENV" data-caption="Contour"></div>
+          </div>
+          <div class="krow">
+            <div class="combo" data-param="FILTER_KEYTRACK" data-caption="Kbd Ctrl"></div>
+            <div class="knob small" data-param="FILTER_DRIVE" data-caption="Drive"></div>
+            <div class="knob small" data-param="BASS_THIN" data-caption="Bass"></div>
+            <div class="rocker mini" data-param="MOD_FILTER_ON" data-caption="Flt Mod"></div>
+          </div>
+          <div class="krow env">
+            <div class="knob small" data-param="FILTER_ATTACK" data-caption="Attack"></div>
+            <div class="knob small" data-param="FILTER_DECAY" data-caption="Decay"></div>
+            <div class="knob small" data-param="FILTER_SUSTAIN" data-caption="Sustain"></div>
+            <div class="knob small" data-param="FILTER_RELEASE" data-caption="Release"></div>
+          </div>
+        </div>
+        <h2>Modifiers &mdash; Filter</h2>
+      </section>
+
+      <!-- OUTPUT -->
+      <section class="sect" id="output">
+        <div class="sect-body">
+          <div class="knob" data-param="MASTER_VOLUME" data-caption="Volume"></div>
+          <div class="krow env">
+            <div class="knob small" data-param="AMP_ATTACK" data-caption="Attack"></div>
+            <div class="knob small" data-param="AMP_DECAY" data-caption="Decay"></div>
+          </div>
+          <div class="krow env">
+            <div class="knob small" data-param="AMP_SUSTAIN" data-caption="Sustain"></div>
+            <div class="knob small" data-param="AMP_RELEASE" data-caption="Release"></div>
+          </div>
+        </div>
+        <h2>Output &mdash; Loudness</h2>
+      </section>
+    </main>
+
+    <!-- Bottom: wheels + keyboard -->
+    <div id="lower">
+      <div id="wheels">
+        <div class="wheel" data-wheel="pitch"><div class="wheel-face"></div><span class="wheel-label">PITCH</span></div>
+        <div class="wheel" data-wheel="mod" data-param="MOD_WHEEL"><div class="wheel-face"></div><span class="wheel-label">MOD</span></div>
+      </div>
+      <div id="keyboard"></div>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

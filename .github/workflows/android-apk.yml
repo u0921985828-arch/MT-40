@@ -1,0 +1,61 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/moog-synth-vst-dsp-p6mrst
+    paths:
+      - 'android/**'
+      - 'webapp/index.html'
+      - '.github/workflows/android-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Rename APK
+        working-directory: android
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/debug/app-debug.apk out/MoogVA-Synth.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoogVA-Synth-apk
+          path: android/out/MoogVA-Synth.apk
+          if-no-files-found: error
+
+      - name: Publish to Release (tag apk-android)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-android
+          name: MoogVA Synth — Android APK
+          body: |
+            APK de depuración compilado automáticamente desde
+            `webapp/index.html` (WebView). Instalar con:
+            `adb install -r MoogVA-Synth.apk` o abriendo el archivo en el móvil.
+          files: android/out/MoogVA-Synth.apk
+          make_latest: false
