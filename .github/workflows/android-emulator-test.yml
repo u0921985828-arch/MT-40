@@ -1,0 +1,91 @@
+name: Test APK on Emulator
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/moog-synth-vst-dsp-p6mrst
+    paths:
+      - 'android/**'
+      - 'webapp/index.html'
+      - '.github/workflows/android-emulator-test.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  emulator-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run app on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb wait-for-device
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am start -n com.moogva.synth/.MainActivity
+            sleep 12
+            echo "=== focused window ==="
+            adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' || true
+            echo "=== resumed activity ==="
+            adb shell dumpsys activity activities | grep -E 'ResumedActivity' || true
+            adb exec-out screencap -p > screenshot.png
+            echo "=== relevant logcat ==="
+            adb logcat -d | grep -iE 'moogva|synth|AndroidRuntime|FATAL|chromium|WebView|AudioContext' | tail -n 150 || true
+            echo "=== crash check ==="
+            if adb logcat -d | grep -q 'FATAL EXCEPTION'; then
+              echo "RESULT: APP CRASHED"; exit 1
+            fi
+            if adb shell dumpsys activity activities | grep -q 'com.moogva.synth/.MainActivity'; then
+              echo "RESULT: LAUNCH_OK — MainActivity is resumed"
+            else
+              echo "RESULT: LAUNCH_FAIL — MainActivity not resumed"; exit 1
+            fi
+
+      - name: Upload screenshot + logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-screenshot
+          path: screenshot.png
+          if-no-files-found: warn
+
+      - name: Publish screenshot to Release (tag apk-android)
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-android
+          files: screenshot.png
+          make_latest: false
