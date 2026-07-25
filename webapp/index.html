@@ -47,7 +47,7 @@
   .model{font-size:9px;letter-spacing:3px;color:var(--dim);}
   header .right{display:flex;gap:8px;align-items:center;}
   #res{min-width:150px;}
-  #preset{min-width:150px;}
+  #preset{min-width:200px;}
   .preset-dd .dd-btn{font-size:12px;padding:5px 20px 5px 8px;}
   .vu{display:flex;gap:3px;align-items:flex-end;height:26px;}
   .vu i{width:6px;height:100%;background:#0a1a10;border-radius:2px;overflow:hidden;display:flex;align-items:flex-end;}
@@ -137,6 +137,17 @@
   .dd-menu::-webkit-scrollbar{width:8px;}
   .dd-menu::-webkit-scrollbar-thumb{background:#4a4a52;border-radius:4px;}
   .dd-menu::-webkit-scrollbar-track{background:transparent;}
+
+  /* Preset stepper row: prev / button / next */
+  .pdd-row{display:flex;align-items:stretch;gap:4px;width:100%;}
+  .pdd-row .dd-btn{flex:1;}
+  .dd-nav{flex:none;width:22px;display:flex;align-items:center;justify-content:center;
+    color:var(--label);border:1px solid #000;border-top-color:#3a3a42;border-radius:4px;
+    background:linear-gradient(180deg,#2b2b30,#141416);font-size:15px;line-height:1;cursor:pointer;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.09),inset 0 -3px 6px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.5);
+    text-shadow:0 1px 0 rgba(0,0,0,.85);}
+  .dd-nav:hover{border-top-color:#4c4c56;color:#fff;}
+  .dd-nav:active{background:linear-gradient(180deg,#1f4f7d,#163a5c);}
 
   /* Nested preset browser: library -> folders -> presets (flyout) */
   .pmenu{overflow:visible;max-height:none;min-width:172px;}
@@ -21439,14 +21450,24 @@ function applyPresetParams(params){
 // A node is either a leaf {label,value} or a folder {label, folders?, items?}.
 function makePresetTree(host, data, onSelect){
   host.classList.add("dd","pdd");
-  host.innerHTML=`<button class="dd-btn" type="button"><span class="dd-lbl">Init</span><span class="dd-arw"></span></button>`
-    +`<div class="dd-menu pmenu"></div>`;
+  host.innerHTML=`<div class="pdd-row">`
+    +`<button class="dd-nav prev" type="button" title="Anterior">‹</button>`
+    +`<button class="dd-btn" type="button"><span class="dd-lbl">Init</span><span class="dd-arw"></span></button>`
+    +`<button class="dd-nav next" type="button" title="Siguiente">›</button>`
+    +`</div><div class="dd-menu pmenu"></div>`;
   const btn=host.querySelector(".dd-btn"),lbl=host.querySelector(".dd-lbl"),menu=host.querySelector(".dd-menu");
-  const opts=[];
+  const opts=[];         // {el,val} for menu items (for .sel highlighting)
+  const order=[];        // {val,label} in menu order (for prev/next stepping)
+  let curIdx=0;
   const pick=(val,label)=>{lbl.textContent=label;
-    opts.forEach(o=>o.el.classList.toggle("sel",String(o.val)===String(val)));closeAllDD();onSelect(val);};
+    opts.forEach(o=>o.el.classList.toggle("sel",String(o.val)===String(val)));
+    const i=order.findIndex(o=>String(o.val)===String(val)); if(i>=0)curIdx=i;
+    closeAllDD();onSelect(val);};
+  const step=(d)=>{ if(!order.length)return; curIdx=(curIdx+d+order.length)%order.length;
+    const o=order[curIdx]; pick(o.val,o.label); };
   const mkOpt=(o,into)=>{const it=document.createElement("div");it.className="dd-opt";it.textContent=o.label;it.dataset.val=o.value;
-    it.addEventListener("click",e=>{e.stopPropagation();pick(o.value,o.label);});into.appendChild(it);opts.push({el:it,val:o.value});};
+    it.addEventListener("click",e=>{e.stopPropagation();pick(o.value,o.label);});into.appendChild(it);
+    opts.push({el:it,val:o.value});order.push({val:o.value,label:o.label});};
   const mkFolder=(f,into)=>{
     const fo=document.createElement("div");fo.className="dd-folder";
     fo.innerHTML=`<span class="dd-fl">${f.label}</span><span class="dd-chev"></span>`;
@@ -21483,7 +21504,11 @@ function makePresetTree(host, data, onSelect){
     const open=!host.classList.contains("open");closeAllDD();
     menu.querySelectorAll(".dd-folder.open").forEach(x=>x.classList.remove("open"));
     if(open){host.classList.add("open");__openDD=host;}});
-  return {setValue:(val)=>{let label="";opts.forEach(o=>{const on=String(o.val)===String(val);o.el.classList.toggle("sel",on);if(on)label=o.el.textContent;});if(label)lbl.textContent=label;}};
+  host.querySelector(".prev").addEventListener("click",e=>{e.stopPropagation();step(-1);});
+  host.querySelector(".next").addEventListener("click",e=>{e.stopPropagation();step(1);});
+  return {setValue:(val)=>{let label="";opts.forEach(o=>{const on=String(o.val)===String(val);o.el.classList.toggle("sel",on);if(on)label=o.el.textContent;});
+    const i=order.findIndex(o=>String(o.val)===String(val)); if(i>=0)curIdx=i;
+    if(label)lbl.textContent=label;}};
 }
 
 const presetDD=makePresetTree(document.getElementById("preset"), {

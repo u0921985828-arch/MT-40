@@ -499,24 +499,36 @@ function setupVisualiser() {
 function makePresetTree(host, onSelect) {
   host.classList.add("dd", "pdd");
   host.innerHTML =
+    `<div class="pdd-row">` +
+    `<button class="dd-nav prev" type="button" title="Previous">‹</button>` +
     `<button class="dd-btn" type="button"><span class="dd-lbl">Init</span><span class="dd-arw"></span></button>` +
-    `<div class="dd-menu pmenu"></div>`;
+    `<button class="dd-nav next" type="button" title="Next">›</button>` +
+    `</div><div class="dd-menu pmenu"></div>`;
   const btn = host.querySelector(".dd-btn");
   const lbl = host.querySelector(".dd-lbl");
   const menu = host.querySelector(".dd-menu");
-  let opts = [];
+  let opts = [];        // {el,val} for menu items
+  let order = [];       // {val,label} in menu order (for prev/next stepping)
+  let curIdx = 0;
 
   const pick = (val, label) => {
     lbl.textContent = label;
     opts.forEach((o) => o.el.classList.toggle("sel", String(o.val) === String(val)));
+    const i = order.findIndex((o) => String(o.val) === String(val));
+    if (i >= 0) curIdx = i;
     closeAllDD();
     onSelect(val);
+  };
+  const step = (d) => {
+    if (!order.length) return;
+    curIdx = (curIdx + d + order.length) % order.length;
+    const o = order[curIdx]; pick(o.val, o.label);
   };
   const mkOpt = (o, into) => {
     const it = document.createElement("div");
     it.className = "dd-opt"; it.textContent = o.label; it.dataset.val = o.value;
     it.addEventListener("click", (e) => { e.stopPropagation(); pick(o.value, o.label); });
-    into.appendChild(it); opts.push({ el: it, val: o.value });
+    into.appendChild(it); opts.push({ el: it, val: o.value }); order.push({ val: o.value, label: o.label });
   };
   const positionSub = (fo, sub) => {
     // Descendants inherit their parent folder's direction so the cascade keeps
@@ -554,7 +566,7 @@ function makePresetTree(host, onSelect) {
   };
 
   const build = (data) => {
-    opts = []; menu.innerHTML = "";
+    opts = []; order = []; curIdx = 0; menu.innerHTML = "";
     if (data.lib) {
       const h = document.createElement("div"); h.className = "dd-lib"; h.textContent = data.lib;
       menu.appendChild(h);
@@ -570,6 +582,8 @@ function makePresetTree(host, onSelect) {
     menu.querySelectorAll(".dd-folder.open").forEach((x) => x.classList.remove("open"));
     if (open) { host.classList.add("open"); __openDD = host; }
   });
+  host.querySelector(".prev").addEventListener("click", (e) => { e.stopPropagation(); step(-1); });
+  host.querySelector(".next").addEventListener("click", (e) => { e.stopPropagation(); step(1); });
 
   return {
     build,
@@ -580,6 +594,8 @@ function makePresetTree(host, onSelect) {
         o.el.classList.toggle("sel", on);
         if (on) label = o.el.textContent;
       });
+      const i = order.findIndex((o) => String(o.val) === String(val));
+      if (i >= 0) curIdx = i;
       if (label) lbl.textContent = label;
     },
   };

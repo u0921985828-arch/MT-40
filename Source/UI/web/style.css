@@ -58,7 +58,7 @@ html, body {
 .model { font-size: 11px; letter-spacing: 4px; color: var(--label-dim); white-space: nowrap; }
 
 #presetbar { display: flex; gap: 6px; align-items: center; }
-#presetSelect { min-width: 190px; }
+#presetSelect { min-width: 230px; }
 #presetSelect .dd-btn { font-size: 12px; padding: 5px 22px 5px 9px; }
 #presetSelect .dd-menu { min-width: 210px; }
 #presetSave { background: linear-gradient(180deg, #45454a, #232326); color: var(--label); border: 1px solid #000; border-radius: 4px; padding: 5px 11px; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
@@ -256,6 +256,17 @@ html, body {
 .dd-menu::-webkit-scrollbar { width: 8px; }
 .dd-menu::-webkit-scrollbar-thumb { background: #4a4a52; border-radius: 4px; }
 .dd-menu::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- Preset stepper row: prev / button / next ---------------------- */
+.pdd-row { display: flex; align-items: stretch; gap: 4px; width: 100%; }
+.pdd-row .dd-btn { flex: 1; }
+.dd-nav { flex: none; width: 22px; display: flex; align-items: center; justify-content: center;
+  color: var(--label); border: 1px solid #000; border-top-color: #3a3a42; border-radius: 4px;
+  background: linear-gradient(180deg, #2b2b30, #141416); font-size: 15px; line-height: 1; cursor: pointer;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.09), inset 0 -3px 6px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.85); }
+.dd-nav:hover { border-top-color: #4c4c56; color: #fff; }
+.dd-nav:active { background: linear-gradient(180deg, #1f4f7d, #163a5c); }
 
 /* ---- Nested preset browser: library -> folders -> presets (flyout) -- */
 .pmenu { overflow: visible; max-height: none; min-width: 180px; }
