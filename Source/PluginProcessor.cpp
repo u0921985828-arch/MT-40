@@ -165,6 +165,12 @@ void MoogSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 
     for (auto& d : dcX1) d = 0.0f;
     for (auto& d : dcY1) d = 0.0f;
+    for (auto& d : lpWarm) d = 0.0f;
+    for (auto& d : lpAir)  d = 0.0f;
+
+    // Gentle analog tone shelves (warmth ~ 220 Hz, air ~ 6.5 kHz).
+    coefWarm = (float) (1.0 - std::exp (-2.0 * juce::MathConstants<double>::pi * 220.0  / sampleRate));
+    coefAir  = (float) (1.0 - std::exp (-2.0 * juce::MathConstants<double>::pi * 6500.0 / sampleRate));
 
     for (auto& s : scope.buffer)
         s.store (0.0f, std::memory_order_relaxed);
@@ -217,14 +223,26 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     const int numCh = buffer.getNumChannels();
 
+    // ---- Master gain + analog tone shaping (warmth + air shelves) ----------
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
         const float g = masterGain.getNextValue();
         for (int ch = 0; ch < numCh; ++ch)
-            buffer.setSample (ch, i, buffer.getSample (ch, i) * g);
+        {
+            const int c = juce::jmin (ch, 1);
+            float x = buffer.getSample (ch, i) * g;
+
+            // One-pole low-shelf (adds body) and high-shelf (adds sheen/air).
+            lpWarm[c] += coefWarm * (x - lpWarm[c]);
+            lpAir[c]  += coefAir  * (x - lpAir[c]);
+            x += 0.14f * lpWarm[c];          // warmth
+            x += 0.42f * (x - lpAir[c]);     // air (boost content above ~6.5 kHz)
+
+            buffer.setSample (ch, i, x);
+        }
     }
 
-    // ---- Oversampled soft limiter (bandlimits the saturation harmonics) ----
+    // ---- Oversampled tube stage (asymmetric drive -> even + odd harmonics) --
     if (oversampler != nullptr)
     {
         juce::dsp::AudioBlock<float> block (buffer);
@@ -234,7 +252,12 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             auto* d = osBlock.getChannelPointer (ch);
             for (size_t i = 0; i < osBlock.getNumSamples(); ++i)
-                d[i] = std::tanh (d[i] * 1.2f);
+            {
+                const float x = d[i] * 1.15f;
+                // Subtle asymmetry gives the 2nd-harmonic "tube" colour; the
+                // tanh provides the soft, bandlimited limiting.
+                d[i] = std::tanh (x + 0.045f * x * x);
+            }
         }
 
         oversampler->processSamplesDown (block);

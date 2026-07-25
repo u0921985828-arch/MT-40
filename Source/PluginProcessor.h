@@ -76,11 +76,15 @@ private:
     MonoSynthEngine engine;
     std::atomic<float> uiPitchBend { 0.0f };
 
-    // Master output: 4x oversampled soft limiter + DC blocker.
+    // Master output: analog tone shaping -> 4x oversampled tube stage -> DC block.
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
     static constexpr size_t oversamplingFactor = 2; // 2^2 = 4x
     float dcX1[2] { 0.0f, 0.0f };
     float dcY1[2] { 0.0f, 0.0f };
+    float lpWarm[2] { 0.0f, 0.0f };   // low-shelf (warmth) one-pole state
+    float lpAir[2]  { 0.0f, 0.0f };   // high-shelf (air) one-pole state
+    float coefWarm { 0.02f };
+    float coefAir  { 0.4f };
 
     // Lock-free single-producer / single-consumer ring buffer feeding the
     // WebView oscilloscope + spectrum display.

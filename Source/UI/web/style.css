@@ -289,3 +289,52 @@ html, body {
   box-shadow: inset 0 1px 2px rgba(255,205,160,0.55), 0 0 9px rgba(207,90,42,0.8); }
 .rocker.accent-blue.on .cap::before { background: linear-gradient(180deg,#57a2e2,#1c4e7d);
   box-shadow: inset 0 1px 2px rgba(190,225,255,0.55), 0 0 9px rgba(47,116,179,0.8); }
+
+/* ============================================================
+   GLOW-UP: premium finishing pass (panel, plates, displays)
+   ============================================================ */
+/* Cabinet: deeper walnut + soft top light. */
+#cabinet::after { content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+  background: radial-gradient(120% 80% at 50% -10%, rgba(255,240,215,0.10), rgba(0,0,0,0) 55%); }
+
+/* Panel: crisper edge sheen + richer inner darkening. */
+#panel { box-shadow: inset 0 2px 3px rgba(255,255,255,0.10), inset 0 -3px 10px rgba(0,0,0,0.55),
+  inset 0 0 60px rgba(0,0,0,0.55), 0 6px 16px rgba(0,0,0,0.7); }
+#panel::before { content:""; position:absolute; left:3px; right:3px; top:3px; height:34px; pointer-events:none;
+  border-radius:6px 6px 0 0; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0)); }
+
+/* Section title: engraved metal name-plate. */
+.sect h2 { position: relative; margin: 0 4px; border-radius: 4px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.28));
+  border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(0,0,0,0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.5);
+  color: #efe6cc; letter-spacing: 1.4px; }
+
+/* Knob captions + values: refined engraved type. */
+.knob .caption, .combo .caption, .rocker .caption { letter-spacing: 0.6px; color: #cdc4a8; }
+.knob .value { color: #a9e6c4; font-variant-numeric: tabular-nums; letter-spacing: 0.4px; }
+
+/* Displays: glass bezel, phosphor glow, subtle screen reflection. */
+.display { border: 1px solid #000;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.6);
+  background: linear-gradient(180deg, #06130c, #030907); }
+.display::after { content:""; position:absolute; inset:3px; pointer-events:none; border-radius:3px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 40%); }
+.disp-label { color: rgba(120,230,160,0.65); text-shadow: 0 0 6px rgba(90,240,150,0.5); }
+
+/* VU: richer LED gradient + glow. */
+.vu-bar { box-shadow: inset 0 0 6px rgba(0,0,0,0.9); }
+
+/* Wheels: chrome edge highlight. */
+.wheel-face { box-shadow: inset 0 0 8px rgba(0,0,0,0.85), 0 1px 0 rgba(255,255,255,0.06); }
+
+/* Keyboard: felt strip above the keys + deeper bed. */
+#keyboard { box-shadow: inset 0 3px 9px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(0,0,0,0.6); }
+#keyboard::before { content:""; position:absolute; left:8px; right:8px; top:4px; height:4px; border-radius:2px;
+  background: linear-gradient(180deg, #7a1f14, #3a0f0a); box-shadow: 0 1px 2px rgba(0,0,0,0.6); z-index:3; }
+.wkey { box-shadow: inset 0 -3px 4px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.8); }
+.bkey { background: linear-gradient(180deg, #34302a 0%, #17140f 55%, #0c0a07 100%);
+  box-shadow: 0 3px 4px rgba(0,0,0,0.7), inset 0 -2px 2px rgba(255,255,255,0.06); }
+
+/* Brand: subtle emboss on the logo. */
+.logo { text-shadow: 0 1px 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(255,255,255,0.08), 0 2px 6px rgba(0,0,0,0.7); }

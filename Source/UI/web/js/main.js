@@ -89,49 +89,70 @@ function installTextures() {
   try { root.setProperty("--metal-tex", `url(${makeMetalTexture()})`); } catch (e) {}
 }
 
-// Photoreal knob rendered on a canvas: brushed-metal skirt with a bevel,
-// black pointer cap with a specular highlight, tick ring and a cast shadow.
-function drawKnob(ctx, size, norm) {
+// Photoreal knob rendered on a canvas: machined-aluminium skirt with a chrome
+// bevel ring, tick ring with active-arc glow, black anodised cap with a
+// specular sheen and a lit pointer, plus a soft cast shadow.
+function drawKnob(ctx, size, norm, accent) {
   const cx = size / 2, cy = size / 2, R = size / 2;
+  const A = accent || "rgba(90,170,255,0.9)";
   ctx.clearRect(0, 0, size, size);
 
+  // Cast shadow.
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = size * 0.09; ctx.shadowOffsetY = size * 0.05;
-  ctx.beginPath(); ctx.arc(cx, cy, R * 0.92, 0, Math.PI * 2); ctx.fillStyle = "#000"; ctx.fill();
+  ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = size * 0.11; ctx.shadowOffsetY = size * 0.06;
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.9, 0, Math.PI * 2); ctx.fillStyle = "#000"; ctx.fill();
   ctx.restore();
 
-  let gs = ctx.createRadialGradient(cx, cy - R * 0.5, R * 0.1, cx, cy, R);
-  gs.addColorStop(0, "#9a9aa0"); gs.addColorStop(0.45, "#55555b"); gs.addColorStop(0.8, "#2b2b30"); gs.addColorStop(1, "#0a0a0c");
-  ctx.beginPath(); ctx.arc(cx, cy, R * 0.97, 0, Math.PI * 2); ctx.fillStyle = gs; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, R * 0.9, Math.PI * 1.05, Math.PI * 1.95); ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = R * 0.05; ctx.stroke();
+  // Chrome bevel ring (outer).
+  let gr = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
+  gr.addColorStop(0, "#c7ccd4"); gr.addColorStop(0.5, "#3a3d44"); gr.addColorStop(1, "#0c0c0e");
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.97, 0, Math.PI * 2); ctx.fillStyle = gr; ctx.fill();
 
+  // Machined skirt.
+  let gs = ctx.createRadialGradient(cx, cy - R * 0.55, R * 0.1, cx, cy, R * 0.9);
+  gs.addColorStop(0, "#a7a7ae"); gs.addColorStop(0.45, "#5a5a61"); gs.addColorStop(0.82, "#2c2c31"); gs.addColorStop(1, "#111114");
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.9, 0, Math.PI * 2); ctx.fillStyle = gs; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.83, Math.PI * 1.02, Math.PI * 1.98); ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = R * 0.045; ctx.stroke();
+
+  // Tick ring with an active-value glow arc.
+  const start = -135, sweep = 270;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.995, (start - 90) * Math.PI / 180, (start - 90 + sweep) * Math.PI / 180);
+  ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = R * 0.07; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.995, (start - 90) * Math.PI / 180, (start - 90 + sweep * norm) * Math.PI / 180);
+  ctx.strokeStyle = A; ctx.lineWidth = R * 0.05; ctx.shadowColor = A; ctx.shadowBlur = size * 0.06; ctx.stroke();
+  ctx.restore();
   for (let i = 0; i <= 10; i++) {
-    const a = (-135 + i * 27) * Math.PI / 180, maj = i % 5 === 0;
-    const r1 = R * 0.99, r2 = R * (maj ? 0.82 : 0.88);
+    const a = (start + i * 27) * Math.PI / 180, maj = i % 5 === 0;
+    const r1 = R * 0.92, r2 = R * (maj ? 0.76 : 0.82);
     ctx.beginPath();
     ctx.moveTo(cx + Math.sin(a) * r1, cy - Math.cos(a) * r1);
     ctx.lineTo(cx + Math.sin(a) * r2, cy - Math.cos(a) * r2);
-    ctx.strokeStyle = maj ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)";
-    ctx.lineWidth = maj ? 1.6 : 1; ctx.stroke();
+    ctx.strokeStyle = maj ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.32)";
+    ctx.lineWidth = maj ? 1.7 : 1; ctx.stroke();
   }
 
-  const br = R * 0.7;
-  let gb = ctx.createRadialGradient(cx - br * 0.35, cy - br * 0.5, br * 0.1, cx, cy, br);
-  gb.addColorStop(0, "#50505a"); gb.addColorStop(0.5, "#1c1c20"); gb.addColorStop(1, "#040405");
+  // Anodised cap.
+  const br = R * 0.66;
+  let gb = ctx.createRadialGradient(cx - br * 0.4, cy - br * 0.55, br * 0.1, cx, cy, br);
+  gb.addColorStop(0, "#54545e"); gb.addColorStop(0.5, "#1d1d22"); gb.addColorStop(1, "#040406");
   ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.fillStyle = gb; ctx.fill();
 
+  // Specular sheen.
   ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.clip();
-  ctx.beginPath(); ctx.ellipse(cx, cy - br * 0.45, br * 0.72, br * 0.4, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.22)"; ctx.fill(); ctx.restore();
+  let gh = ctx.createLinearGradient(cx, cy - br, cx, cy + br * 0.2);
+  gh.addColorStop(0, "rgba(255,255,255,0.3)"); gh.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.beginPath(); ctx.ellipse(cx, cy - br * 0.42, br * 0.78, br * 0.46, 0, 0, Math.PI * 2);
+  ctx.fillStyle = gh; ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.strokeStyle = "rgba(0,0,0,0.9)"; ctx.lineWidth = 1; ctx.stroke();
 
-  ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.strokeStyle = "rgba(0,0,0,0.85)"; ctx.lineWidth = 1; ctx.stroke();
-
-  const a = (-135 + norm * 270) * Math.PI / 180;
-  ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 2;
+  // Lit pointer.
+  const a = (start + norm * sweep) * Math.PI / 180;
+  ctx.save(); ctx.shadowColor = A; ctx.shadowBlur = size * 0.05;
   ctx.beginPath();
-  ctx.moveTo(cx + Math.sin(a) * br * 0.2, cy - Math.cos(a) * br * 0.2);
-  ctx.lineTo(cx + Math.sin(a) * br * 0.92, cy - Math.cos(a) * br * 0.92);
-  ctx.lineCap = "round"; ctx.lineWidth = Math.max(2, br * 0.16); ctx.strokeStyle = "#f4f4f4"; ctx.stroke();
+  ctx.moveTo(cx + Math.sin(a) * br * 0.18, cy - Math.cos(a) * br * 0.18);
+  ctx.lineTo(cx + Math.sin(a) * br * 0.9, cy - Math.cos(a) * br * 0.9);
+  ctx.lineCap = "round"; ctx.lineWidth = Math.max(2, br * 0.17); ctx.strokeStyle = "#f6f6f8"; ctx.stroke();
   ctx.restore();
 }
 
@@ -147,17 +168,22 @@ function setupKnob(el) {
   const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
   const valueEl = el.querySelector(".value");
 
+  const accent = /CUTOFF|RESO|FILTER|EMPHASIS|CONTOUR/.test(id) ? "rgba(230,140,70,0.95)"
+               : /^MIX_|VOLUME|MASTER/.test(id)                 ? "rgba(90,170,255,0.95)"
+               : /AMP_|LOUD/.test(id)                           ? "rgba(90,220,140,0.95)"
+               :                                                   "rgba(200,180,120,0.95)";
+
   let state;
   try {
     state = getSliderState(id);
   } catch (e) {
-    drawKnob(ctx, size, 0.5);
+    drawKnob(ctx, size, 0.5, accent);
     return;
   }
 
   const render = () => {
     const norm = state.getNormalisedValue();
-    drawKnob(ctx, size, norm);
+    drawKnob(ctx, size, norm, accent);
     valueEl.textContent = formatValue(id, state.getScaledValue());
   };
   state.valueChangedEvent.addListener(render);
@@ -404,15 +430,22 @@ function setupVisualiser() {
   const sctx = scope.getContext("2d");
   const pctx = spectrum.getContext("2d");
 
+  const grid = (ctx, w, h, cols, rows, col) => {
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    for (let i = 1; i < cols; i++) { const x = (i / cols) * w; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let j = 1; j < rows; j++) { const y = (j / rows) * h; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  };
+
   const drawScope = (wave) => {
     const w = scope.width, h = scope.height;
     sctx.clearRect(0, 0, w, h);
-    sctx.strokeStyle = "rgba(80, 220, 120, 0.25)";
-    sctx.lineWidth = 1;
+    grid(sctx, w, h, 8, 4, "rgba(80,220,120,0.10)");
+    sctx.strokeStyle = "rgba(80,220,120,0.28)"; sctx.lineWidth = 1;
     sctx.beginPath(); sctx.moveTo(0, h / 2); sctx.lineTo(w, h / 2); sctx.stroke();
 
-    sctx.strokeStyle = "#5cf08a";
-    sctx.lineWidth = 1.5;
+    sctx.save();
+    sctx.shadowColor = "rgba(92,240,138,0.8)"; sctx.shadowBlur = 6;
+    sctx.strokeStyle = "#7dffab"; sctx.lineWidth = 1.6; sctx.lineJoin = "round";
     sctx.beginPath();
     wave.forEach((v, i) => {
       const x = (i / (wave.length - 1)) * w;
@@ -420,18 +453,26 @@ function setupVisualiser() {
       i === 0 ? sctx.moveTo(x, y) : sctx.lineTo(x, y);
     });
     sctx.stroke();
+    sctx.restore();
   };
 
   const drawSpectrum = (bins) => {
     const w = spectrum.width, h = spectrum.height;
     pctx.clearRect(0, 0, w, h);
+    grid(pctx, w, h, 8, 4, "rgba(90,160,220,0.08)");
     const bw = w / bins.length;
+    pctx.save();
+    pctx.shadowColor = "rgba(90,180,240,0.5)"; pctx.shadowBlur = 4;
     for (let i = 0; i < bins.length; i++) {
       const bh = bins[i] * h;
       const t = i / bins.length;
-      pctx.fillStyle = `rgb(${40 + t * 120}, ${180 - t * 40}, ${220 - t * 120})`;
-      pctx.fillRect(i * bw, h - bh, Math.max(1, bw - 0.5), bh);
+      const g = pctx.createLinearGradient(0, h, 0, h - bh);
+      g.addColorStop(0, `rgba(${40 + t * 120},${190 - t * 50},${230 - t * 120},0.5)`);
+      g.addColorStop(1, `rgb(${70 + t * 150},${210 - t * 40},${240 - t * 120})`);
+      pctx.fillStyle = g;
+      pctx.fillRect(i * bw, h - bh, Math.max(1, bw - 0.6), bh);
     }
+    pctx.restore();
   };
 
   const vuL = document.getElementById("vuL");

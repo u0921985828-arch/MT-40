@@ -195,6 +195,39 @@
 
   #panel::-webkit-scrollbar{height:6px;}
   #panel::-webkit-scrollbar-thumb{background:#000;border-radius:3px;}
+
+  /* ===== GLOW-UP: premium finishing pass ===== */
+  #stage{box-shadow:0 26px 74px rgba(0,0,0,.88),inset 0 0 90px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,240,215,.08);}
+  #stage::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;z-index:5;
+    background:radial-gradient(120% 70% at 50% -8%,rgba(255,240,215,.10),rgba(0,0,0,0) 55%);}
+  #panel{box-shadow:inset 0 2px 3px rgba(255,255,255,.10),inset 0 -3px 10px rgba(0,0,0,.55),inset 0 0 56px rgba(0,0,0,.55);}
+  .sect{position:relative;}
+  .sect h2{position:relative;margin:0 6px;border-radius:4px;padding:5px 4px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.28));
+    border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(0,0,0,.6);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.5);color:#efe6cc;letter-spacing:1.4px;}
+  .kcap{letter-spacing:.5px;color:#cdc4a8;}
+  .kval{color:#a9e6c4;letter-spacing:.3px;}
+  /* Switch: recessed metal frame + brighter lit paddle */
+  .sw .cap{background:linear-gradient(180deg,#3a3a40,#141417);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.12),inset 0 -2px 4px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.6);}
+  .sw.on.orange .cap::before{box-shadow:inset 0 1px 2px rgba(255,205,160,.6),0 0 11px rgba(207,90,42,.9);}
+  .sw.on.blue .cap::before{box-shadow:inset 0 1px 2px rgba(190,225,255,.6),0 0 11px rgba(47,116,179,.9);}
+  /* VU: glass bezel + phosphor glow */
+  .vu{padding:3px 4px;border-radius:4px;background:linear-gradient(180deg,#050d09,#02070500);
+    box-shadow:inset 0 0 8px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05);}
+  .vu i{box-shadow:inset 0 0 6px rgba(0,0,0,.9);}
+  .vu i b{box-shadow:0 0 6px rgba(120,240,150,.5);}
+  /* Wheels: chrome edge */
+  .wface{box-shadow:inset 0 0 8px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.06);}
+  /* Keyboard: felt strip + deeper bed */
+  #kbd{box-shadow:inset 0 3px 9px rgba(0,0,0,.9),inset 0 0 0 1px rgba(0,0,0,.6);}
+  #kbd::before{content:"";position:absolute;left:8px;right:8px;top:3px;height:4px;border-radius:2px;z-index:3;
+    background:linear-gradient(180deg,#7a1f14,#3a0f0a);box-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .wk{box-shadow:inset 0 -3px 4px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.85);}
+  .bk{background:linear-gradient(180deg,#34302a 0%,#17140f 55%,#0c0a07 100%);
+    box-shadow:0 3px 4px rgba(0,0,0,.7),inset 0 -2px 2px rgba(255,255,255,.06);}
+  .logo{text-shadow:0 1px 0 rgba(0,0,0,.9),0 -1px 0 rgba(255,255,255,.08),0 2px 6px rgba(0,0,0,.7);}
 </style>
 
 <div id="gate">
@@ -21140,8 +21173,7 @@ class Engine{
     this.block();
     let peak=0;
     for(let i=0;i<out.length;i++){
-      let s=this.sample()*P.masterVolume;
-      s=Math.tanh(s*1.2);
+      const s=this.sample()*P.masterVolume;   // dry voice; the master chain colours it
       out[i]=s;
       const a=Math.abs(s); if(a>peak)peak=a;
     }
@@ -21153,14 +21185,44 @@ class Engine{
 // AUDIO
 //====================================================================
 let ctx,engine,node;
+// Tube transfer curve: soft clip with a touch of asymmetry (2nd harmonic).
+function makeTubeCurve(drive){
+  const n=2048,c=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=(i/(n-1))*2-1;
+    let y=Math.tanh(drive*x)+0.05*(Math.tanh(drive*x*x)); // gentle even-harmonic warmth
+    c[i]=Math.max(-1,Math.min(1,y*0.86));}
+  return c;
+}
 function startAudio(){
   ctx=new (window.AudioContext||window.webkitAudioContext)();
   engine=new Engine(ctx.sampleRate);
   const buf=512;
   node=ctx.createScriptProcessor(buf,0,1);
   node.onaudioprocess=e=>engine.render(e.outputBuffer.getChannelData(0));
-  const g=ctx.createGain(); g.gain.value=1;
-  node.connect(g); g.connect(ctx.destination);
+
+  // ---- Analog-style mastering chain (native nodes, low CPU) --------------
+  const hp=ctx.createBiquadFilter();   hp.type="highpass";  hp.frequency.value=24; hp.Q.value=0.6;
+  const shaper=ctx.createWaveShaper(); shaper.curve=makeTubeCurve(1.9); shaper.oversample="4x";
+  const warm=ctx.createBiquadFilter(); warm.type="lowshelf";  warm.frequency.value=200;  warm.gain.value=1.8;
+  const pres=ctx.createBiquadFilter(); pres.type="peaking";   pres.frequency.value=2200; pres.Q.value=0.7; pres.gain.value=1.2;
+  const air=ctx.createBiquadFilter();  air.type="highshelf"; air.frequency.value=7000; air.gain.value=3.5;
+
+  // Stereo width: dry centre + short, phase-offset side delays (Haas).
+  const merger=ctx.createChannelMerger(2);
+  const dry=ctx.createGain();  dry.gain.value=0.82;
+  const dL=ctx.createDelay();  dL.delayTime.value=0.0069; const wL=ctx.createGain(); wL.gain.value= 0.30;
+  const dR=ctx.createDelay();  dR.delayTime.value=0.0113; const wR=ctx.createGain(); wR.gain.value=-0.30;
+
+  // Bus glue / limiter.
+  const comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-13; comp.knee.value=14; comp.ratio.value=2.5; comp.attack.value=0.006; comp.release.value=0.18;
+  const outG=ctx.createGain(); outG.gain.value=0.92;
+
+  node.connect(hp); hp.connect(shaper); shaper.connect(warm); warm.connect(pres); pres.connect(air);
+  air.connect(dry); dry.connect(merger,0,0); dry.connect(merger,0,1);
+  air.connect(dL); dL.connect(wL); wL.connect(merger,0,0);
+  air.connect(dR); dR.connect(wR); wR.connect(merger,0,1);
+  merger.connect(comp); comp.connect(outG); outG.connect(ctx.destination);
   ctx.resume();
 }
 
@@ -21192,37 +21254,51 @@ function installTextures(){const rs=document.documentElement.style;
   try{rs.setProperty("--wood-tex",`url(${makeWoodTexture()})`);}catch(e){}
   try{rs.setProperty("--metal-tex",`url(${makeMetalTexture()})`);}catch(e){}}
 installTextures();
-function drawKnob(ctx,size,norm){
-  const cx=size/2,cy=size/2,R=size/2;ctx.clearRect(0,0,size,size);
-  ctx.save();ctx.shadowColor="rgba(0,0,0,0.6)";ctx.shadowBlur=size*0.09;ctx.shadowOffsetY=size*0.05;
-  ctx.beginPath();ctx.arc(cx,cy,R*0.92,0,Math.PI*2);ctx.fillStyle="#000";ctx.fill();ctx.restore();
-  let gs=ctx.createRadialGradient(cx,cy-R*0.5,R*0.1,cx,cy,R);
-  gs.addColorStop(0,"#9a9aa0");gs.addColorStop(0.45,"#55555b");gs.addColorStop(0.8,"#2b2b30");gs.addColorStop(1,"#0a0a0c");
-  ctx.beginPath();ctx.arc(cx,cy,R*0.97,0,Math.PI*2);ctx.fillStyle=gs;ctx.fill();
-  ctx.beginPath();ctx.arc(cx,cy,R*0.9,Math.PI*1.05,Math.PI*1.95);ctx.strokeStyle="rgba(255,255,255,0.35)";ctx.lineWidth=R*0.05;ctx.stroke();
-  for(let i=0;i<=10;i++){const a=(-135+i*27)*Math.PI/180,maj=i%5===0,r1=R*0.99,r2=R*(maj?0.82:0.88);
+function drawKnob(ctx,size,norm,accent){
+  const cx=size/2,cy=size/2,R=size/2,A=accent||"rgba(90,170,255,0.9)";ctx.clearRect(0,0,size,size);
+  ctx.save();ctx.shadowColor="rgba(0,0,0,0.65)";ctx.shadowBlur=size*0.11;ctx.shadowOffsetY=size*0.06;
+  ctx.beginPath();ctx.arc(cx,cy,R*0.9,0,Math.PI*2);ctx.fillStyle="#000";ctx.fill();ctx.restore();
+  let gr=ctx.createLinearGradient(cx,cy-R,cx,cy+R);
+  gr.addColorStop(0,"#c7ccd4");gr.addColorStop(0.5,"#3a3d44");gr.addColorStop(1,"#0c0c0e");
+  ctx.beginPath();ctx.arc(cx,cy,R*0.97,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+  let gs=ctx.createRadialGradient(cx,cy-R*0.55,R*0.1,cx,cy,R*0.9);
+  gs.addColorStop(0,"#a7a7ae");gs.addColorStop(0.45,"#5a5a61");gs.addColorStop(0.82,"#2c2c31");gs.addColorStop(1,"#111114");
+  ctx.beginPath();ctx.arc(cx,cy,R*0.9,0,Math.PI*2);ctx.fillStyle=gs;ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,R*0.83,Math.PI*1.02,Math.PI*1.98);ctx.strokeStyle="rgba(255,255,255,0.4)";ctx.lineWidth=R*0.045;ctx.stroke();
+  const st=-135,sw=270;
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,R*0.995,(st-90)*Math.PI/180,(st-90+sw)*Math.PI/180);ctx.strokeStyle="rgba(0,0,0,0.55)";ctx.lineWidth=R*0.07;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R*0.995,(st-90)*Math.PI/180,(st-90+sw*norm)*Math.PI/180);ctx.strokeStyle=A;ctx.lineWidth=R*0.05;ctx.shadowColor=A;ctx.shadowBlur=size*0.06;ctx.stroke();
+  ctx.restore();
+  for(let i=0;i<=10;i++){const a=(st+i*27)*Math.PI/180,maj=i%5===0,r1=R*0.92,r2=R*(maj?0.76:0.82);
     ctx.beginPath();ctx.moveTo(cx+Math.sin(a)*r1,cy-Math.cos(a)*r1);ctx.lineTo(cx+Math.sin(a)*r2,cy-Math.cos(a)*r2);
-    ctx.strokeStyle=maj?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.3)";ctx.lineWidth=maj?1.6:1;ctx.stroke();}
-  const br=R*0.7;let gb=ctx.createRadialGradient(cx-br*0.35,cy-br*0.5,br*0.1,cx,cy,br);
-  gb.addColorStop(0,"#50505a");gb.addColorStop(0.5,"#1c1c20");gb.addColorStop(1,"#040405");
+    ctx.strokeStyle=maj?"rgba(255,255,255,0.75)":"rgba(255,255,255,0.32)";ctx.lineWidth=maj?1.7:1;ctx.stroke();}
+  const br=R*0.66;let gb=ctx.createRadialGradient(cx-br*0.4,cy-br*0.55,br*0.1,cx,cy,br);
+  gb.addColorStop(0,"#54545e");gb.addColorStop(0.5,"#1d1d22");gb.addColorStop(1,"#040406");
   ctx.beginPath();ctx.arc(cx,cy,br,0,Math.PI*2);ctx.fillStyle=gb;ctx.fill();
   ctx.save();ctx.beginPath();ctx.arc(cx,cy,br,0,Math.PI*2);ctx.clip();
-  ctx.beginPath();ctx.ellipse(cx,cy-br*0.45,br*0.72,br*0.4,0,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,0.22)";ctx.fill();ctx.restore();
-  ctx.beginPath();ctx.arc(cx,cy,br,0,Math.PI*2);ctx.strokeStyle="rgba(0,0,0,0.85)";ctx.lineWidth=1;ctx.stroke();
-  const a=(-135+norm*270)*Math.PI/180;ctx.save();ctx.shadowColor="rgba(0,0,0,0.8)";ctx.shadowBlur=2;
-  ctx.beginPath();ctx.moveTo(cx+Math.sin(a)*br*0.2,cy-Math.cos(a)*br*0.2);ctx.lineTo(cx+Math.sin(a)*br*0.92,cy-Math.cos(a)*br*0.92);
-  ctx.lineCap="round";ctx.lineWidth=Math.max(2,br*0.16);ctx.strokeStyle="#f4f4f4";ctx.stroke();ctx.restore();
+  let gh=ctx.createLinearGradient(cx,cy-br,cx,cy+br*0.2);gh.addColorStop(0,"rgba(255,255,255,0.3)");gh.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.beginPath();ctx.ellipse(cx,cy-br*0.42,br*0.78,br*0.46,0,0,Math.PI*2);ctx.fillStyle=gh;ctx.fill();ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,br,0,Math.PI*2);ctx.strokeStyle="rgba(0,0,0,0.9)";ctx.lineWidth=1;ctx.stroke();
+  const a=(st+norm*sw)*Math.PI/180;ctx.save();ctx.shadowColor=A;ctx.shadowBlur=size*0.05;
+  ctx.beginPath();ctx.moveTo(cx+Math.sin(a)*br*0.18,cy-Math.cos(a)*br*0.18);ctx.lineTo(cx+Math.sin(a)*br*0.9,cy-Math.cos(a)*br*0.9);
+  ctx.lineCap="round";ctx.lineWidth=Math.max(2,br*0.17);ctx.strokeStyle="#f6f6f8";ctx.stroke();ctx.restore();
+}
+function knobAccent(id){
+  return /filterCutoff|filterReso|filterEnv|Cutoff|Reso|filter/.test(id)?"rgba(230,140,70,0.95)"
+    :/^mix|masterVolume|Vol/.test(id)?"rgba(90,170,255,0.95)"
+    :/^amp/.test(id)?"rgba(90,220,140,0.95)":"rgba(200,180,120,0.95)";
 }
 function knobEl(spec){
   const el=document.createElement("div");el.className="knob"+(spec.sm?" sm":"");el.style.touchAction="none";
   const size=spec.sm?38:46;const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
   el.innerHTML=`<canvas class="kcv"></canvas><span class="kcap">${spec.cap}</span><span class="kval"></span>`;
   const cv=el.querySelector(".kcv");cv.width=size*dpr;cv.height=size*dpr;cv.style.width=size+"px";cv.style.height=size+"px";
-  const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);const val=el.querySelector(".kval");
+  const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);const val=el.querySelector(".kval");const acc=knobAccent(spec.id);
   if(spec.skew!==1 && spec.skew>spec.min && spec.skew<spec.max){const p=(spec.skew-spec.min)/(spec.max-spec.min);spec.skewPow=Math.log(0.5)/Math.log(p);}else spec.skewPow=1;
   const fromNorm=n=>{const nn=Math.pow(n,spec.skewPow);return spec.min+nn*(spec.max-spec.min);};
   const norm=()=>{const n=(P[spec.id]-spec.min)/(spec.max-spec.min);return Math.pow(Math.max(0,Math.min(1,n)),1/spec.skewPow);};
-  const render=()=>{drawKnob(ctx,size,norm());val.textContent=spec.fmt(P[spec.id]);};
+  const render=()=>{drawKnob(ctx,size,norm(),acc);val.textContent=spec.fmt(P[spec.id]);};
   P[spec.id]=spec.def; render();
   let drag=false,y0=0,n0=0;
   el.addEventListener("pointerdown",e=>{drag=true;y0=e.clientY;n0=norm();el.setPointerCapture(e.pointerId);e.preventDefault();});
