@@ -165,7 +165,13 @@ private:
     void resetToDefaults()
     {
         for (auto* param : apvts.processor.getParameters())
+        {
+            // Poly/Mono is a global performance mode, not part of a sound preset.
+            if (auto* withID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param))
+                if (withID->paramID == ParamID::polyOn)
+                    continue;
             param->setValueNotifyingHost (param->getDefaultValue());
+        }
     }
 
     static const std::unordered_map<std::string, juce::String>& camelToId()

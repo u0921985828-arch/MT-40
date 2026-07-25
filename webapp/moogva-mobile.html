@@ -21074,7 +21074,7 @@ const KEYTRK = ["0%","33%","66%","100%"];
 const NOISE = ["White","Pink"];
 
 const P = {
-  masterVolume:0.8, masterTune:0, glideOn:0, glideTime:0.05, modWheel:0, modMix:0, modOscOn:0, modFilterOn:0,
+  masterVolume:0.8, masterTune:0, glideOn:0, glideTime:0.05, modWheel:0, modMix:0, modOscOn:0, modFilterOn:0, polyOn:0,
   osc1Wave:2, osc1Range:3,
   osc2Wave:2, osc2Range:3, osc2Detune:0,
   osc3Wave:2, osc3Range:3, osc3Detune:0, osc3Kb:1,
@@ -21226,13 +21226,40 @@ class Engine{
     const ae=this.aenv.next();
     return filt*ae*this.vel;
   }
+  reset(){ this.held=[]; this.fenv.reset(); this.aenv.reset(); this.flt.z=[0,0,0,0]; this.fb=0; this.lo3=0; this.ln=0; }
+  active(){ return this.aenv.active(); }
+}
+
+// Polyphony manager: a bank of monophonic Engine voices. In Mono mode voice 0
+// handles every key (authentic last-note priority); in Poly mode note-ons are
+// allocated across the bank and the voices are summed.
+class Poly{
+  constructor(fs){
+    this.fs=fs; this.N=8; this.voices=[];
+    for(let i=0;i<this.N;i++)this.voices.push(new Engine(fs));
+    this.vnote=new Array(this.N).fill(-1); this.vage=new Array(this.N).fill(0);
+    this.ageC=0; this.wasPoly=false; this.meter=0;
+  }
+  alloc(n){
+    for(let i=0;i<this.N;i++)if(this.vnote[i]<0&&!this.voices[i].active()){this.vnote[i]=n;this.vage[i]=this.ageC++;return i;}
+    let best=-1,old=Infinity;
+    for(let i=0;i<this.N;i++)if(this.vnote[i]<0&&this.vage[i]<old){old=this.vage[i];best=i;}
+    if(best<0){old=Infinity;for(let i=0;i<this.N;i++)if(this.vage[i]<old){old=this.vage[i];best=i;}this.voices[best].reset();}
+    this.vnote[best]=n;this.vage[best]=this.ageC++;return best;
+  }
+  findVoice(n){let best=-1,newest=-1;for(let i=0;i<this.N;i++)if(this.vnote[i]===n&&this.vage[i]>=newest){newest=this.vage[i];best=i;}return best;}
+  noteOn(n,v){ if(!P.polyOn){this.voices[0].noteOn(n,v);return;} const i=this.alloc(n); this.voices[i].noteOn(n,v); }
+  noteOff(n){ if(!P.polyOn){this.voices[0].noteOff(n);return;} const i=this.findVoice(n); if(i>=0){this.voices[i].noteOff(n);this.vnote[i]=-1;} }
   render(out){
-    this.block();
+    const poly=!!P.polyOn;
+    if(poly!==this.wasPoly){ for(const v of this.voices)v.reset(); this.vnote.fill(-1); this.wasPoly=poly; }
+    const act=poly?this.voices:[this.voices[0]];
+    const g=(poly?0.6:1)*P.masterVolume;
+    for(const v of act)v.block();
     let peak=0;
     for(let i=0;i<out.length;i++){
-      const s=this.sample()*P.masterVolume;   // dry voice; the master chain colours it
-      out[i]=s;
-      const a=Math.abs(s); if(a>peak)peak=a;
+      let s=0; for(const v of act)s+=v.sample();
+      s*=g; out[i]=s; const a=Math.abs(s); if(a>peak)peak=a;
     }
     this.meter=peak;
   }
@@ -21252,7 +21279,7 @@ function makeTubeCurve(drive){
 }
 function startAudio(){
   ctx=new (window.AudioContext||window.webkitAudioContext)();
-  engine=new Engine(ctx.sampleRate);
+  engine=new Poly(ctx.sampleRate);
   const buf=512;
   node=ctx.createScriptProcessor(buf,0,1);
   node.onaudioprocess=e=>engine.render(e.outputBuffer.getChannelData(0));
@@ -21453,7 +21480,7 @@ const panel=document.getElementById("panel");
 panel.appendChild(section("Controllers",
   row(mk(K("masterTune","Tune",-12,12,0,1,fmtSt)), mk(K("glideTime","Glide",0,5,0.05,0.5,v=>v.toFixed(2)+" s"))),
   row(mk(K("modMix","Mod Mix",0,1,0)), mk(K("drift","Drift",0,1,0.25))),
-  swrow(mk(SW("modOscOn","Osc Mod")), mk(SW("glideOn","Glide")))
+  swrow(mk(SW("modOscOn","Osc Mod")), mk(SW("glideOn","Glide")), mk(SW("polyOn","Poly")))
 ));
 // Oscillator Bank
 panel.appendChild(section("Oscillator Bank",
@@ -21498,7 +21525,9 @@ function findPreset(id){
   return (lib.presets[p[1]]||[]).find(x=>x.name===p[2])||null;
 }
 function applyPresetParams(params){
+  const keepPoly=P.polyOn;   // Poly/Mono is a performance mode, not part of a preset
   Object.assign(P, JSON.parse(DEFAULTS)); Object.assign(P, params);
+  P.polyOn=keepPoly;
   allControls.forEach(c=>c._render&&c._render());
 }
 

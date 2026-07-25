@@ -21,6 +21,7 @@ namespace ParamID
     static constexpr auto modMix         = "MOD_MIX";          // 0 = Osc3, 1 = Noise
     static constexpr auto modOscOn       = "MOD_OSC_ON";       // route mod -> oscillator pitch
     static constexpr auto modFilterOn    = "MOD_FILTER_ON";    // route mod -> filter cutoff
+    static constexpr auto polyOn         = "POLY_ON";          // false = mono (authentic), true = polyphonic
 
     // ---- Oscillator Bank -----------------------------------------------------
     static constexpr auto osc1Wave  = "OSC1_WAVE";

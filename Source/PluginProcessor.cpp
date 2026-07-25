@@ -33,7 +33,10 @@ MoogSynthAudioProcessor::MoogSynthAudioProcessor()
       apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
     synthParams.connect (apvts);
-    engine.setParameters (&synthParams);
+    for (auto& v : voices)
+        v.setParameters (&synthParams);
+    for (auto& n : voiceNote)
+        n = -1;
 
     for (auto& s : scope.buffer)
         s.store (0.0f, std::memory_order_relaxed);
@@ -67,6 +70,7 @@ MoogSynthAudioProcessor::createParameterLayout()
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
     params.push_back (std::make_unique<APB> (ParamID::modOscOn, "Oscillator Modulation", false));
     params.push_back (std::make_unique<APB> (ParamID::modFilterOn, "Filter Modulation", false));
+    params.push_back (std::make_unique<APB> (ParamID::polyOn, "Polyphonic", false));
 
     // ---- Oscillator Bank ----------------------------------------------------
     params.push_back (std::make_unique<APC> (ParamID::osc1Wave, "Osc 1 Waveform", ParamChoices::waveforms(), 2));
@@ -153,7 +157,16 @@ MoogSynthAudioProcessor::createParameterLayout()
 
 void MoogSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    engine.prepare (sampleRate, samplesPerBlock);
+    for (auto& v : voices)
+    {
+        v.prepare (sampleRate, samplesPerBlock);
+        v.reset();
+    }
+    for (auto& b : voiceMidi)
+        b.ensureSize (256);
+    for (auto& n : voiceNote)
+        n = -1;
+    ageCounter = 0;
     masterGain.reset (sampleRate, 0.02);
 
     const auto numOut = (size_t) juce::jmax (1, getTotalNumOutputChannels());
@@ -214,9 +227,63 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Merge notes played on the on-screen keyboard with incoming host MIDI.
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
 
-    engine.setExternalBend (uiPitchBend.load()
-                            * apvts.getRawParameterValue (ParamID::pitchBendRange)->load());
-    engine.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    const float extBend = uiPitchBend.load()
+                          * apvts.getRawParameterValue (ParamID::pitchBendRange)->load();
+    for (auto& v : voices)
+        v.setExternalBend (extBend);
+
+    const bool poly = apvts.getRawParameterValue (ParamID::polyOn)->load() > 0.5f;
+    const int  numSamples = buffer.getNumSamples();
+
+    // Reset the bank when switching mode so no note gets stuck across the change.
+    if (poly != wasPoly)
+    {
+        for (auto& v : voices) v.reset();
+        for (auto& n : voiceNote) n = -1;
+        wasPoly = poly;
+    }
+
+    if (! poly)
+    {
+        voices[0].renderNextBlock (buffer, midiMessages, 0, numSamples);
+    }
+    else
+    {
+        for (auto& b : voiceMidi) b.clear();
+
+        for (const auto meta : midiMessages)
+        {
+            const auto msg = meta.getMessage();
+            const int  sp  = meta.samplePosition;
+
+            if (msg.isNoteOn())
+            {
+                const int v = allocateVoice (msg.getNoteNumber());
+                voiceMidi[(size_t) v].addEvent (msg, sp);
+            }
+            else if (msg.isNoteOff())
+            {
+                const int v = findVoiceForNote (msg.getNoteNumber());
+                if (v >= 0)
+                {
+                    voiceMidi[(size_t) v].addEvent (msg, sp);
+                    voiceNote[v] = -1;  // freed (envelope releases)
+                }
+            }
+            else
+            {
+                // Pitch bend, mod wheel, all-notes-off, etc. go to every voice.
+                for (auto& b : voiceMidi) b.addEvent (msg, sp);
+                if (msg.isAllNotesOff() || msg.isAllSoundOff())
+                    for (auto& n : voiceNote) n = -1;
+            }
+        }
+
+        for (int i = 0; i < maxVoices; ++i)
+            voices[(size_t) i].renderNextBlock (buffer, voiceMidi[(size_t) i], 0, numSamples);
+
+        buffer.applyGain (0.6f); // headroom for stacked voices
+    }
 
     // ---- Master volume -----------------------------------------------------
     masterGain.setTargetValue (apvts.getRawParameterValue (ParamID::masterVolume)->load());
@@ -286,6 +353,43 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     meter[0].store (peak[0], std::memory_order_relaxed);
     meter[1].store (numCh > 1 ? peak[1] : peak[0], std::memory_order_relaxed);
+}
+
+int MoogSynthAudioProcessor::allocateVoice (int note) noexcept
+{
+    // 1) A fully idle voice (free and silent).
+    for (int i = 0; i < maxVoices; ++i)
+        if (voiceNote[i] < 0 && ! voices[(size_t) i].isActive())
+        {
+            voiceNote[i] = note; voiceAge[i] = ageCounter++;
+            return i;
+        }
+
+    // 2) The oldest released voice (freed but still ringing out).
+    int best = -1; uint64_t oldest = UINT64_MAX;
+    for (int i = 0; i < maxVoices; ++i)
+        if (voiceNote[i] < 0 && voiceAge[i] < oldest) { oldest = voiceAge[i]; best = i; }
+
+    // 3) Otherwise steal the oldest still-held voice (reset to avoid a stuck note).
+    if (best < 0)
+    {
+        oldest = UINT64_MAX;
+        for (int i = 0; i < maxVoices; ++i)
+            if (voiceAge[i] < oldest) { oldest = voiceAge[i]; best = i; }
+        voices[(size_t) best].reset();
+    }
+
+    voiceNote[best] = note; voiceAge[best] = ageCounter++;
+    return best;
+}
+
+int MoogSynthAudioProcessor::findVoiceForNote (int note) const noexcept
+{
+    // Most recently allocated voice holding this note.
+    int best = -1; uint64_t newest = 0;
+    for (int i = 0; i < maxVoices; ++i)
+        if (voiceNote[i] == note && voiceAge[i] >= newest) { newest = voiceAge[i]; best = i; }
+    return best;
 }
 
 juce::AudioProcessorEditor* MoogSynthAudioProcessor::createEditor()

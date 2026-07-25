@@ -32,6 +32,10 @@ public:
                           const juce::MidiBuffer& midiMessages,
                           int startSample, int numSamples);
 
+    /** True while the amplitude envelope is still producing sound (for poly
+        voice allocation / stealing). */
+    bool isActive() const noexcept { return ampEnv.isActive(); }
+
 private:
     void handleMidi (const juce::MidiMessage& m);
     void pushNote (int note, float velocity);

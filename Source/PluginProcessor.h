@@ -2,6 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include <array>
+#include <cstdint>
 #include "DSP/MonoSynthEngine.h"
 #include "DSP/SynthParameters.h"
 #include "PresetManager.h"
@@ -73,7 +75,21 @@ private:
     juce::MidiKeyboardState keyboardState;
 
     SynthParameters synthParams;
-    MonoSynthEngine engine;
+
+    // Voice bank: each MonoSynthEngine is one monophonic voice. Mono mode uses
+    // voices[0] with the full MIDI stream (authentic last-note priority); poly
+    // mode allocates note-ons across the bank and sums the voices.
+    static constexpr int maxVoices = 8;
+    std::array<MonoSynthEngine, maxVoices> voices;
+    std::array<juce::MidiBuffer, maxVoices> voiceMidi;
+    int      voiceNote[maxVoices];       // note each voice currently holds, -1 = free
+    uint64_t voiceAge[maxVoices]  { 0 }; // allocation order (for stealing)
+    uint64_t ageCounter { 0 };
+    bool     wasPoly { false };
+
+    int allocateVoice (int note) noexcept;
+    int findVoiceForNote (int note) const noexcept;
+
     std::atomic<float> uiPitchBend { 0.0f };
 
     // Master output: analog tone shaping -> 4x oversampled tube stage -> DC block.
