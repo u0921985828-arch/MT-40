@@ -58,16 +58,20 @@ function makeWoodTexture() {
   const w = 512, h = 256, c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d");
   const g = x.createLinearGradient(0, 0, w, h);
-  g.addColorStop(0, "#5a3a1e"); g.addColorStop(0.5, "#3a2413"); g.addColorStop(1, "#2a1a0d");
+  g.addColorStop(0, "#6a4526"); g.addColorStop(0.5, "#3a2413"); g.addColorStop(1, "#241608");
   x.fillStyle = g; x.fillRect(0, 0, w, h);
   let seed = 7;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) & 0x7fffffff; return seed / 0x7fffffff; };
-  for (let i = 0; i < 340; i++) {
-    const yy = rnd() * h, amp = 3 + rnd() * 9, freq = 0.006 + rnd() * 0.02, ph = rnd() * 6.28;
+  // Deep grain streaks (higher contrast, cathedral-like flow).
+  for (let i = 0; i < 520; i++) {
+    const yy = rnd() * h, amp = 3 + rnd() * 12, freq = 0.005 + rnd() * 0.022, ph = rnd() * 6.28;
     x.beginPath();
-    for (let px = 0; px <= w; px += 4) x.lineTo(px, yy + Math.sin(px * freq + ph) * amp);
-    x.strokeStyle = `rgba(${20 + rnd() * 30},${12 + rnd() * 20},${6 + rnd() * 10},${0.05 + rnd() * 0.12})`;
-    x.lineWidth = 0.6 + rnd() * 1.6; x.stroke();
+    for (let px = 0; px <= w; px += 3) x.lineTo(px, yy + Math.sin(px * freq + ph) * amp);
+    const dark = rnd() > 0.55;
+    x.strokeStyle = dark
+      ? `rgba(${10 + rnd() * 18},${6 + rnd() * 12},${2 + rnd() * 6},${0.10 + rnd() * 0.20})`
+      : `rgba(${120 + rnd() * 70},${80 + rnd() * 40},${40 + rnd() * 24},${0.04 + rnd() * 0.08})`;
+    x.lineWidth = 0.5 + rnd() * 1.8; x.stroke();
   }
   return c.toDataURL("image/png");
 }
@@ -477,9 +481,15 @@ function setupVisualiser() {
 
   const vuL = document.getElementById("vuL");
   const vuR = document.getElementById("vuR");
+  const vuLp = document.getElementById("vuLp");
+  const vuRp = document.getElementById("vuRp");
+  let peakHold = [0, 0];
   const drawVU = (levels) => {
     if (vuL) vuL.style.height = (levels[0] * 100).toFixed(1) + "%";
     if (vuR) vuR.style.height = (levels[1] * 100).toFixed(1) + "%";
+    for (let c = 0; c < 2; c++) peakHold[c] = levels[c] > peakHold[c] ? levels[c] : peakHold[c] * 0.94;
+    if (vuLp) vuLp.style.bottom = (peakHold[0] * 100).toFixed(1) + "%";
+    if (vuRp) vuRp.style.bottom = (peakHold[1] * 100).toFixed(1) + "%";
   };
 
   try {

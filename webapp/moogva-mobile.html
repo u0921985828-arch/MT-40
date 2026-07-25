@@ -239,6 +239,52 @@
   .bk{background:linear-gradient(180deg,#34302a 0%,#17140f 55%,#0c0a07 100%);
     box-shadow:0 3px 4px rgba(0,0,0,.7),inset 0 -2px 2px rgba(255,255,255,.06);}
   .logo{text-shadow:0 1px 0 rgba(0,0,0,.9),0 -1px 0 rgba(255,255,255,.08),0 2px 6px rgba(0,0,0,.7);}
+
+  /* ===== LAYOUT & FINISH v2 — design study P1/P2/P3 ===== */
+  /* P1: less dead space, sections vertically centred */
+  .sect .body{justify-content:center;gap:20px;padding:8px 0;}
+  .sect{min-width:196px;}
+  #panel{align-items:stretch;}
+  h2{white-space:nowrap;font-size:12.5px;letter-spacing:1.3px;}
+  .osc{gap:8px;padding-left:2px;}
+  /* Osc 1 fixed-tune reference slot */
+  .osc-fixed{display:flex;flex-direction:column;align-items:center;gap:2px;width:50px;flex:none;opacity:.82;}
+  .of-dial{width:34px;height:34px;border-radius:50%;position:relative;
+    background:radial-gradient(circle at 50% 30%,#3a3a40,#17171b 62%,#050506);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.12),inset 0 -3px 5px rgba(0,0,0,.7),0 1px 2px rgba(0,0,0,.8),0 0 0 2px rgba(80,80,88,.4);}
+  .of-dial::after{content:"";position:absolute;left:50%;top:12%;width:2px;height:34%;background:#6a6a72;border-radius:2px;transform:translateX(-50%);}
+  .osc-fixed .kcap{font-size:9.5px;color:#cdc4a8;text-transform:uppercase;letter-spacing:.4px;}
+  .osc-fixed .kval{font-size:8.5px;color:#8f8a76;letter-spacing:1px;}
+  /* P2: mixer regletas aligned name | level | on | type */
+  .mch{display:grid;grid-template-columns:46px 40px 34px 50px;align-items:center;justify-items:center;gap:10px;min-height:0;
+    padding:4px 4px;border-radius:5px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.14));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03),inset 0 -1px 0 rgba(0,0,0,.35);}
+  .mch .mlbl{justify-self:end;width:auto;font-size:10px;color:#cdc4a8;text-transform:uppercase;letter-spacing:.5px;}
+  .mch .knob.sm{width:40px;}
+  .mch .cmb{width:50px;}
+  .mch .cmb .lab{display:none;}
+  .sect .body:has(.mch){gap:12px;}
+  /* P2: rocker LED */
+  .sw .cap{position:relative;}
+  .sw .cap::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;transform:translate(-50%,-50%);
+    background:#0c0c0e;box-shadow:inset 0 1px 1px rgba(0,0,0,.8);transition:all .08s;}
+  .sw.on.orange .cap::after{background:#ffb27a;box-shadow:0 0 7px 1px rgba(240,130,60,.9);}
+  .sw.on.blue .cap::after{background:#9fd0ff;box-shadow:0 0 7px 1px rgba(60,150,240,.9);}
+  /* P3: VU wider + scale + peak-hold */
+  .vu{height:30px;gap:4px;}
+  .vu i{width:12px;position:relative;background:repeating-linear-gradient(0deg,#0a1a10 0 3px,#0d1f13 3px 4px);}
+  .vu i b{background:linear-gradient(0deg,#2ecb54 0%,#7ee06a 55%,#d9d040 78%,#e0402a 100%);}
+  .vu i u{position:absolute;left:0;right:0;height:2px;background:#eafff0;box-shadow:0 0 5px rgba(230,255,235,.9);bottom:0%;transition:bottom .08s linear;}
+  /* P3: wheels — fluted cylinder */
+  .wface{background:
+    linear-gradient(180deg,rgba(255,255,255,.10),rgba(0,0,0,0) 12%,rgba(0,0,0,0) 88%,rgba(0,0,0,.5) 100%),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 2px,rgba(255,255,255,.07) 2px 5px),
+    linear-gradient(90deg,#070708,#45454c 48%,#070708);
+    box-shadow:inset 0 0 9px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.06),0 2px 4px rgba(0,0,0,.6);}
+  .wface::after{background:linear-gradient(180deg,#7a7a82,#16161a);box-shadow:0 1px 2px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.25);}
+  /* P3: typography */
+  .kcap,.cmb .lab,.sw .lab{font-size:9.5px;letter-spacing:.5px;color:#cdc4a8;}
+  .kval{font-size:9.5px;letter-spacing:.3px;color:#a9e6c4;}
 </style>
 
 <div id="gate">
@@ -257,7 +303,7 @@
   <div class="right">
     <div class="dd preset-dd" id="res" title="Resolución"></div>
     <div class="dd preset-dd" id="preset"></div>
-    <div class="vu"><i><b id="vuL"></b></i><i><b id="vuR"></b></i></div>
+    <div class="vu"><i><b id="vuL"></b><u id="vuLp"></u></i><i><b id="vuR"></b><u id="vuRp"></u></i></div>
   </div>
 </header>
 
@@ -21247,11 +21293,13 @@ const CM=(id,lab,opts,wide)=>({t:"cmb",id,lab,opts,wide});
 // section builders return DOM
 function makeWoodTexture(){
   const w=512,h=256,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");
-  const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,"#5a3a1e");g.addColorStop(0.5,"#3a2413");g.addColorStop(1,"#2a1a0d");
+  const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,"#6a4526");g.addColorStop(0.5,"#3a2413");g.addColorStop(1,"#241608");
   x.fillStyle=g;x.fillRect(0,0,w,h);let s=7;const r=()=>{s=(s*1664525+1013904223)&0x7fffffff;return s/0x7fffffff;};
-  for(let i=0;i<340;i++){const yy=r()*h,amp=3+r()*9,fq=0.006+r()*0.02,ph=r()*6.28;x.beginPath();
-    for(let px=0;px<=w;px+=4)x.lineTo(px,yy+Math.sin(px*fq+ph)*amp);
-    x.strokeStyle=`rgba(${20+r()*30},${12+r()*20},${6+r()*10},${0.05+r()*0.12})`;x.lineWidth=0.6+r()*1.6;x.stroke();}
+  for(let i=0;i<520;i++){const yy=r()*h,amp=3+r()*12,fq=0.005+r()*0.022,ph=r()*6.28;x.beginPath();
+    for(let px=0;px<=w;px+=3)x.lineTo(px,yy+Math.sin(px*fq+ph)*amp);
+    const dark=r()>0.55;
+    x.strokeStyle=dark?`rgba(${10+r()*18},${6+r()*12},${2+r()*6},${0.10+r()*0.20})`:`rgba(${120+r()*70},${80+r()*40},${40+r()*24},${0.04+r()*0.08})`;
+    x.lineWidth=0.5+r()*1.8;x.stroke();}
   return c.toDataURL("image/png");
 }
 function makeMetalTexture(){
@@ -21386,6 +21434,8 @@ function oscRow(n,waveId,rangeId,tuneId){
   r.innerHTML=`<span class="n">${n}</span>`;
   r.appendChild(mk(CM(rangeId,"Range",RANGES)));
   if(tuneId){const k=mk(K(tuneId,"Tune",-7,7,0,1,fmtSt));k.classList.add("sm");r.appendChild(k);}
+  else{const f=document.createElement("div");f.className="osc-fixed";f.title="Osc 1 es la referencia de tono";
+    f.innerHTML=`<div class="of-dial"></div><span class="kcap">Tune</span><span class="kval">REF</span>`;r.appendChild(f);}
   r.appendChild(mk(CM(waveId,"Wave",WAVES,true)));
   return r;
 }
@@ -21432,7 +21482,7 @@ panel.appendChild(section("Output — Loudness",
   row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs)))
 ));
 // make knob-band-ish rows fixed height for alignment
-document.querySelectorAll(".row,.sw-row,.osc,.mch").forEach(r=>{r.style.minHeight="64px";r.style.alignItems="center";});
+document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
 
 //====================================================================
 // PRESETS  (shared bank, grouped into category folders)
@@ -21595,8 +21645,8 @@ document.getElementById("octDn").addEventListener("click",()=>{if(startNote>24){
 //====================================================================
 // VU meter
 //====================================================================
-const vuL=document.getElementById("vuL"),vuR=document.getElementById("vuR");let vd=0;
-function vu(){ if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; const h=Math.min(1,vd)*100+"%"; vuL.style.height=h; vuR.style.height=h;} requestAnimationFrame(vu);}
+const vuL=document.getElementById("vuL"),vuR=document.getElementById("vuR"),vuLp=document.getElementById("vuLp"),vuRp=document.getElementById("vuRp");let vd=0,vp=0;
+function vu(){ if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; vp=m>vp?m:vp*0.94; const h=Math.min(1,vd)*100+"%",ph=Math.min(1,vp)*100+"%"; vuL.style.height=h; vuR.style.height=h; if(vuLp)vuLp.style.bottom=ph; if(vuRp)vuRp.style.bottom=ph;} requestAnimationFrame(vu);}
 requestAnimationFrame(vu);
 
 //====================================================================
