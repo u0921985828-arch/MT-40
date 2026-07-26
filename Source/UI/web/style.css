@@ -417,3 +417,127 @@ html, body {
 .knob .caption, .combo .caption, .rocker .caption, .osc-fixed .caption { font-size: 9.5px; letter-spacing: 0.5px; color: #cdc4a8; }
 .knob .value { font-size: 9.5px; letter-spacing: 0.3px; }
 .sect h2 { font-size: 12.5px; letter-spacing: 1.3px; }
+
+/* ============================================================
+   UA-GRADE PASS v3 — depth, legible selectors, denser osc bank
+   ============================================================ */
+
+/* ---- Cabinet: hardwood with a faint top-light and rounded edge ---- */
+#cabinet { border-radius: 10px; padding: 15px 17px; gap: 9px;
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.72), inset 0 2px 0 rgba(255,235,205,0.06); }
+/* Bigger, more convincing corner screws (Phillips head) on all four corners. */
+#cabinet::before, #cabinet::after { width: 14px; height: 14px;
+  background:
+    radial-gradient(circle at 40% 34%, #e6e0d2, #9a9384 42%, #4c473d 74%, #221f19 100%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.8), inset 0 0 3px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.5);
+  top: 7px; }
+#cabinet::before { left: 7px; } #cabinet::after { right: 7px; }
+
+/* ---- Panel: warmer graphite metal + crisper top sheen ---- */
+#panel {
+  border: 3px solid #060607; border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 50% 34%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.6) 100%),
+    var(--metal-tex, none),
+    linear-gradient(180deg, #42424a, #26262c 44%, #141418 100%);
+  background-size: cover, 512px 96px, cover;
+  background-blend-mode: multiply, soft-light, normal;
+  box-shadow: inset 0 2px 2px rgba(255,255,255,0.13), inset 0 -4px 12px rgba(0,0,0,0.6),
+    inset 0 0 64px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.75);
+}
+#panel::before { height: 40px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0)); }
+
+/* ---- Rebalanced bays: the osc bank needs the most room (wide selectors) -- */
+#panel { grid-template-columns: 2.0fr 4.3fr 3.0fr 3.9fr 2.4fr; }
+
+/* ---- Section dividers: chamfered groove with a highlight lip ---- */
+.sect { position: relative;
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.06), inset 1px 0 0 rgba(0,0,0,0.55); }
+.sect:not(:last-child)::after { content: ""; position: absolute; top: 8px; bottom: 8px; right: -1px; width: 2px;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 12%, rgba(0,0,0,0.5) 88%, rgba(0,0,0,0) 100%);
+  box-shadow: 1px 0 0 rgba(255,255,255,0.05); pointer-events: none; }
+
+/* ---- Engraved name-plate with flanking screws ---- */
+.sect h2 { position: relative; margin: 0 8px; padding: 0 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(0,0,0,0.34));
+  border-top: 1px solid rgba(255,255,255,0.10); border-bottom: 1px solid rgba(0,0,0,0.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.6);
+  color: #f0e7cd; }
+.sect h2::before, .sect h2::after { content: ""; position: absolute; top: 50%; width: 7px; height: 7px;
+  transform: translateY(-50%); border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, #d8d2c4, #8c8576 46%, #3a362d 100%);
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.6), 0 1px 1px rgba(0,0,0,0.7); }
+.sect h2::before { left: 5px; } .sect h2::after { right: 5px; }
+
+/* ---- Combos as backlit selector readouts (amber "tube" LCD) ---- */
+.combo .dd-btn {
+  justify-content: center; gap: 6px; padding: 5px 20px 5px 10px; min-height: 24px;
+  color: #ffcf8a; font-weight: 600; letter-spacing: 0.6px; font-size: 11px;
+  text-shadow: 0 0 6px rgba(255,180,90,0.55), 0 1px 0 rgba(0,0,0,0.7);
+  background: linear-gradient(180deg, #241a12, #14100b 55%, #0c0906);
+  border: 1px solid #000; border-top-color: #3a2f22; border-radius: 4px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.9), inset 0 0 10px rgba(120,70,20,0.35),
+    inset 0 1px 0 rgba(255,200,120,0.10), 0 1px 2px rgba(0,0,0,0.6);
+}
+.combo .dd-btn:hover { border-top-color: #5a4a33; box-shadow: inset 0 1px 2px rgba(0,0,0,0.9),
+  inset 0 0 12px rgba(160,95,30,0.45), 0 1px 2px rgba(0,0,0,0.6); }
+.combo.open .dd-btn { border-color: #d8863a; }
+.combo .dd-btn .dd-arw {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c89250'/%3E%3C/svg%3E") no-repeat center; }
+.combo .dd-lbl { text-align: center; width: 100%; }
+
+/* ---- Oscillator bank: grid so Range | Tune | Waveform align + fill ---- */
+#oscillators .sect-body { gap: 16px; padding: 6px 0; justify-content: center; }
+.osc-row { display: grid; align-items: center;
+  grid-template-columns: 16px 64px 46px minmax(84px, 1fr) 32px; gap: 9px;
+  width: 100%; min-height: 0; padding: 8px 10px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.028), rgba(0,0,0,0.16));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.4); }
+.osc-label { font-size: 16px; width: auto; justify-self: center; color: #efe6cc; }
+#oscillators .combo, #oscillators .combo.wide { width: 100%; }
+#oscillators .combo .dd-btn { padding: 5px 17px 5px 7px; }
+.osc-row > * { min-width: 0; }
+#oscillators .knob.small, .osc-fixed { justify-self: center; }
+.osc-row .rocker { justify-self: center; }
+.osc-row .rocker.mini + *, .osc-row > .rocker.mini { grid-column: 5; }
+/* rows without a 5th control leave the column empty — keeps alignment */
+
+/* ---- Knob read-outs: seated on a faint recessed strip ---- */
+.knob .value, .osc-fixed .value { color: #a9e6c4; text-shadow: 0 0 5px rgba(90,220,150,0.35), 0 1px 1px rgba(0,0,0,0.8); }
+
+/* ---- Header: brushed nameplate for the logo ---- */
+#brand { padding: 2px 8px; }
+.brand-text { padding: 5px 14px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.3));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.55);
+  border: 1px solid rgba(0,0,0,0.5); }
+.logo { font-size: 29px; color: #f7efd9;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(255,255,255,0.10), 0 2px 8px rgba(0,0,0,0.7); }
+.model { color: #b8ad8c; }
+
+/* ---- Preset bar: keep neutral steel (distinct from amber selectors) ---- */
+#presetSave { background: linear-gradient(180deg, #4a4a50, #26262a); border: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.5); }
+#presetSave:hover { background: linear-gradient(180deg, #55555c, #2c2c31); }
+
+/* ---- Mixer: regletas that fill the whole bay (no dead right margin) ---- */
+#mixer .sect-body { padding: 6px 10px; }
+.mix-grid { gap: 13px; padding: 4px 4px; }
+.mrow { grid-template-columns: 52px 1fr 40px 78px; gap: 12px; padding: 7px 12px; width: 100%; }
+.mlbl { justify-self: start; }
+.mk { width: 44px !important; justify-self: center; }
+#mixer .rocker.mini { justify-self: center; }
+#mixer .combo.tiny { width: 100%; margin: 0; justify-self: stretch; }
+#mixer .combo.tiny .dd-btn { padding: 4px 15px 4px 6px; font-size: 10px; letter-spacing: 0.3px; }
+#mixer .combo.tiny .dd-arw { width: 8px; }
+.mspace { width: 100%; }
+
+/* ---- Mixer channel on/off: brighter, larger paddle for legibility ---- */
+#mixer .rocker.mini .cap { width: 34px; height: 18px; }
+
+/* ---- Controllers: even vertical rhythm (no bottom-heavy gap) ---- */
+#controllers .sect-body { justify-content: space-evenly; gap: 14px; padding: 12px 0 14px; }
+
+/* ---- Osc3 keyboard-track switch: label it clearly inside the row ---- */
+.osc-row .rocker.mini .caption { font-size: 8px; }
