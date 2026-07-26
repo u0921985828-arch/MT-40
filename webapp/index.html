@@ -1,3 +1,4 @@
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <meta name="theme-color" content="#2a1a0d" />
 <title>MoogVA Mobile</title>
@@ -5,7 +6,7 @@
   :root{
     --label:#f0e8d4; --dim:#b6ab8a; --orange:#cf5a2a; --blue:#2f74b3;
     --key-white:#efe9dc; --key-black:#141109;
-    --band-gap:16px; --row-gap:12px;
+    --band-gap:14px; --row-gap:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -49,9 +50,21 @@
   #res{min-width:150px;}
   #preset{min-width:200px;}
   .preset-dd .dd-btn{font-size:12px;padding:5px 20px 5px 8px;}
-  .vu{display:flex;gap:3px;align-items:flex-end;height:26px;}
-  .vu i{width:6px;height:100%;background:#0a1a10;border-radius:2px;overflow:hidden;display:flex;align-items:flex-end;}
-  .vu i b{display:block;width:100%;height:0;background:linear-gradient(0deg,#34d058,#d9d040 78%,#e0402a);}
+  .vu{display:flex;gap:3px;align-items:flex-end;height:100%;}
+  .vu i{position:relative;width:7px;height:100%;background:repeating-linear-gradient(0deg,#0a1a10 0 3px,#0d1f13 3px 4px);border-radius:2px;overflow:hidden;display:flex;align-items:flex-end;box-shadow:inset 0 0 6px rgba(0,0,0,.9);}
+  .vu i b{display:block;width:100%;height:0;background:linear-gradient(0deg,#2ecb54,#7ee06a 55%,#d9d040 78%,#e0402a);}
+  .vu i u{position:absolute;left:0;right:0;height:2px;bottom:0;background:#eafff0;box-shadow:0 0 5px rgba(230,255,235,.9);}
+  /* Header displays: glass-bezel phosphor screens (scope / spectrum / VU) */
+  .disp{position:relative;height:46px;padding:3px;border:1px solid #000;border-radius:4px;
+    background:linear-gradient(180deg,#06130c,#030907);
+    box-shadow:inset 0 0 12px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.06),0 2px 4px rgba(0,0,0,.6);}
+  .disp canvas{display:block;border-radius:2px;}
+  .disp::after{content:"";position:absolute;inset:3px;pointer-events:none;border-radius:2px;
+    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 42%);}
+  .disp.vudisp{display:flex;flex-direction:column;align-items:center;gap:2px;width:34px;padding:4px 5px 3px;}
+  .disp.vudisp .vu{height:32px;}
+  .dlab{position:absolute;top:3px;right:6px;font-size:7.5px;letter-spacing:1.5px;color:rgba(120,230,160,.6);text-shadow:0 0 6px rgba(90,240,150,.5);}
+  .vudisp .dlab{position:static;text-align:center;}
 
   /* Control panel — sections scroll horizontally on small screens */
   #panel{flex:1;min-height:0;display:flex;flex-wrap:wrap;gap:0;
@@ -68,7 +81,7 @@
   .sect h2{text-shadow:0 1px 0 rgba(0,0,0,.95),0 -1px 0 rgba(255,255,255,.06);}
   .sect{flex:1 1 200px;min-width:190px;max-width:420px;display:flex;flex-direction:column;
     padding:8px 10px 4px;border-right:1px solid rgba(0,0,0,.6);border-bottom:1px solid rgba(0,0,0,.5);}
-  .sect .body{flex:1;display:flex;flex-direction:column;justify-content:space-between;align-items:center;gap:var(--band-gap);padding:6px 0 10px;}
+  .sect .body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:var(--band-gap);padding:6px 0 10px;}
   .sect h2{font-family:Georgia,serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
     color:#e9dfc2;text-align:center;padding-top:5px;border-top:1px solid rgba(0,0,0,.5);text-shadow:0 1px 0 #000;}
   .row{display:flex;justify-content:center;align-items:flex-start;gap:var(--row-gap);}
@@ -297,7 +310,9 @@
   <div class="right">
     <div class="dd preset-dd" id="res" title="Resolución"></div>
     <div class="dd preset-dd" id="preset"></div>
-    <div class="vu"><i><b id="vuL"></b><u id="vuLp"></u></i><i><b id="vuR"></b><u id="vuRp"></u></i></div>
+    <div class="disp"><canvas id="scope" width="176" height="44"></canvas><span class="dlab">SCOPE</span></div>
+    <div class="disp"><canvas id="spectrum" width="176" height="44"></canvas><span class="dlab">SPECTRUM</span></div>
+    <div class="disp vudisp"><div class="vu"><i><b id="vuL"></b><u id="vuLp"></u></i><i><b id="vuR"></b><u id="vuRp"></u></i></div><span class="dlab">OUT</span></div>
   </div>
 </header>
 
@@ -22976,7 +22991,7 @@ class Poly{
 //====================================================================
 // AUDIO
 //====================================================================
-let ctx,engine,node;
+let ctx,engine,node,analyser;
 // Tube transfer curve: soft clip with a touch of asymmetry (2nd harmonic).
 function makeTubeCurve(drive){
   const n=2048,c=new Float32Array(n);
@@ -23014,7 +23029,9 @@ function startAudio(){
   air.connect(dry); dry.connect(merger,0,0); dry.connect(merger,0,1);
   air.connect(dL); dL.connect(wL); wL.connect(merger,0,0);
   air.connect(dR); dR.connect(wR); wR.connect(merger,0,1);
-  merger.connect(comp); comp.connect(outG); outG.connect(ctx.destination);
+  // Visualiser tap: analyser after the master gain (pass-through, no tone change).
+  analyser=ctx.createAnalyser(); analyser.fftSize=1024; analyser.smoothingTimeConstant=0.72;
+  merger.connect(comp); comp.connect(outG); outG.connect(analyser); analyser.connect(ctx.destination);
   ctx.resume();
 }
 
@@ -23383,7 +23400,48 @@ document.getElementById("octDn").addEventListener("click",()=>{if(startNote>24){
 // VU meter
 //====================================================================
 const vuL=document.getElementById("vuL"),vuR=document.getElementById("vuR"),vuLp=document.getElementById("vuLp"),vuRp=document.getElementById("vuRp");let vd=0,vp=0;
-function vu(){ if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; vp=m>vp?m:vp*0.94; const h=Math.min(1,vd)*100+"%",ph=Math.min(1,vp)*100+"%"; vuL.style.height=h; vuR.style.height=h; if(vuLp)vuLp.style.bottom=ph; if(vuRp)vuRp.style.bottom=ph;} requestAnimationFrame(vu);}
+
+// Scope + spectrum displays, driven by the master analyser node.
+const scopeC=document.getElementById("scope"), specC=document.getElementById("spectrum");
+const sctx=scopeC?scopeC.getContext("2d"):null, pctx=specC?specC.getContext("2d"):null;
+let tdata=null, fdata=null;
+function grid(c,w,h,cols,rows,col){c.strokeStyle=col;c.lineWidth=1;
+  for(let i=1;i<cols;i++){const x=(i/cols)*w;c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
+  for(let j=1;j<rows;j++){const y=(j/rows)*h;c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}}
+function drawScope(){
+  const w=scopeC.width,h=scopeC.height; sctx.clearRect(0,0,w,h);
+  grid(sctx,w,h,8,4,"rgba(80,220,120,0.10)");
+  sctx.strokeStyle="rgba(80,220,120,0.28)";sctx.lineWidth=1;sctx.beginPath();sctx.moveTo(0,h/2);sctx.lineTo(w,h/2);sctx.stroke();
+  if(!analyser)return;
+  if(!tdata)tdata=new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(tdata);
+  const N=tdata.length, step=Math.max(1,Math.floor(N/w));
+  sctx.save();sctx.shadowColor="rgba(92,240,138,0.8)";sctx.shadowBlur=6;
+  sctx.strokeStyle="#7dffab";sctx.lineWidth=1.6;sctx.lineJoin="round";sctx.beginPath();
+  for(let x=0,i=0;x<w;x++,i+=step){const v=(tdata[i]-128)/128;const y=h/2 - v*(h/2-2);x===0?sctx.moveTo(x,y):sctx.lineTo(x,y);}
+  sctx.stroke();sctx.restore();
+}
+function drawSpectrum(){
+  const w=specC.width,h=specC.height; pctx.clearRect(0,0,w,h);
+  grid(pctx,w,h,8,4,"rgba(90,160,220,0.08)");
+  if(!analyser)return;
+  if(!fdata)fdata=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(fdata);
+  const bins=64, bw=w/bins, src=Math.floor(fdata.length*0.72);
+  pctx.save();pctx.shadowColor="rgba(90,180,240,0.5)";pctx.shadowBlur=4;
+  for(let i=0;i<bins;i++){const t=i/bins;const idx=Math.floor(Math.pow(t,1.4)*src);
+    const bh=(fdata[idx]/255)*h;
+    const g=pctx.createLinearGradient(0,h,0,h-bh);
+    g.addColorStop(0,`rgba(${40+t*120},${190-t*50},${230-t*120},0.5)`);
+    g.addColorStop(1,`rgb(${70+t*150},${210-t*40},${240-t*120})`);
+    pctx.fillStyle=g;pctx.fillRect(i*bw,h-bh,Math.max(1,bw-0.6),bh);}
+  pctx.restore();
+}
+function vu(){
+  if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; vp=m>vp?m:vp*0.94; const h=Math.min(1,vd)*100+"%",ph=Math.min(1,vp)*100+"%"; vuL.style.height=h; vuR.style.height=h; if(vuLp)vuLp.style.bottom=ph; if(vuRp)vuRp.style.bottom=ph;}
+  if(sctx)drawScope(); if(pctx)drawSpectrum();
+  requestAnimationFrame(vu);
+}
 requestAnimationFrame(vu);
 
 //====================================================================
