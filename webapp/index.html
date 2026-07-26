@@ -23447,16 +23447,25 @@ requestAnimationFrame(vu);
 //====================================================================
 // RESOLUTION PRESETS + uniform scale-to-fit (any screen)
 //====================================================================
-const RES=[{n:"16:9 · 1280×720",w:1280,h:720},{n:"16:10 · 1200×760",w:1200,h:760},{n:"Compacto · 1040×660",w:1040,h:660}];
+const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9 · 1280×720",w:1280,h:720},{n:"16:10 · 1200×760",w:1200,h:760},{n:"Compacto · 1040×660",w:1040,h:660}];
 let resIdx=0;const stageEl=document.getElementById("stage");
+// Auto mode derives the design-canvas aspect from the actual screen so the
+// (uniformly scaled) stage fills it edge-to-edge — no letterbox, no distortion.
+function dims(){
+  const r=RES[resIdx];
+  if(!r.auto)return {w:r.w,h:r.h};
+  const long=Math.max(window.innerWidth,window.innerHeight),short=Math.min(window.innerWidth,window.innerHeight);
+  const A=Math.min(2.5,Math.max(1.55,long/short)),h=720;
+  return {w:Math.round(h*A),h};
+}
 function setScale(){
-  const r=RES[resIdx],vw=window.innerWidth,vh=window.innerHeight,portrait=vh>vw;
-  // Landscape-locked: on a portrait screen rotate the canvas 90deg so it always
-  // fills the screen in landscape (no prompt).
-  const sc=portrait?Math.min(vh/r.w,vw/r.h):Math.min(vw/r.w,vh/r.h);
+  const d=dims(),vw=window.innerWidth,vh=window.innerHeight,portrait=vh>vw;
+  stageEl.style.setProperty("--dw",d.w+"px");stageEl.style.setProperty("--dh",d.h+"px");
+  // Landscape-locked: on a portrait screen rotate 90deg so it always fills in landscape.
+  const sc=portrait?Math.min(vh/d.w,vw/d.h):Math.min(vw/d.w,vh/d.h);
   stageEl.style.transform=`rotate(${portrait?90:0}deg) scale(${sc.toFixed(4)})`;
 }
-function applyRes(){const r=RES[resIdx];stageEl.style.setProperty("--dw",r.w+"px");stageEl.style.setProperty("--dh",r.h+"px");setScale();}
+function applyRes(){setScale();}
 (function(){const resDD=makeDropdown(document.getElementById("res"),"");
   resDD.setOptions(RES.map((r,i)=>({label:r.n,value:i})));
   resDD.setValue(resIdx);
