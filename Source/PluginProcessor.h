@@ -37,7 +37,7 @@ public:
     const juce::String getName() const override { return JucePlugin_Name; }
 
     bool acceptsMidi()  const override { return true; }
-    bool producesMidi() const override { return false; }
+    bool producesMidi() const override { return true; }
     bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override { return 3.0; }
 
@@ -100,6 +100,7 @@ private:
     double   perfToGateOff  { 0.0 };    // samples remaining until arp note release
     int      perfArpNote    { -1 };     // currently sounding arp note (-1 = none)
     int      perfArpPos     { 0 };      // sequence position
+    std::vector<int> perfCasQueue;      // ringing notes in Cascade mode
     uint32_t perfRandSeed   { 0x9E3779B9u };
     bool     perfWasArp     { false };
     double   currentSampleRate { 44100.0 };

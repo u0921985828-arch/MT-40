@@ -83,6 +83,12 @@ namespace ParamID
     static constexpr auto fxDrive     = "FX_DRIVE";
     static constexpr auto fxChorusOn = "FX_CHORUS_ON";
     static constexpr auto fxChorus    = "FX_CHORUS";
+    static constexpr auto fxPhaserOn = "FX_PHASER_ON";
+    static constexpr auto fxPhaser    = "FX_PHASER";
+    static constexpr auto fxCrushOn  = "FX_CRUSH_ON";
+    static constexpr auto fxCrush     = "FX_CRUSH";
+    static constexpr auto fxToneOn   = "FX_TONE_ON";
+    static constexpr auto fxTone      = "FX_TONE";
     static constexpr auto fxDelayOn  = "FX_DELAY_ON";
     static constexpr auto fxDelayMix  = "FX_DELAY_MIX";
     static constexpr auto fxDelayTime = "FX_DELAY_TIME";
@@ -97,6 +103,7 @@ namespace ParamID
     static constexpr auto arpOct    = "ARP_OCT";    // 0=1..3=4 octaves
     static constexpr auto arpGate   = "ARP_GATE";   // 0..1
     static constexpr auto arpBpm    = "ARP_BPM";    // 40..240 (used when host tempo absent)
+    static constexpr auto midiOutOn = "MIDI_OUT_ON"; // send chord/arp as MIDI (mutes internal audio)
 }
 
 namespace ParamChoices
@@ -159,7 +166,7 @@ namespace ParamChoices
 
     inline juce::StringArray arpModes()
     {
-        return { "Up", "Down", "Up-Down", "Random", "As-Played" };
+        return { "Up", "Down", "Up-Down", "Random", "As-Played", "Cascade" };
     }
 
     inline juce::StringArray arpOctaves()

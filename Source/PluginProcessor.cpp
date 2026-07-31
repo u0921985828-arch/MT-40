@@ -165,6 +165,12 @@ MoogSynthAudioProcessor::createParameterLayout()
     params.push_back (std::make_unique<APF> (ParamID::fxDrive, "FX Drive", juce::NormalisableRange<float> (0.0f, 1.0f), 0.35f));
     params.push_back (std::make_unique<APB> (ParamID::fxChorusOn, "FX Chorus On", false));
     params.push_back (std::make_unique<APF> (ParamID::fxChorus, "FX Chorus", juce::NormalisableRange<float> (0.0f, 1.0f), 0.4f));
+    params.push_back (std::make_unique<APB> (ParamID::fxPhaserOn, "FX Phaser On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxPhaser, "FX Phaser", juce::NormalisableRange<float> (0.0f, 1.0f), 0.4f));
+    params.push_back (std::make_unique<APB> (ParamID::fxCrushOn, "FX Crush On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxCrush, "FX Crush", juce::NormalisableRange<float> (0.0f, 1.0f), 0.35f));
+    params.push_back (std::make_unique<APB> (ParamID::fxToneOn, "FX Tone On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxTone, "FX Tone", juce::NormalisableRange<float> (0.0f, 1.0f), 0.5f));
     params.push_back (std::make_unique<APB> (ParamID::fxDelayOn, "FX Delay On", false));
     params.push_back (std::make_unique<APF> (ParamID::fxDelayMix, "FX Delay Mix", juce::NormalisableRange<float> (0.0f, 1.0f), 0.3f));
     params.push_back (std::make_unique<APF> (ParamID::fxDelayTime, "FX Delay Time", juce::NormalisableRange<float> (0.02f, 1.2f), 0.28f, Attr().withLabel ("s")));
@@ -182,6 +188,7 @@ MoogSynthAudioProcessor::createParameterLayout()
     params.push_back (std::make_unique<APF> (ParamID::arpBpm, "Arp Tempo",
                                              juce::NormalisableRange<float> (40.0f, 240.0f, 1.0f), 120.0f,
                                              Attr().withLabel ("bpm")));
+    params.push_back (std::make_unique<APB> (ParamID::midiOutOn, "MIDI Out", false));
 
     return { params.begin(), params.end() };
 }
@@ -271,9 +278,11 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         v.setExternalBend (extBend);
 
     const bool poly = apvts.getRawParameterValue (ParamID::polyOn)->load() > 0.5f;
+    const bool midiOut = apvts.getRawParameterValue (ParamID::midiOutOn)->load() > 0.5f;
     const int  numSamples = buffer.getNumSamples();
 
     // Perform layer: expand chords / run the arpeggiator on the MIDI stream.
+    // (When MIDI-out is on, the transformed events are also sent to MIDI output.)
     applyPerform (midiMessages, numSamples);
 
     // Reset the bank when switching mode so no note gets stuck across the change.
@@ -325,6 +334,11 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
         buffer.applyGain (0.6f); // headroom for stacked voices
     }
+
+    // MIDI-out mode: act as a chord/arp MIDI generator — mute internal audio,
+    // the transformed events already sit in midiMessages and go to MIDI output.
+    if (midiOut)
+        buffer.clear();
 
     // ---- Master volume -----------------------------------------------------
     masterGain.setTargetValue (apvts.getRawParameterValue (ParamID::masterVolume)->load());
@@ -378,6 +392,12 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         fp.drive     = apvts.getRawParameterValue (ParamID::fxDrive)->load();
         fp.chorusOn  = apvts.getRawParameterValue (ParamID::fxChorusOn)->load() > 0.5f;
         fp.chorus    = apvts.getRawParameterValue (ParamID::fxChorus)->load();
+        fp.phaserOn  = apvts.getRawParameterValue (ParamID::fxPhaserOn)->load() > 0.5f;
+        fp.phaser    = apvts.getRawParameterValue (ParamID::fxPhaser)->load();
+        fp.crushOn   = apvts.getRawParameterValue (ParamID::fxCrushOn)->load() > 0.5f;
+        fp.crush     = apvts.getRawParameterValue (ParamID::fxCrush)->load();
+        fp.toneOn    = apvts.getRawParameterValue (ParamID::fxToneOn)->load() > 0.5f;
+        fp.tone      = apvts.getRawParameterValue (ParamID::fxTone)->load();
         fp.delayOn   = apvts.getRawParameterValue (ParamID::fxDelayOn)->load() > 0.5f;
         fp.delayMix  = apvts.getRawParameterValue (ParamID::fxDelayMix)->load();
         fp.delayTime = apvts.getRawParameterValue (ParamID::fxDelayTime)->load();
@@ -409,6 +429,11 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     meter[0].store (peak[0], std::memory_order_relaxed);
     meter[1].store (numCh > 1 ? peak[1] : peak[0], std::memory_order_relaxed);
+
+    // A synth normally emits no MIDI; only leave events in the buffer when the
+    // MIDI-out generator mode is engaged.
+    if (! midiOut)
+        midiMessages.clear();
 }
 
 // Chord expansion + arpeggiator. Rewrites `midi` in place. When Chord=Off and
@@ -444,7 +469,12 @@ void MoogSynthAudioProcessor::applyPerform (juce::MidiBuffer& midi, int numSampl
             else if (m.isNoteOff()) { held_rm  (m.getNoteNumber()); emitChord (false, m.getNoteNumber(), 0, sp); }
             else                    { out.addEvent (m, sp); }
         }
-        if (perfWasArp && perfArpNote >= 0) { out.addEvent (juce::MidiMessage::noteOff (1, perfArpNote), 0); perfArpNote = -1; }
+        if (perfWasArp)
+        {
+            if (perfArpNote >= 0) { out.addEvent (juce::MidiMessage::noteOff (1, perfArpNote), 0); perfArpNote = -1; }
+            for (int n : perfCasQueue) out.addEvent (juce::MidiMessage::noteOff (1, n), 0);
+            perfCasQueue.clear();
+        }
         perfWasArp = false;
         midi.swapWith (out);
         return;
@@ -490,6 +520,8 @@ void MoogSynthAudioProcessor::applyPerform (juce::MidiBuffer& midi, int numSampl
     if (perfHeld.empty())
     {
         if (perfArpNote >= 0) { out.addEvent (juce::MidiMessage::noteOff (1, perfArpNote), 0); perfArpNote = -1; }
+        for (int n : perfCasQueue) out.addEvent (juce::MidiMessage::noteOff (1, n), 0);
+        perfCasQueue.clear();
         perfToNextStep = 0.0;
         midi.swapWith (out);
         return;
@@ -514,17 +546,37 @@ void MoogSynthAudioProcessor::applyPerform (juce::MidiBuffer& midi, int numSampl
         }
         if (perfToNextStep <= 0.0)
         {
-            if (perfArpNote >= 0) { out.addEvent (juce::MidiMessage::noteOff (1, perfArpNote), at); perfArpNote = -1; }
             const auto seq = buildSeq();
-            if (! seq.empty())
+            if (mode == 5)
             {
-                int idx;
-                if (mode == 3) { perfRandSeed = perfRandSeed * 1664525u + 1013904223u; idx = (int) (perfRandSeed % (uint32_t) seq.size()); }
-                else           { idx = perfArpPos % (int) seq.size(); }
-                perfArpPos = idx + 1;
-                const int note = juce::jlimit (0, 127, seq[(size_t) idx]);
-                out.addEvent (juce::MidiMessage::noteOn (1, note, (juce::uint8) 100), at);
-                perfArpNote = note; perfToGateOff = stepS * gate;
+                // WATERFALL cascade: overlap notes into a sustained wash, then roll off.
+                if (! seq.empty())
+                {
+                    const int idx = perfArpPos % (int) seq.size(); perfArpPos = idx + 1;
+                    const int note = juce::jlimit (0, 127, seq[(size_t) idx]);
+                    out.addEvent (juce::MidiMessage::noteOn (1, note, (juce::uint8) 100), at);
+                    perfCasQueue.push_back (note);
+                    const int ring = juce::jmin ((int) seq.size(), 6);
+                    while ((int) perfCasQueue.size() > ring)
+                    {
+                        out.addEvent (juce::MidiMessage::noteOff (1, perfCasQueue.front()), at);
+                        perfCasQueue.erase (perfCasQueue.begin());
+                    }
+                }
+            }
+            else
+            {
+                if (perfArpNote >= 0) { out.addEvent (juce::MidiMessage::noteOff (1, perfArpNote), at); perfArpNote = -1; }
+                if (! seq.empty())
+                {
+                    int idx;
+                    if (mode == 3) { perfRandSeed = perfRandSeed * 1664525u + 1013904223u; idx = (int) (perfRandSeed % (uint32_t) seq.size()); }
+                    else           { idx = perfArpPos % (int) seq.size(); }
+                    perfArpPos = idx + 1;
+                    const int note = juce::jlimit (0, 127, seq[(size_t) idx]);
+                    out.addEvent (juce::MidiMessage::noteOn (1, note, (juce::uint8) 100), at);
+                    perfArpNote = note; perfToGateOff = stepS * gate;
+                }
             }
             perfToNextStep += stepS;
             did = true;

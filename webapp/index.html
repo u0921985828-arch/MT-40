@@ -22817,6 +22817,7 @@ const P = {
   drift:0.25, filterDrive:0, bassThin:0.3, pitchBend:0,
   sampleOn:0, sampleSel:0, sampleVol:0.6,
   fxDriveOn:0, fxDrive:0.35, fxChorusOn:0, fxChorus:0.4,
+  fxPhaserOn:0, fxPhaser:0.4, fxCrushOn:0, fxCrush:0.35, fxToneOn:0, fxTone:0.5,
   fxDelayOn:0, fxDelayMix:0.3, fxDelayTime:0.28, fxReverbOn:0, fxReverbMix:0.3,
   chordType:0, arpOn:0, arpRate:1, arpMode:0, arpOct:0, arpGate:0.6, arpBpm:120
 };
@@ -22930,6 +22931,11 @@ function buildWavetables(){
 }
 const WT=buildWavetables();
 const WT_NAMES=WT.names;
+// User-loaded one-shot (import your own WAV). Played pitched + looped, blended
+// like the built-in timbres. Selected via the last "User" entry.
+let USER_SAMPLE=null, USER_SR=44100;
+const USER_IDX=WT.names.length;
+const SAMPLE_NAMES=WT_NAMES.concat(["User"]);
 
 class Engine{
   constructor(fs){
@@ -22937,12 +22943,12 @@ class Engine{
     this.o1=new Osc();this.o2=new Osc();this.o3=new Osc();this.noise=new Noise();
     this.flt=new Ladder(fs);this.fenv=new Env(fs);this.aenv=new Env(fs);
     this.held=[];this.tgt=60;this.gl=60;this.vel=1;this.bend=0;
-    this.fb=0;this.lo3=0;this.ln=0;this.dph=[0,0,0];this.meter=0;this.sph=0;
+    this.fb=0;this.lo3=0;this.ln=0;this.dph=[0,0,0];this.meter=0;this.sph=0;this.usph=0;
   }
   midiHz(n){return 440*Math.pow(2,(n-69)/12);}
   noteOn(n,v){
     const silent=this.held.length===0; this.held.push(n); this.tgt=n; this.vel=0.2+0.8*v;
-    if(silent){ if(!P.glideOn)this.gl=n; this.fenv.on();this.aenv.on(); }
+    if(silent){ if(!P.glideOn)this.gl=n; this.fenv.on();this.aenv.on(); this.usph=0; }
   }
   noteOff(n){
     for(let i=this.held.length-1;i>=0;i--)if(this.held[i]===n)this.held.splice(i,1);
@@ -22981,11 +22987,18 @@ class Engine{
     if(P.mixNoiseOn)mix+=n*P.mixNoiseVol;
     if(P.mixExtOn)mix+=this.fb*P.mixExtVol*0.7;
     if(P.sampleOn){
-      const f=this.midiHz(base+dr[0])*this.m1, N=WT.N;
-      const tbl=WT.tables[(P.sampleSel|0)]||WT.tables[0];
-      const x=this.sph*N, i0=x|0, frac=x-i0, i1=(i0+1)&(N-1);
-      mix+=(tbl[i0]+(tbl[i1]-tbl[i0])*frac)*P.sampleVol;
-      this.sph+=f/this.fs; while(this.sph>=1)this.sph-=1;
+      const f=this.midiHz(base+dr[0])*this.m1;
+      if((P.sampleSel|0)===USER_IDX && USER_SAMPLE){
+        const L=USER_SAMPLE.length, inc=(f/261.63)*(USER_SR/this.fs);
+        const i0=this.usph|0, frac=this.usph-i0, i1=(i0+1)%L;
+        mix+=(USER_SAMPLE[i0]+(USER_SAMPLE[i1]-USER_SAMPLE[i0])*frac)*P.sampleVol;
+        this.usph+=inc; while(this.usph>=L)this.usph-=L;
+      } else {
+        const N=WT.N, tbl=WT.tables[(P.sampleSel|0)]||WT.tables[0];
+        const x=this.sph*N, i0=x|0, frac=x-i0, i1=(i0+1)&(N-1);
+        mix+=(tbl[i0]+(tbl[i1]-tbl[i0])*frac)*P.sampleVol;
+        this.sph+=f/this.fs; while(this.sph>=1)this.sph-=1;
+      }
     }
     const fe=this.fenv.next();
     const ko=this.kt*(this.gl-60)/12, eo=P.filterEnv*fe*5;
@@ -22996,7 +23009,7 @@ class Engine{
     const ae=this.aenv.next();
     return filt*ae*this.vel;
   }
-  reset(){ this.held=[]; this.fenv.reset(); this.aenv.reset(); this.flt.z=[0,0,0,0]; this.fb=0; this.lo3=0; this.ln=0; }
+  reset(){ this.held=[]; this.fenv.reset(); this.aenv.reset(); this.flt.z=[0,0,0,0]; this.fb=0; this.lo3=0; this.ln=0; this.usph=0; }
   active(){ return this.aenv.active(); }
 }
 
@@ -23054,6 +23067,21 @@ function buildFX(ctx){
   const lfo=ctx.createOscillator(); lfo.frequency.value=0.6; const lfoG=ctx.createGain(); lfoG.gain.value=0.004;
   lfo.connect(lfoG); lfoG.connect(cDel.delayTime); lfo.start();
   cIn.connect(cDel); cDel.connect(cWet); cWet.connect(cOut); cIn.connect(cDry); cDry.connect(cOut);
+  // Phaser: 4 modulated allpass stages.
+  const pIn=ctx.createGain(), pWet=ctx.createGain(), pDry=ctx.createGain(), pOut=ctx.createGain();
+  const aps=[]; let pnode=pIn;
+  for(let i=0;i<4;i++){const ap=ctx.createBiquadFilter();ap.type="allpass";ap.frequency.value=400+i*300;ap.Q.value=0.6;pnode.connect(ap);pnode=ap;aps.push(ap);}
+  const pLfo=ctx.createOscillator();pLfo.frequency.value=0.4;const pLfoG=ctx.createGain();pLfoG.gain.value=600;
+  aps.forEach(a=>pLfoG.connect(a.frequency));pLfo.connect(pLfoG);pLfo.start();
+  pnode.connect(pWet);pWet.connect(pOut);pIn.connect(pDry);pDry.connect(pOut);
+  // Bitcrush (bit-depth quantise via waveshaper).
+  const bIn=ctx.createGain(), bWet=ctx.createGain(), bDry=ctx.createGain(), bOut=ctx.createGain();
+  const crush=ctx.createWaveShaper();crush.curve=makeCrushCurve(6);
+  bIn.connect(crush);crush.connect(bWet);bWet.connect(bOut);bIn.connect(bDry);bDry.connect(bOut);
+  // Tone: tilt lowpass.
+  const tIn=ctx.createGain(), tOut=ctx.createGain();
+  const tone=ctx.createBiquadFilter();tone.type="lowpass";tone.frequency.value=8000;tone.Q.value=0.5;
+  tIn.connect(tone);tone.connect(tOut);
   // Delay ping-pong with feedback.
   const eIn=ctx.createGain(), eWet=ctx.createGain(), eDry=ctx.createGain(), eOut=ctx.createGain();
   const dl=ctx.createDelay(1.5); dl.delayTime.value=0.28; const fb=ctx.createGain(); fb.gain.value=0.35;
@@ -23063,16 +23091,24 @@ function buildFX(ctx){
   const rIn=ctx.createGain(), rWet=ctx.createGain(), rDry=ctx.createGain(), rOut=ctx.createGain();
   const conv=ctx.createConvolver(); conv.buffer=makeImpulse(ctx,2.2,2.5);
   rIn.connect(conv); conv.connect(rWet); rWet.connect(rOut); rIn.connect(rDry); rDry.connect(rOut);
-  // Chain them.
-  dOut.connect(cIn); cOut.connect(eIn); eOut.connect(rIn);
-  return { in:dIn, out:rOut, nodes:{shp,dWet,dDry,cWet,cDry,cDel,lfoG,dl,fb,eWet,eDry,dTone,rWet,rDry,conv},
+  // Chain: drive -> chorus -> phaser -> crush -> tone -> delay -> reverb.
+  dOut.connect(cIn); cOut.connect(pIn); pOut.connect(bIn); bOut.connect(tIn); tOut.connect(eIn); eOut.connect(rIn);
+  let crushBits=6;
+  return { in:dIn, out:rOut,
     update(P){
-      const dOn=!!P.fxDriveOn, dv=P.fxDrive;
-      shp.curve=makeTubeCurve(1+dv*8); dWet.gain.value=dOn?1:0; dDry.gain.value=dOn?0.15:1;
-      const cOn=!!P.fxChorusOn; lfoG.gain.value=0.002+P.fxChorus*0.006; cWet.gain.value=cOn?P.fxChorus:0; cDry.gain.value=cOn?1:1;
+      const dOn=!!P.fxDriveOn; shp.curve=makeTubeCurve(1+P.fxDrive*8); dWet.gain.value=dOn?1:0; dDry.gain.value=dOn?0.15:1;
+      const cOn=!!P.fxChorusOn; lfoG.gain.value=0.002+P.fxChorus*0.006; cWet.gain.value=cOn?P.fxChorus:0; cDry.gain.value=1;
+      const pOn=!!P.fxPhaserOn; pLfoG.gain.value=200+P.fxPhaser*1400; pWet.gain.value=pOn?P.fxPhaser:0; pDry.gain.value=1;
+      const bOn=!!P.fxCrushOn; const bits=Math.round(8-P.fxCrush*6); if(bits!==crushBits){crushBits=bits;crush.curve=makeCrushCurve(bits);} bWet.gain.value=bOn?1:0; bDry.gain.value=bOn?0:1;
+      const tOn=!!P.fxToneOn; tone.frequency.value=tOn?(400*Math.pow(2,P.fxTone*5.5)):20000;
       const eOn=!!P.fxDelayOn; dl.delayTime.value=Math.max(0.02,Math.min(1.4,P.fxDelayTime)); fb.gain.value=eOn?0.15+P.fxDelayMix*0.5:0; eWet.gain.value=eOn?P.fxDelayMix:0; eDry.gain.value=1;
       const rOn=!!P.fxReverbOn; rWet.gain.value=rOn?P.fxReverbMix:0; rDry.gain.value=1;
     } };
+}
+function makeCrushCurve(bits){
+  const steps=Math.pow(2,Math.max(1,bits)), n=1024, c=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i/(n-1)*2-1; c[i]=Math.round(x*steps)/steps;}
+  return c;
 }
 function makeImpulse(ctx,dur,decay){
   const rate=ctx.sampleRate, len=Math.floor(rate*dur), buf=ctx.createBuffer(2,len,rate);
@@ -23294,7 +23330,7 @@ const CHORDS=[[0],[0,12],[0,7],[0,7,12],[0,4,7],[0,3,7],[0,5,7],[0,4,7,11],[0,3,
 const CHORD_NAMES=["Off","Oct","5th","Power","Maj","Min","Sus4","Maj7","Min7","Add9"];
 const ARP_RATE_NAMES=["1/4","1/8","1/8T","1/16","1/16T","1/32"];
 const ARP_RATE_STEPS=[1,2,3,4,6,8];   // steps per beat
-const ARP_MODES=["Up","Down","Up-Down","Random","As-Played"];
+const ARP_MODES=["Up","Down","Up-Down","Random","As-Played","Cascade"];
 const ARP_OCTS=["1","2","3","4"];
 // A momentary metal button (for Randomize / actions).
 function btn(label,onClick){const b=document.createElement("button");b.className="tn-btn";b.type="button";b.textContent=label;
@@ -23321,8 +23357,26 @@ panel.appendChild(section("Mixer",
   mixCh("Osc 3","mixOsc3Vol","mixOsc3On"),
   mixCh("Ext","mixExtVol","mixExtOn"),
   mixCh("Noise","mixNoiseVol","mixNoiseOn", mk(CM("noiseType","",NOISE))),
-  mixCh("Sample","sampleVol","sampleOn", mk(CM("sampleSel","",WT_NAMES)))
+  mixCh("Sample","sampleVol","sampleOn", (()=>{
+    const w=document.createElement("div"); w.style.cssText="display:flex;gap:4px;align-items:center";
+    w.appendChild(mk(CM("sampleSel","",SAMPLE_NAMES)));
+    const inp=document.createElement("input"); inp.type="file"; inp.accept="audio/*"; inp.style.display="none";
+    const lb=document.createElement("button"); lb.className="tn-btn"; lb.textContent="WAV"; lb.style.cssText="padding:4px 7px;font-size:9px;letter-spacing:.5px";
+    lb.addEventListener("click",()=>inp.click());
+    inp.addEventListener("change",e=>{const f=e.target.files&&e.target.files[0]; if(f)loadUserSample(f);});
+    w.appendChild(lb); w.appendChild(inp); return w;
+  })())
 ));
+// Decode a user WAV/audio file into the User sample slot and select it.
+async function loadUserSample(file){
+  if(!ctx){ alert("Pulsa POWER (arranca el audio) antes de cargar un sample."); return; }
+  try{
+    const buf=await ctx.decodeAudioData(await file.arrayBuffer());
+    USER_SAMPLE=buf.getChannelData(0).slice(); USER_SR=buf.sampleRate;
+    P.sampleSel=USER_IDX; P.sampleOn=1;
+    allControls.forEach(c=>c._render&&c._render());
+  }catch(e){ alert("No se pudo decodificar el audio: "+e); }
+}
 // Modifiers
 panel.appendChild(section("Modifiers — Filter",
   row(mk(K("filterCutoff","Cutoff",20,20000,12000,1000,fmtHz)), mk(K("filterReso","Emphasis",0,1,0.1)), mk(K("filterEnv","Contour",0,1,0.5))),
@@ -23340,9 +23394,25 @@ const fxRow=(lab,onId,amtId,amtCap)=>row(mk(SW(onId,lab,"blue")), mk(K(amtId,amt
 panel.appendChild(section("FX",
   fxRow("Drive","fxDriveOn","fxDrive","Drive"),
   fxRow("Chorus","fxChorusOn","fxChorus","Depth"),
+  fxRow("Phaser","fxPhaserOn","fxPhaser","Amt"),
+  fxRow("Crush","fxCrushOn","fxCrush","Amt"),
+  fxRow("Tone","fxToneOn","fxTone","Tone"),
   row(mk(SW("fxDelayOn","Delay","blue")), mk(K("fxDelayMix","Mix",0,1,0.3)), mk(K("fxDelayTime","Time",0.02,1.2,0.28,1,v=>Math.round(v*1000)+" ms"))),
-  fxRow("Reverb","fxReverbOn","fxReverbMix","Mix")
+  fxRow("Reverb","fxReverbOn","fxReverbMix","Mix"),
+  row(btn("FX RANDOM", ()=>randomizeFX()))
 ));
+// Musical FX randomization: enable a tasteful subset with sensible amounts.
+function randomizeFX(){
+  const rr=(a,b)=>a+Math.random()*(b-a), ch=p=>Math.random()<p?1:0;
+  P.fxDriveOn=ch(0.35);P.fxDrive=rr(0.2,0.6);
+  P.fxChorusOn=ch(0.5);P.fxChorus=rr(0.25,0.7);
+  P.fxPhaserOn=ch(0.3);P.fxPhaser=rr(0.3,0.7);
+  P.fxCrushOn=ch(0.2);P.fxCrush=rr(0.2,0.5);
+  P.fxToneOn=ch(0.35);P.fxTone=rr(0.3,0.8);
+  P.fxDelayOn=ch(0.5);P.fxDelayMix=rr(0.15,0.45);P.fxDelayTime=rr(0.12,0.5);
+  P.fxReverbOn=ch(0.6);P.fxReverbMix=rr(0.15,0.5);
+  allControls.forEach(c=>c._render&&c._render());
+}
 // Perform — chord + arpeggiator + randomize (the LEADR-style performance bay)
 panel.appendChild(section("Perform",
   row(mk(CM("chordType","Chord",CHORD_NAMES,true))),
@@ -23373,20 +23443,29 @@ const Perf=(()=>{
     return seq;
   };
   const stepSec=()=>(60/(P.arpBpm||120))/ARP_RATE_STEPS[P.arpRate||1];
+  let casQueue=[];   // notes currently ringing in Cascade mode
   const tick=()=>{
     if(lastNote>=0){off(lastNote);lastNote=-1;}
     if(!P.arpOn){arpTimer=null;return;}   // arp switched off mid-hold
     const seq=buildSeq(); const iv=stepSec();
     if(seq.length){
-      arpPos=(P.arpMode||0)===3?Math.floor(rnd()*seq.length):arpPos%seq.length;
-      const n=seq[arpPos]; arpPos++; on(n,0.9); lastNote=n;
-      const gate=Math.max(0.05,Math.min(0.98,P.arpGate||0.6));
-      setTimeout(()=>{if(lastNote===n){off(n);lastNote=-1;}},iv*gate*1000);
+      if((P.arpMode||0)===5){
+        // WATERFALL cascade: notes overlap into a sustained wash, then roll off.
+        const n=seq[arpPos%seq.length]; arpPos++; on(n,0.9); casQueue.push(n);
+        const ring=Math.min(seq.length, 6);
+        while(casQueue.length>ring) off(casQueue.shift());
+      } else {
+        arpPos=(P.arpMode||0)===3?Math.floor(rnd()*seq.length):arpPos%seq.length;
+        const n=seq[arpPos]; arpPos++; on(n,0.9); lastNote=n;
+        const gate=Math.max(0.05,Math.min(0.98,P.arpGate||0.6));
+        setTimeout(()=>{if(lastNote===n){off(n);lastNote=-1;}},iv*gate*1000);
+      }
     }
     arpTimer=setTimeout(tick,iv*1000);
   };
   const startArp=()=>{if(!arpTimer){arpPos=0;tick();}};
-  const stopArp=()=>{if(arpTimer){clearTimeout(arpTimer);arpTimer=null;}if(lastNote>=0){off(lastNote);lastNote=-1;}};
+  const flushCas=()=>{while(casQueue.length)off(casQueue.shift());};
+  const stopArp=()=>{if(arpTimer){clearTimeout(arpTimer);arpTimer=null;}if(lastNote>=0){off(lastNote);lastNote=-1;}flushCas();};
   return {
     on(n,v){ if(held.includes(n))return; held.push(n);
       if(P.arpOn){startArp();return;} chordOf(n).forEach(x=>on(x,v)); },
@@ -23415,6 +23494,7 @@ function randomize(){
   P.filterDrive=rr(0.1,0.6); P.bassThin=rr(0.1,0.45); P.drift=rr(0.15,0.4);
   P.sampleOn=ch(0.35); P.sampleSel=Math.floor(Math.random()*WT.names.length); P.sampleVol=rr(0.3,0.7);
   P.fxDriveOn=ch(0.3);P.fxDrive=rr(0.2,0.6);P.fxChorusOn=ch(0.4);P.fxChorus=rr(0.2,0.7);
+  P.fxPhaserOn=ch(0.25);P.fxPhaser=rr(0.3,0.7);P.fxCrushOn=ch(0.15);P.fxCrush=rr(0.2,0.5);P.fxToneOn=ch(0.3);P.fxTone=rr(0.3,0.8);
   P.fxDelayOn=ch(0.35);P.fxDelayMix=rr(0.15,0.45);P.fxDelayTime=rr(0.12,0.5);P.fxReverbOn=ch(0.4);P.fxReverbMix=rr(0.15,0.5);
   allControls.forEach(c=>c._render&&c._render());
 }
@@ -23641,7 +23721,7 @@ function dims(){
   const r=RES[resIdx];
   if(!r.auto)return {w:r.w,h:r.h};
   const long=Math.max(window.innerWidth,window.innerHeight),short=Math.min(window.innerWidth,window.innerHeight);
-  const A=Math.min(2.5,Math.max(1.55,long/short)),h=720;
+  const A=Math.min(2.5,Math.max(1.55,long/short)),h=1000;
   return {w:Math.round(h*A),h};
 }
 function setScale(){

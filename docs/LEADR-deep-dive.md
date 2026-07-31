@@ -82,18 +82,19 @@ copiarlo, destilar QUÉ lo hace vender para inspirar a MoogVA.
 
 ---
 
-## 5. Plan de inspiración (priorizado, inspirado ≠ copia)
+## 5. Plan de inspiración — ESTADO
 
-**P1 — cerrar las 3 brechas nucleares:**
-1. **Slots de sample reales + import de WAV del usuario** (2 slots que se mezclan
-   con los osc). Web: `AudioBuffer` + `<input type=file>`/drag; plugin: buffer +
-   lectura a pitch. Más una **mini-librería de fábrica** de one-shots reales.
-2. **Modo arp "CASCADE/WATERFALL"**: notas solapadas + gate largo + spill de
-   octavas + cola de reverb/delay → el "wash" sostenido. Nuevo modo de arp +
-   parámetro de solape (overlap/feedback).
-3. **MIDI-OUT (plugin)**: emitir el acorde/arp como MIDI para tocar otros synths
-   (modo "MIDI FX"). En JUCE: `producesMidi()=true` y volcar los eventos
-   generados por `applyPerform` al `MidiBuffer` de salida.
+**P1 — cerrado en esta tanda (inspirado ≠ copia):**
+1. ✅ **Modo arp "CASCADE" (WATERFALL)**: notas solapadas que forman un *wash*
+   sostenido (hasta 6 notas sonando, rueda). Plugin + web.
+2. ✅ **FX ampliado a 7** (Drive · Chorus · Phaser · Crush · Tone · Delay · Reverb)
+   + **FX RANDOM musical**. Plugin (FxRack C++) + web (Web Audio).
+3. ✅ **MIDI-OUT (plugin)**: modo generador — el acorde/arp sale como MIDI para
+   tocar Serum/Diva/etc.; silencia el audio interno (`producesMidi=true`).
+4. ✅ **Import de WAV del usuario (web)**: slot "User" en el mixer que carga tu
+   audio (botón WAV → `decodeAudioData`) y lo reproduce pitcheado + loop.
+   ⏳ *Pendiente*: import de WAV en el **plugin** (requiere puente nativo de
+   file-chooser al WebView; siguiente iteración).
 
 **P2 — carácter y descubrimiento:**
 4. **Ampliar FX a ~8–12** (phaser, bitcrush, formant, filtro, EQ, width) + un

@@ -728,6 +728,9 @@ function setupRandom() {
     setT("SAMPLE_ON", Math.random()<0.35); setC("SAMPLE_SEL", Math.floor(Math.random()*8)); setS("SAMPLE_VOL", rn(0.3,0.7));
     setT("FX_DRIVE_ON", Math.random()<0.3); setS("FX_DRIVE", rn(0.2,0.6));
     setT("FX_CHORUS_ON", Math.random()<0.4); setS("FX_CHORUS", rn(0.2,0.7));
+    setT("FX_PHASER_ON", Math.random()<0.25); setS("FX_PHASER", rn(0.3,0.7));
+    setT("FX_CRUSH_ON", Math.random()<0.15); setS("FX_CRUSH", rn(0.2,0.5));
+    setT("FX_TONE_ON", Math.random()<0.3); setS("FX_TONE", rn(0.3,0.8));
     setT("FX_DELAY_ON", Math.random()<0.35); setS("FX_DELAY_MIX", rn(0.15,0.45)); setS("FX_DELAY_TIME", rn(0.1,0.5));
     setT("FX_REVERB_ON", Math.random()<0.4); setS("FX_REVERB_MIX", rn(0.15,0.5));
   });

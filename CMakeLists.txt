@@ -49,7 +49,7 @@ juce_add_plugin(MoogVASynth
     PRODUCT_NAME            "MoogVA Synth"
     IS_SYNTH                TRUE
     NEEDS_MIDI_INPUT        TRUE
-    NEEDS_MIDI_OUTPUT       FALSE
+    NEEDS_MIDI_OUTPUT       TRUE
     IS_MIDI_EFFECT          FALSE
     NEEDS_WEBVIEW2          TRUE
     EDITOR_WANTS_KEYBOARD_FOCUS TRUE

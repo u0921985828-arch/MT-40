@@ -17,6 +17,9 @@ public:
     {
         bool  driveOn = false;  float drive = 0.35f;
         bool  chorusOn = false; float chorus = 0.4f;
+        bool  phaserOn = false; float phaser = 0.4f;
+        bool  crushOn = false;  float crush = 0.35f;
+        bool  toneOn = false;   float tone = 0.5f;
         bool  delayOn = false;  float delayMix = 0.3f, delayTime = 0.28f;
         bool  reverbOn = false; float reverbMix = 0.3f;
     };
@@ -38,6 +41,7 @@ public:
         dpos = 0;
         lpL = lpR = 0.0f;
         lpCoef = 1.0f - std::exp (-2.0f * juce::MathConstants<float>::pi * 3200.0f / (float) sr);
+        lfoInc = (float) (0.4 / sr);   // ~0.4 Hz phaser sweep
         reset();
     }
 
@@ -47,6 +51,8 @@ public:
         reverb.reset();
         for (auto& b : dbuf) std::fill (b.begin(), b.end(), 0.0f);
         dpos = 0; lpL = lpR = 0.0f;
+        for (auto& c : apZ) for (auto& z : c) z = 0.0f;
+        toneZ[0] = toneZ[1] = 0.0f; lfoPhase = 0.0f;
     }
 
     void process (juce::AudioBuffer<float>& buffer, const Params& p)
@@ -76,6 +82,52 @@ public:
             juce::dsp::AudioBlock<float> block (buffer);
             juce::dsp::ProcessContextReplacing<float> ctx (block);
             chorus.process (ctx);
+        }
+
+        // ---- Phaser (4 modulated allpass stages, wet/dry) ------------------
+        if (p.phaserOn)
+        {
+            const float depth = p.phaser;
+            for (int i = 0; i < n; ++i)
+            {
+                lfoPhase += lfoInc; if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
+                const float a = 0.4f + 0.45f * (0.5f + 0.5f * std::sin (juce::MathConstants<float>::twoPi * lfoPhase));
+                for (int c = 0; c < ch; ++c)
+                {
+                    float* d = buffer.getWritePointer (c);
+                    float x = d[i], y = x;
+                    for (int s = 0; s < 4; ++s)
+                    {
+                        const float in = y;
+                        y = -a * in + apZ[c][s];
+                        apZ[c][s] = in + a * y;
+                    }
+                    d[i] = x + (y - x) * depth;
+                }
+            }
+        }
+
+        // ---- Bitcrush (bit-depth quantise) ---------------------------------
+        if (p.crushOn)
+        {
+            const float q = std::pow (2.0f, juce::jmax (1.0f, 8.0f - p.crush * 6.0f));
+            for (int c = 0; c < ch; ++c)
+            {
+                auto* d = buffer.getWritePointer (c);
+                for (int i = 0; i < n; ++i) d[i] = std::round (d[i] * q) / q;
+            }
+        }
+
+        // ---- Tone (one-pole low-pass tilt) ---------------------------------
+        if (p.toneOn)
+        {
+            const float fc = 400.0f * std::pow (2.0f, p.tone * 5.5f);
+            const float a  = 1.0f - std::exp (-2.0f * juce::MathConstants<float>::pi * juce::jmin ((float) sampleRate * 0.49f, fc) / (float) sampleRate);
+            for (int c = 0; c < ch; ++c)
+            {
+                auto* d = buffer.getWritePointer (c);
+                for (int i = 0; i < n; ++i) { toneZ[c] += a * (d[i] - toneZ[c]); d[i] = toneZ[c]; }
+            }
         }
 
         // ---- Ping-pong delay (manual stereo, low-passed feedback) ----------
@@ -127,4 +179,8 @@ private:
     std::vector<float> dbuf[2];
     int dmax { 0 }, dpos { 0 };
     float lpL { 0.0f }, lpR { 0.0f }, lpCoef { 0.5f };
+
+    float apZ[2][4] { { 0 }, { 0 } };   // phaser allpass state (per channel)
+    float toneZ[2] { 0.0f, 0.0f };      // tone one-pole state
+    float lfoPhase { 0.0f }, lfoInc { 0.0f };
 };

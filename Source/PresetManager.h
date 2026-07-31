@@ -167,7 +167,8 @@ private:
         // Global performance controls are player state, not part of a sound preset.
         static const juce::StringArray perform {
             ParamID::polyOn, ParamID::chordType, ParamID::arpOn, ParamID::arpRate,
-            ParamID::arpMode, ParamID::arpOct, ParamID::arpGate, ParamID::arpBpm
+            ParamID::arpMode, ParamID::arpOct, ParamID::arpGate, ParamID::arpBpm,
+            ParamID::midiOutOn
         };
         for (auto* param : apvts.processor.getParameters())
         {
@@ -203,6 +204,9 @@ private:
             {"sampleOn",ParamID::sampleOn},{"sampleSel",ParamID::sampleSel},{"sampleVol",ParamID::sampleVol},
             {"fxDriveOn",ParamID::fxDriveOn},{"fxDrive",ParamID::fxDrive},
             {"fxChorusOn",ParamID::fxChorusOn},{"fxChorus",ParamID::fxChorus},
+            {"fxPhaserOn",ParamID::fxPhaserOn},{"fxPhaser",ParamID::fxPhaser},
+            {"fxCrushOn",ParamID::fxCrushOn},{"fxCrush",ParamID::fxCrush},
+            {"fxToneOn",ParamID::fxToneOn},{"fxTone",ParamID::fxTone},
             {"fxDelayOn",ParamID::fxDelayOn},{"fxDelayMix",ParamID::fxDelayMix},{"fxDelayTime",ParamID::fxDelayTime},
             {"fxReverbOn",ParamID::fxReverbOn},{"fxReverbMix",ParamID::fxReverbMix},
         };

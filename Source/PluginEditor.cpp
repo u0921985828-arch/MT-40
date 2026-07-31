@@ -116,7 +116,7 @@ MoogSynthAudioProcessorEditor::MoogSynthAudioProcessorEditor (MoogSynthAudioProc
 
     setResizable (true, true);
     setResizeLimits (1040, 560, 1900, 1000);
-    setSize (1520, 700);
+    setSize (1520, 820);
 
     startTimerHz (30); // drive the visualiser
 }
