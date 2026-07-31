@@ -703,6 +703,32 @@ function setupWheel(el) {
 }
 
 // ---------------------------------------------------------------------------
+// Randomize  ->  writes musical random values through the parameter relays
+// ---------------------------------------------------------------------------
+function setupRandom() {
+  const btn = document.getElementById("randomBtn");
+  if (!btn) return;
+  const rn = (a, b) => a + Math.random() * (b - a);
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const setS = (id, norm) => { try { getSliderState(id).setNormalisedValue(Math.max(0, Math.min(1, norm))); } catch (e) {} };
+  const setC = (id, ix) => { try { getComboBoxState(id).setChoiceIndex(ix); } catch (e) {} };
+  const setT = (id, on) => { try { getToggleState(id).setValue(on); } catch (e) {} };
+  btn.addEventListener("click", () => {
+    setC("OSC1_WAVE", pick([0,1,2,3])); setC("OSC1_RANGE", pick([1,2,3]));
+    setC("OSC2_WAVE", pick([0,1,2,3])); setC("OSC2_RANGE", pick([1,2,3])); setS("OSC2_DETUNE", rn(0.38,0.62));
+    setC("OSC3_WAVE", pick([0,2,3]));   setC("OSC3_RANGE", pick([1,2,3])); setS("OSC3_DETUNE", rn(0.42,0.58));
+    setT("MIX_OSC1_ON", true);              setS("MIX_OSC1_VOL", rn(0.7,0.95));
+    setT("MIX_OSC2_ON", Math.random()<0.8); setS("MIX_OSC2_VOL", rn(0.4,0.8));
+    setT("MIX_OSC3_ON", Math.random()<0.5); setS("MIX_OSC3_VOL", rn(0.3,0.7));
+    setT("MIX_NOISE_ON", Math.random()<0.3);setS("MIX_NOISE_VOL", rn(0.1,0.4)); setC("NOISE_TYPE", pick([0,1]));
+    setS("FILTER_CUTOFF", rn(0.25,0.72)); setS("FILTER_RESO", rn(0.1,0.6)); setS("FILTER_ENV", rn(0.2,0.85));
+    setS("FILTER_ATTACK", rn(0.0,0.35)); setS("FILTER_DECAY", rn(0.2,0.6)); setS("FILTER_SUSTAIN", rn(0.2,0.7)); setS("FILTER_RELEASE", rn(0.1,0.5));
+    setS("AMP_ATTACK", rn(0.0,0.3)); setS("AMP_DECAY", rn(0.2,0.6)); setS("AMP_SUSTAIN", rn(0.5,0.95)); setS("AMP_RELEASE", rn(0.1,0.45));
+    setS("FILTER_DRIVE", rn(0.1,0.6)); setS("DRIFT_AMOUNT", rn(0.15,0.4)); setS("BASS_THIN", rn(0.1,0.45));
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 (async () => {
@@ -716,4 +742,5 @@ function setupWheel(el) {
   setupKeyboard();
   setupVisualiser();
   setupPresets();
+  setupRandom();
 })();

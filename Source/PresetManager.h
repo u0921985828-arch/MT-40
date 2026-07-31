@@ -164,11 +164,15 @@ private:
 
     void resetToDefaults()
     {
+        // Global performance controls are player state, not part of a sound preset.
+        static const juce::StringArray perform {
+            ParamID::polyOn, ParamID::chordType, ParamID::arpOn, ParamID::arpRate,
+            ParamID::arpMode, ParamID::arpOct, ParamID::arpGate, ParamID::arpBpm
+        };
         for (auto* param : apvts.processor.getParameters())
         {
-            // Poly/Mono is a global performance mode, not part of a sound preset.
             if (auto* withID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param))
-                if (withID->paramID == ParamID::polyOn)
+                if (perform.contains (withID->paramID))
                     continue;
             param->setValueNotifyingHost (param->getDefaultValue());
         }

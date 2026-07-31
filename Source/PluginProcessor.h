@@ -4,6 +4,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cstdint>
+#include <vector>
 #include "DSP/MonoSynthEngine.h"
 #include "DSP/SynthParameters.h"
 #include "PresetManager.h"
@@ -89,6 +90,18 @@ private:
 
     int allocateVoice (int note) noexcept;
     int findVoiceForNote (int note) const noexcept;
+
+    // Perform layer: rewrites the incoming MIDI (chord expansion + arpeggiator)
+    // before it reaches the voice dispatch. Global performance mode, not a preset.
+    void applyPerform (juce::MidiBuffer& midi, int numSamples);
+    std::vector<int> perfHeld;          // held notes, in press order
+    double   perfToNextStep { 0.0 };    // samples remaining until next arp step
+    double   perfToGateOff  { 0.0 };    // samples remaining until arp note release
+    int      perfArpNote    { -1 };     // currently sounding arp note (-1 = none)
+    int      perfArpPos     { 0 };      // sequence position
+    uint32_t perfRandSeed   { 0x9E3779B9u };
+    bool     perfWasArp     { false };
+    double   currentSampleRate { 44100.0 };
 
     std::atomic<float> uiPitchBend { 0.0f };
 

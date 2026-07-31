@@ -2,6 +2,7 @@
 
 #include <juce_core/juce_core.h>
 #include <array>
+#include <vector>
 
 /**
     Centralised APVTS parameter identifiers, aligned with the Minimoog Model D
@@ -71,6 +72,15 @@ namespace ParamID
     static constexpr auto driftAmount = "DRIFT_AMOUNT"; // oscillator analog drift
     static constexpr auto filterDrive = "FILTER_DRIVE"; // mixer -> filter overdrive (growl)
     static constexpr auto bassThin    = "BASS_THIN";    // resonance bass-thinning
+
+    // ---- Perform: chord + arpeggiator (global performance mode) --------------
+    static constexpr auto chordType = "CHORD_TYPE"; // 0=Off..9=Add9
+    static constexpr auto arpOn     = "ARP_ON";
+    static constexpr auto arpRate   = "ARP_RATE";   // 0=1/4..5=1/32
+    static constexpr auto arpMode   = "ARP_MODE";   // Up/Down/Up-Down/Random/As-Played
+    static constexpr auto arpOct    = "ARP_OCT";    // 0=1..3=4 octaves
+    static constexpr auto arpGate   = "ARP_GATE";   // 0..1
+    static constexpr auto arpBpm    = "ARP_BPM";    // 40..240 (used when host tempo absent)
 }
 
 namespace ParamChoices
@@ -95,6 +105,44 @@ namespace ParamChoices
     inline juce::StringArray noiseTypes()
     {
         return { "White", "Pink" };
+    }
+
+    // ---- Perform ------------------------------------------------------------
+    inline juce::StringArray chordTypes()
+    {
+        return { "Off", "Oct", "5th", "Power", "Maj", "Min", "Sus4", "Maj7", "Min7", "Add9" };
+    }
+
+    // Semitone interval sets for each chord type (index matches chordTypes()).
+    inline const std::array<std::vector<int>, 10>& chordIntervals()
+    {
+        static const std::array<std::vector<int>, 10> iv = {{
+            {0}, {0,12}, {0,7}, {0,7,12}, {0,4,7}, {0,3,7},
+            {0,5,7}, {0,4,7,11}, {0,3,7,10}, {0,4,7,14}
+        }};
+        return iv;
+    }
+
+    inline juce::StringArray arpRates()
+    {
+        return { "1/4", "1/8", "1/8T", "1/16", "1/16T", "1/32" };
+    }
+
+    // Steps per beat for each arp rate.
+    inline int arpRateSteps (int i)
+    {
+        static const int s[6] = { 1, 2, 3, 4, 6, 8 };
+        return s[juce::jlimit (0, 5, i)];
+    }
+
+    inline juce::StringArray arpModes()
+    {
+        return { "Up", "Down", "Up-Down", "Random", "As-Played" };
+    }
+
+    inline juce::StringArray arpOctaves()
+    {
+        return { "1", "2", "3", "4" };
     }
 
     inline float rangeMultiplier (int rangeIndex)
