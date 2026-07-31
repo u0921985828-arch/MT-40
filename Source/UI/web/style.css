@@ -552,3 +552,144 @@ html, body {
 
 /* ---- Osc3 keyboard-track switch: label it clearly inside the row ---- */
 .osc-row .rocker.mini .caption { font-size: 8px; }
+
+/* ============================================================
+   CYBER-DARK THEME — Hi-Tech industrial pivot (over the wood/UA look).
+   Matte carbon chassis, machined hairline edges, reactive neon accents.
+   Appended last so it wins over the earlier wood/amber rules by order.
+   ============================================================ */
+:root {
+  --label: #d8e4ec; --label-dim: #7c8b97;
+  --accent-orange: #00e6d8; --accent-blue: #ff2d78;  /* accents: cyan / magenta */
+  --metal: #11151c;
+  --key-white: #c9d3da; --key-black: #0a0c10;
+  --neon: #00e6d8; --neon2: #ff2d78;
+}
+html, body { color: var(--label); background: #05070b; }
+
+/* Cabinet: brushed graphite, cyan rim-light, machined corner bolts */
+#cabinet {
+  background:
+    linear-gradient(180deg, rgba(0,230,216,0.05), rgba(0,0,0,0) 15%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.012) 0 2px, rgba(0,0,0,0) 2px 5px),
+    linear-gradient(160deg, #12161d, #0b0e13 45%, #070a0e 100%);
+  box-shadow: inset 0 0 90px rgba(0,0,0,0.72), inset 0 2px 0 rgba(0,230,216,0.16);
+}
+#cabinet::after { background: radial-gradient(120% 80% at 50% -10%, rgba(0,230,216,0.10), rgba(0,0,0,0) 55%); }
+#cabinet::before, #cabinet::after {
+  background: radial-gradient(circle at 40% 34%, #cfe9e5, #4a5860 46%, #10161b 100%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.8), inset 0 0 3px rgba(0,0,0,0.55), inset 0 1px 1px rgba(0,230,216,0.35); }
+
+/* Panel: dark machined plate, cyan seams */
+#panel {
+  border: 3px solid #05070b;
+  background:
+    radial-gradient(ellipse at 50% 34%, rgba(0,230,216,0.05) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.014) 0 1px, rgba(0,0,0,0) 1px 4px),
+    linear-gradient(180deg, #141a22, #0d1117 44%, #080b0f 100%);
+  box-shadow: inset 0 1px 0 rgba(0,230,216,0.20), inset 0 -4px 12px rgba(0,0,0,0.6),
+    inset 0 0 64px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.8);
+}
+#panel::before { background: linear-gradient(180deg, rgba(0,230,216,0.10), rgba(255,255,255,0)); }
+.sect { box-shadow: inset -1px 0 0 rgba(0,230,216,0.08), inset 1px 0 0 rgba(0,0,0,0.55); }
+.sect:not(:last-child)::after { background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 12%, rgba(0,0,0,0.55) 88%, rgba(0,0,0,0) 100%);
+  box-shadow: 1px 0 0 rgba(0,230,216,0.10); }
+
+/* Section name-plate */
+.sect h2 { color: #cfe9e5; letter-spacing: 1.6px;
+  background: linear-gradient(180deg, rgba(0,230,216,0.09), rgba(0,0,0,0.34));
+  border-top: 1px solid rgba(0,230,216,0.16); border-bottom: 1px solid rgba(0,0,0,0.7);
+  text-shadow: 0 0 8px rgba(0,230,216,0.35), 0 1px 0 #000; }
+.sect h2::before, .sect h2::after { background: radial-gradient(circle at 40% 34%, #cfe9e5, #4a5860 46%, #10161b 100%);
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.6), 0 1px 1px rgba(0,0,0,0.7); }
+
+/* Knobs: anodised dark skirt + cyan pointer/ring */
+.skirt { background: radial-gradient(circle at 50% 30%, #2a3138, #141a20 52%, #05070a 100%);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.8), inset 0 1px 1px rgba(0,230,216,0.18), 0 0 0 1px rgba(0,230,216,0.10); }
+.dial { background: radial-gradient(circle at 50% 26%, #1a2126, #0a0e12 66%, #040608 100%);
+  box-shadow: inset 0 2px 3px rgba(0,230,216,0.12), inset 0 -4px 7px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.9); }
+.pointer { background: linear-gradient(#8ffff5, #00e6d8); box-shadow: 0 0 6px rgba(0,230,216,0.9); }
+.ticks line { stroke: rgba(0,230,216,0.22); } .ticks line.maj { stroke: rgba(0,230,216,0.55); }
+.of-dial { background: radial-gradient(circle at 50% 30%, #1a2126, #0a0e12 62%, #040608);
+  box-shadow: inset 0 1px 1px rgba(0,230,216,0.14), inset 0 -3px 5px rgba(0,0,0,0.75), 0 0 0 2px rgba(0,230,216,0.16); }
+.of-dial::after { background: #00e6d8; box-shadow: 0 0 5px rgba(0,230,216,0.7); }
+.knob .caption, .combo .caption, .rocker .caption, .osc-fixed .caption { color: #9fb0bb; }
+.knob .value, .osc-fixed .value { color: var(--neon); text-shadow: 0 0 6px rgba(0,230,216,0.4), 0 1px 1px rgba(0,0,0,0.8); }
+
+/* Rockers: neon paddle + LED (cyan primary, magenta secondary) */
+.rocker .cap { background: linear-gradient(180deg, #1a2026, #0a0e12);
+  box-shadow: inset 0 1px 1px rgba(0,230,216,0.10), inset 0 -2px 4px rgba(0,0,0,0.7), 0 1px 2px rgba(0,0,0,0.7); }
+.rocker .cap::before { background: linear-gradient(180deg, #242c33, #12181d);
+  box-shadow: inset 0 1px 1px rgba(0,230,216,0.14), inset 0 -3px 4px rgba(0,0,0,0.5); }
+.rocker.accent-orange.on .cap::before { background: linear-gradient(180deg, #12d9cc, #065c56);
+  box-shadow: inset 0 1px 2px rgba(160,255,248,0.6), 0 0 11px rgba(0,230,216,0.9); }
+.rocker.accent-blue.on .cap::before { background: linear-gradient(180deg, #ff5c93, #8f0f3c);
+  box-shadow: inset 0 1px 2px rgba(255,200,220,0.6), 0 0 11px rgba(255,45,120,0.9); }
+.rocker.accent-orange.on .cap::after { background: #8ffff5; box-shadow: 0 0 8px 1px rgba(0,230,216,0.95); }
+.rocker.accent-blue.on .cap::after { background: #ffb0cd; box-shadow: 0 0 8px 1px rgba(255,45,120,0.95); }
+
+/* Combos: dark glass + cyan LCD readout (was amber "tube") */
+.combo .dd-btn { color: #bfe9e5; font-weight: 600;
+  text-shadow: 0 0 6px rgba(0,230,216,0.5), 0 1px 0 rgba(0,0,0,0.7);
+  background: linear-gradient(180deg, #12191f, #0a0e12 55%, #05080b);
+  border: 1px solid #000; border-top-color: #243038;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.9), inset 0 0 10px rgba(0,120,112,0.30),
+    inset 0 1px 0 rgba(0,230,216,0.12), 0 1px 2px rgba(0,0,0,0.6); }
+.combo .dd-btn:hover { border-top-color: #2f6b64; box-shadow: inset 0 1px 2px rgba(0,0,0,0.9),
+  inset 0 0 12px rgba(0,160,150,0.40), 0 1px 2px rgba(0,0,0,0.6); }
+.combo.open .dd-btn { border-color: var(--neon); }
+.combo .dd-btn .dd-arw { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2350c8be'/%3E%3C/svg%3E") no-repeat center; }
+
+/* Dropdowns (preset browser + generic): neon accents */
+.dd.open .dd-btn { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,230,216,0.4); }
+.dd-menu, .dd-sub { background: linear-gradient(180deg, #131a20, #0a0e12); border-top-color: #243038; }
+.dd-group, .dd-lib { color: var(--neon); }
+.dd-opt:hover, .dd-folder:hover, .dd-folder.open { background: linear-gradient(180deg, #0f3b3a, #08211f); color: #eafffb; }
+.dd-opt.sel { background: linear-gradient(180deg, #0a5a54, #063c38); color: #eafffb; box-shadow: inset 0 0 0 1px rgba(0,230,216,0.6); }
+.dd-nav:active { background: linear-gradient(180deg, #0a5a54, #063c38); }
+
+/* Action button (Randomize / IDEA): neon */
+.tn-btn { color: #8ffff5; border-top-color: #0a5a54;
+  background: linear-gradient(180deg, #0f2a2b, #071417);
+  box-shadow: inset 0 1px 1px rgba(0,230,216,0.25), inset 0 -3px 6px rgba(0,0,0,0.7), 0 0 10px rgba(0,230,216,0.15);
+  text-shadow: 0 0 8px rgba(0,230,216,0.6), 0 1px 0 rgba(0,0,0,0.7); }
+.tn-btn:hover { border-top-color: #12d9cc; background: linear-gradient(180deg, #134043, #0a2023); }
+.tn-btn:active { background: linear-gradient(180deg, #12d9cc, #065c56); color: #04120f; }
+
+/* Displays: black glass, cyan phosphor bezel */
+.display { background: linear-gradient(180deg, #04100e, #02090a); border: 1px solid #000;
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.95), inset 0 1px 0 rgba(0,230,216,0.12),
+    0 0 0 1px rgba(0,230,216,0.14), 0 2px 4px rgba(0,0,0,0.7); }
+.disp-label { color: rgba(0,230,216,0.6); text-shadow: 0 0 6px rgba(0,230,216,0.5); }
+.vu-fill { background: linear-gradient(0deg, #00e6d8 0%, #5cf0e6 50%, #d9d040 78%, #ff2d78 100%); }
+.vu-peak { background: #eafffb; box-shadow: 0 0 5px rgba(0,230,216,0.9); }
+
+/* Header brand */
+.brand-text { background: linear-gradient(180deg, rgba(0,230,216,0.07), rgba(0,0,0,0.34));
+  box-shadow: inset 0 1px 0 rgba(0,230,216,0.14), inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.55);
+  border: 1px solid rgba(0,0,0,0.6); }
+.logo { font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 800; color: #eaf6f4;
+  text-shadow: 0 0 14px rgba(0,230,216,0.5), 0 1px 0 rgba(0,0,0,0.9); }
+.model { color: rgba(0,230,216,0.55); }
+#presetSave { background: linear-gradient(180deg, #1a2026, #0c1014); border: 1px solid #05070b; color: #bfe9e5;
+  box-shadow: inset 0 1px 0 rgba(0,230,216,0.14), 0 1px 2px rgba(0,0,0,0.5); }
+#presetSave:hover { background: linear-gradient(180deg, #22303a, #10161b); }
+#presetSave:active { background: var(--neon); color: #04120f; }
+
+/* Wheels + keyboard: graphite, dark keys, neon seam */
+.wheel-face { background:
+    linear-gradient(180deg, rgba(0,230,216,0.10), rgba(0,0,0,0) 12%, rgba(0,0,0,0) 88%, rgba(0,0,0,0.55) 100%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.62) 0 2px, rgba(0,230,216,0.05) 2px 5px),
+    linear-gradient(90deg, #05070a, #28323a 48%, #05070a);
+  box-shadow: inset 0 0 9px rgba(0,0,0,0.85), 0 1px 0 rgba(0,230,216,0.10), 0 2px 4px rgba(0,0,0,0.6); }
+.wheel-face::after { background: linear-gradient(180deg, #7a7a82, #16161a); }
+.wheel-label { color: #7c8b97; }
+#keyboard { background: #05070a; border: 2px solid #05070b;
+  box-shadow: inset 0 3px 10px rgba(0,0,0,0.92), inset 0 0 0 1px rgba(0,230,216,0.10); }
+#keyboard::before { background: linear-gradient(90deg, #00e6d8, #ff2d78); box-shadow: 0 0 8px rgba(0,230,216,0.5); }
+.wkey { background: linear-gradient(180deg, #eef4f6, var(--key-white));
+  box-shadow: inset 0 -3px 4px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.7); }
+.wkey:active, .wkey.held { background: linear-gradient(180deg, #7fe9e0, #3fb9b0); }
+.bkey { background: linear-gradient(180deg, #1a2228 0%, #0a0e12 55%, #05070a 100%);
+  box-shadow: 0 3px 4px rgba(0,0,0,0.7), inset 0 -2px 2px rgba(0,230,216,0.06); }
+.bkey:active, .bkey.held { background: linear-gradient(180deg, #0f6f68, #08423d); }

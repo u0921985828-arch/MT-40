@@ -18,9 +18,12 @@ performance (acordes/arp), rack de FX y salida MIDI. Un solo motor/diseño con
 Todo compila y está verificado. Paridad plugin ↔ web salvo lo indicado.
 
 **Síntesis:** 3 osciladores VA (PolyBLEP), ruido (white/pink), filtro **ladder
-Moog ZDF** (TPT, feedback-tanh, 2× oversampling interno, drive + bass-thin),
-ADSR exponencial ×2 (filtro/amp), glide, drift analógico, mod bus (osc/filtro),
-**mono/poly (8 voces)**.
+Moog ZDF** (TPT, 2× oversampling interno, drive + bass-thin, **saturación de
+feedback asimétrica** dependiente de tolerancia → armónicos pares), ADSR
+exponencial ×2 (filtro/amp), glide, **inestabilidad analógica estocástica**
+(random-walk de voltaje por oscilador + tolerancia de cutoff/ADSR por voz,
+gobernada por el knob **Drift**; a 0 el motor es bit-idéntico), mod bus
+(osc/filtro), **mono/poly (8 voces)**.
 
 **Capa Sample:** 8 timbres wavetable generados aditivamente (Digital/Organ/Voice/
 Reed/Bell/Pluck/Glass/Saw2), mezclados en el mixer. En **web**, además, slot
@@ -41,10 +44,14 @@ Delay (ping-pong) · Reverb — cada uno on/off + cantidad, con **FX RANDOM** mu
 
 **Máster:** shelves warmth/air + tube tanh sobre-oversampleado 4× + DC blocker.
 
-**UI:** madera "Universal-Audio", 7 secciones (Controllers · Oscillator Bank ·
-Mixer · Modifiers · Output · FX · Perform), selectores LCD ámbar, placas con
-tornillos, Scope + Spectrum + VU. Plugin 1520×820 (redimensionable). Web: modo
-**Auto pantalla completa** (sin letterbox), lienzo de diseño 1000 de alto.
+**UI (Cyber-Dark):** estética Hi-Tech industrial — carbón mate + acentos neón
+cian/magenta reactivos (pivote desde la madera "UA"; reduce el riesgo de trade
+dress). 7 secciones (Controllers · Oscillator Bank · Mixer · Modifiers · Output ·
+FX · Perform/Morph), selectores LCD cian, **visualizador WebGL** (shader
+reactivo al nivel/drive, con **fallback a canvas 2D** si WebGL no está) + VU.
+**Pad XY de morphing** (interpola 4 slots A/B/C/D) y **generador IDEA** (parche
+musical completo — sonido + acorde + arp + FX — de un botón) en Perform.
+Plugin 1520×820 (redimensionable). Web: modo **Auto pantalla completa**, lienzo 1000.
 
 **Presets:** 10 bibliotecas, ~700 presets (`webapp/presets.json`, embebido).
 
@@ -160,12 +167,17 @@ CMake: `NEEDS_MIDI_INPUT/OUTPUT TRUE`. Proyecto VS Code en `.vscode/`. APK en
 
 ## 8. Roadmap (siguiente)
 
-**P1 restante:** import de WAV en el **plugin** (file-chooser nativo → buffer en
-`MonoSynthEngine`; librería de one-shots de fábrica).
-**P2:** physical modeling (Karplus-Strong) como 4ª fuente; más FX hacia ~12;
-macro **"IDEA"** (acorde+arp+FX+random en un botón); mod-matrix + LFOs.
-**P3 (producto):** marca propia + web; licencia/trial; preset packs y librería
-de samples vendibles; instaladores firmados (macOS notarizado, Win, AAX).
+**Hecho (lote "flagship"):** identidad **Cyber-Dark** (web + plugin), visualizador
+**WebGL** reactivo + fallback 2D, **Pad XY morph**, **generador IDEA**, y DSP
+next-gen (**saturación asimétrica** + **drift estocástico**) en ambos motores.
+**Aplazado:** **MPE** (control polifónico por nota en el banco de 8 voces);
+**rack de FX drag-and-drop** (reordenable); **oversampling adaptativo** 8×/16×
+en bloques no lineales; **Pad XY morph en el plugin** (requiere interpolación
+nativa de presets en `PresetManager`/APVTS); layout con pestañas contextuales.
+**Otros:** import de WAV en el plugin (file-chooser nativo); physical modeling
+(Karplus-Strong); más FX (~12); mod-matrix + LFOs.
+**Producto:** marca propia + web; licencia/trial; preset/sample packs vendibles;
+instaladores firmados (macOS notarizado, Win, AAX).
 
 ---
 

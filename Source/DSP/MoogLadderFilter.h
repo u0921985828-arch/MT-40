@@ -65,6 +65,22 @@ public:
         bassThin = juce::jlimit (0.0f, 1.0f, amount);
     }
 
+    /** Analog "true-circuit" character (0..1), plus a per-voice tolerance seed
+        (0..1). Models two real-world imperfections of a discrete transistor
+        ladder: (1) component tolerance detunes the effective cutoff a little per
+        unit, and (2) the ladder's saturation is *asymmetric* (the transistors
+        clip harder on one polarity), which adds even-order harmonics — the warm,
+        slightly tube-like edge a symmetric tanh can never produce. */
+    void setAnalog (float amount, float seed) noexcept
+    {
+        analogAmt = juce::jlimit (0.0f, 1.0f, amount);
+        const float s = seed * 2.0f - 1.0f;                 // -1..1, stable per voice
+        tolG     = 1.0f + s * 0.02f * analogAmt;            // +-2% cutoff tolerance
+        asym     = s * 0.30f * analogAmt;                    // asymmetric saturation bias
+        tanhBias = std::tanh (asym);                         // keeps the feedback DC-centred
+        updateCoefficients();
+    }
+
     inline float processSample (float input) noexcept
     {
         // Non-linear input drive (the classic Minimoog "growl" when the mixer
@@ -102,8 +118,12 @@ public:
 
             // Linear predictor for the 4th-stage output, then saturate the
             // feedback: keeps self-oscillation perfectly in tune yet bounded.
+            // With analog character engaged the saturation is asymmetric (even
+            // harmonics); at zero it stays the exact symmetric tanh as before.
             const float y4 = (G4 * xin + S) / (1.0f + k * G4);
-            const float u1 = xin - k * std::tanh (y4);
+            const float fb = analogAmt > 0.0001f ? (std::tanh (y4 + asym) - tanhBias)
+                                                  : std::tanh (y4);
+            const float u1 = xin - k * fb;
 
             // Run the four cascaded TPT one-poles with the resolved input.
             float u = u1;
@@ -126,7 +146,8 @@ private:
     {
         // Coefficient computed at the (2x) oversampled rate.
         const double fsOversampled = fs * 2.0;
-        const double g = std::tan (juce::MathConstants<double>::pi * cutoff / fsOversampled);
+        const double g = std::tan (juce::MathConstants<double>::pi * cutoff / fsOversampled)
+                             * (double) tolG; // per-voice component tolerance on the cutoff
         G = (float) (g / (1.0 + g));
         oneMinusG = 1.0f - G;
         G2 = G * G;
@@ -143,6 +164,10 @@ private:
     float  k { 0.0f };            // feedback amount (0..~4.2)
     float  inputDrive { 0.0f };   // mixer -> filter overdrive
     float  bassThin { 0.0f };     // resonance-dependent bass-thinning
+    float  analogAmt { 0.0f };    // "true-circuit" character amount
+    float  tolG { 1.0f };         // per-voice cutoff tolerance multiplier
+    float  asym { 0.0f };         // asymmetric saturation bias (even harmonics)
+    float  tanhBias { 0.0f };     // tanh(asym), removes the resulting DC offset
     float  hpState { 0.0f }, hpCoef { 0.03f };
 
     float  G { 0.0f }, oneMinusG { 1.0f }, G2 { 0.0f }, G3 { 0.0f }, G4 { 0.0f };

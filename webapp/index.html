@@ -1,6 +1,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<meta name="theme-color" content="#2a1a0d" />
+<meta name="theme-color" content="#06080c" />
 <title>MoogVA Mobile</title>
 <style>
   :root{
@@ -300,6 +300,115 @@
   /* P3: typography */
   .kcap,.cmb .lab,.sw .lab{font-size:9.5px;letter-spacing:.5px;color:#cdc4a8;}
   .kval{font-size:9.5px;letter-spacing:.3px;color:#a9e6c4;}
+
+  /* ========================================================================
+     CYBER-DARK THEME — Hi-Tech industrial pivot (replaces the wood/UA look).
+     Matte carbon surfaces, hairline machined edges, reactive neon accents.
+     Placed last so it overrides the earlier wood/amber rules by source order.
+     ===================================================================== */
+  :root{
+    --label:#d8e4ec; --dim:#7c8b97;
+    --orange:#00e6d8; --blue:#ff2d78;                 /* accents: cyan / magenta */
+    --accent-orange:#00e6d8; --accent-blue:#ff2d78;   /* used by dropdowns */
+    --neon:#00e6d8; --neon2:#ff2d78; --neon-dim:rgba(0,230,216,.55);
+    --carbon:#0a0d12; --carbon2:#11151c; --edge:#1c222b;
+    --key-white:#c9d3da; --key-black:#0a0c10;
+  }
+  body{background:radial-gradient(ellipse at 50% 32%,#0c1119,#05070b 70%);}
+  /* Cabinet: brushed graphite, no wood, thin cyan rim-light at the top */
+  #stage{
+    background:
+      linear-gradient(180deg,rgba(0,230,216,.05),rgba(0,0,0,0) 16%),
+      repeating-linear-gradient(115deg,rgba(255,255,255,.012) 0 2px,rgba(0,0,0,0) 2px 5px),
+      linear-gradient(160deg,#12161d,#0b0e13 45%,#070a0e 100%);
+    box-shadow:0 28px 80px rgba(0,0,0,.9),inset 0 0 100px rgba(0,0,0,.6),
+      inset 0 1px 0 rgba(0,230,216,.18),0 0 0 1px #05070b;
+    border:1px solid #05070b;
+  }
+  #stage::after{background:radial-gradient(130% 68% at 50% -10%,rgba(0,230,216,.10),rgba(0,0,0,0) 52%);}
+  /* Power gate */
+  #gate{background:radial-gradient(ellipse at 50% 38%,#0e141c,#04060a);}
+  #gate h1{font-family:"Helvetica Neue",Arial,sans-serif;font-weight:800;letter-spacing:4px;
+    color:#eaf6f4;text-shadow:0 0 18px rgba(0,230,216,.55),0 0 2px rgba(0,230,216,.8);}
+  #gate p{color:#5f7883;}
+  #power{border:1px solid #05070b;color:#bff4ee;letter-spacing:3px;
+    background:radial-gradient(circle at 50% 30%,#0f2a2b,#0a1418 55%,#05080b);
+    box-shadow:0 0 26px rgba(0,230,216,.35),inset 0 1px 2px rgba(0,230,216,.4),inset 0 -6px 14px rgba(0,0,0,.7);}
+  /* Header brand */
+  .logo{color:#eaf6f4;letter-spacing:1px;font-family:"Helvetica Neue",Arial,sans-serif;font-weight:800;
+    text-shadow:0 0 14px rgba(0,230,216,.5),0 1px 0 rgba(0,0,0,.9);}
+  .model{color:var(--neon-dim);letter-spacing:4px;}
+  /* Control panel: dark machined plate with a cyan seam top & bottom */
+  #panel{
+    border-top:2px solid rgba(0,230,216,.35);border-bottom:2px solid rgba(0,230,216,.18);
+    background:
+      radial-gradient(ellipse at 50% 40%,rgba(0,230,216,.05) 0%,rgba(0,0,0,0) 42%,rgba(0,0,0,.5) 100%),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,rgba(0,0,0,0) 1px 4px),
+      linear-gradient(180deg,#141a22,#0d1117 44%,#080b0f);
+    box-shadow:inset 0 1px 0 rgba(0,230,216,.20),inset 0 -2px 10px rgba(0,0,0,.6),inset 0 0 60px rgba(0,0,0,.6);
+  }
+  .sect{border-right:1px solid rgba(0,230,216,.10);border-bottom:1px solid rgba(0,0,0,.6);}
+  .sect h2{color:#cfe9e5;letter-spacing:1.6px;
+    background:linear-gradient(180deg,rgba(0,230,216,.08),rgba(0,0,0,.30));
+    border-top:1px solid rgba(0,230,216,.16);border-bottom:1px solid rgba(0,0,0,.7);
+    text-shadow:0 0 8px rgba(0,230,216,.35),0 1px 0 #000;}
+  .kcap{color:#9fb0bb;} .kval{color:var(--neon);text-shadow:0 0 6px rgba(0,230,216,.4);}
+  /* Knobs: dark anodised skirt + cyan cap ring */
+  .kskirt{background:radial-gradient(circle at 50% 30%,#2a3138,#141a20 52%,#05070a);
+    box-shadow:0 3px 8px rgba(0,0,0,.8),inset 0 1px 1px rgba(0,230,216,.18),0 0 0 1px rgba(0,230,216,.10);}
+  .kdial{background:radial-gradient(circle at 50% 26%,#1a2126,#0a0e12 66%,#040608);
+    box-shadow:inset 0 2px 3px rgba(0,230,216,.12),inset 0 -4px 7px rgba(0,0,0,.85);}
+  .kptr{background:linear-gradient(#8ffff5,#00e6d8);box-shadow:0 0 6px rgba(0,230,216,.9);}
+  .kticks line{stroke:rgba(0,230,216,.22);} .kticks line.maj{stroke:rgba(0,230,216,.55);}
+  .of-dial::after{background:#00e6d8;box-shadow:0 0 5px rgba(0,230,216,.7);}
+  /* Switches: neon paddle + LED (cyan primary, magenta secondary) */
+  .sw .cap{background:linear-gradient(180deg,#1a2026,#0a0e12);
+    box-shadow:inset 0 1px 1px rgba(0,230,216,.10),inset 0 -2px 4px rgba(0,0,0,.7),0 1px 2px rgba(0,0,0,.7);}
+  .sw .cap::before{background:linear-gradient(180deg,#242c33,#12181d);}
+  .sw.on.orange .cap::before{background:linear-gradient(180deg,#12d9cc,#065c56);
+    box-shadow:inset 0 1px 2px rgba(160,255,248,.6),0 0 12px rgba(0,230,216,.9);}
+  .sw.on.blue .cap::before{background:linear-gradient(180deg,#ff5c93,#8f0f3c);
+    box-shadow:inset 0 1px 2px rgba(255,200,220,.6),0 0 12px rgba(255,45,120,.9);}
+  .sw.on.orange .cap::after{background:#8ffff5;box-shadow:0 0 8px 1px rgba(0,230,216,.95);}
+  .sw.on.blue .cap::after{background:#ffb0cd;box-shadow:0 0 8px 1px rgba(255,45,120,.95);}
+  .sw .lab{color:#9fb0bb;}
+  /* Dropdowns / combos: dark glass with cyan LCD text */
+  .dd-btn{color:#bfe9e5;border-top-color:#243038;
+    background:linear-gradient(180deg,#141b21,#0a0e12);text-shadow:0 0 6px rgba(0,230,216,.35);}
+  .dd.open .dd-btn{border-color:var(--neon);box-shadow:0 0 10px rgba(0,230,216,.4),inset 0 1px 1px rgba(0,230,216,.12);}
+  .dd-menu,.dd-sub{background:linear-gradient(180deg,#131a20,#0a0e12);border-top-color:#243038;}
+  .dd-group,.dd-lib{color:var(--neon);}
+  .dd-opt:hover,.dd-folder:hover,.dd-folder.open{background:linear-gradient(180deg,#0f3b3a,#08211f);color:#eafffb;}
+  .dd-opt.sel{background:linear-gradient(180deg,#0a5a54,#063c38);box-shadow:inset 0 0 0 1px rgba(0,230,216,.6);color:#eafffb;}
+  .tn-btn{color:#8ffff5;border-top-color:#0a5a54;
+    background:linear-gradient(180deg,#0f2a2b,#071417);
+    box-shadow:inset 0 1px 1px rgba(0,230,216,.25),inset 0 -3px 6px rgba(0,0,0,.7),0 0 10px rgba(0,230,216,.15);
+    text-shadow:0 0 8px rgba(0,230,216,.6);}
+  .tn-btn:hover{background:linear-gradient(180deg,#134043,#0a2023);border-top-color:#12d9cc;}
+  .tn-btn:active{background:linear-gradient(180deg,#12d9cc,#065c56);color:#04120f;}
+  /* Displays: black glass, cyan phosphor bezel */
+  .disp{background:linear-gradient(180deg,#04100e,#02090a);
+    box-shadow:inset 0 0 14px rgba(0,0,0,.95),inset 0 1px 0 rgba(0,230,216,.12),0 0 0 1px rgba(0,230,216,.14),0 2px 4px rgba(0,0,0,.7);}
+  .dlab{color:var(--neon-dim);text-shadow:0 0 6px rgba(0,230,216,.5);}
+  /* VU: cyan→magenta ladder */
+  .vu i b{background:linear-gradient(0deg,#00e6d8 0%,#5cf0e6 50%,#d9d040 78%,#ff2d78 100%);
+    box-shadow:0 0 6px rgba(0,230,216,.5);}
+  .vu i u{background:#eafffb;box-shadow:0 0 5px rgba(0,230,216,.9);}
+  /* Wheels + keyboard: graphite & dark keys, neon seam */
+  .wface{background:
+    linear-gradient(180deg,rgba(0,230,216,.10),rgba(0,0,0,0) 12%,rgba(0,0,0,0) 88%,rgba(0,0,0,.55) 100%),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.62) 0 2px,rgba(0,230,216,.05) 2px 5px),
+    linear-gradient(90deg,#05070a,#28323a 48%,#05070a);}
+  .wlab{color:#7c8b97;}
+  #octbar button{color:#bfe9e5;background:linear-gradient(180deg,#1a2026,#0c1014);border:1px solid #05070b;
+    box-shadow:inset 0 1px 0 rgba(0,230,216,.14);}
+  #octbar .oct{color:var(--neon-dim);}
+  #kbd{background:#05070a;border:2px solid #05070b;box-shadow:inset 0 3px 10px rgba(0,0,0,.92),inset 0 0 0 1px rgba(0,230,216,.10);}
+  #kbd::before{background:linear-gradient(90deg,#00e6d8,#ff2d78);box-shadow:0 0 8px rgba(0,230,216,.5);}
+  .wk{background:linear-gradient(180deg,#eef4f6,var(--key-white));box-shadow:inset 0 -3px 4px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.7);}
+  .wk.held{background:linear-gradient(180deg,#7fe9e0,#3fb9b0);}
+  .bk{background:linear-gradient(180deg,#1a2228 0%,#0a0e12 55%,#05070a 100%);}
+  .bk.held{background:linear-gradient(180deg,#0f6f68,#08423d);}
 </style>
 
 <div id="gate">
@@ -22866,11 +22975,15 @@ class Noise{
   }
 }
 class Ladder{
-  constructor(fs){this.fs=fs;this.z=[0,0,0,0];this.hp=0;this.k=0;this.drv=0;this.thin=0;this.cut=1000;this.upd();}
-  upd(){const g=Math.tan(Math.PI*this.cut/(this.fs*2)); this.G=g/(1+g); this.oG=1-this.G; this.G2=this.G*this.G; this.G3=this.G2*this.G; this.G4=this.G2*this.G2;
+  constructor(fs){this.fs=fs;this.z=[0,0,0,0];this.hp=0;this.k=0;this.drv=0;this.thin=0;this.cut=1000;
+    this.analog=0;this.tolG=1;this.asym=0;this.tanhBias=0;this.upd();}
+  upd(){const g=Math.tan(Math.PI*this.cut/(this.fs*2))*this.tolG; this.G=g/(1+g); this.oG=1-this.G; this.G2=this.G*this.G; this.G3=this.G2*this.G; this.G4=this.G2*this.G2;
     this.hpc=1-Math.exp(-2*Math.PI*150/this.fs);}
   setCut(c){c=Math.min(this.fs*0.49,Math.max(20,c)); if(Math.abs(c-this.cut)>1e-3){this.cut=c;this.upd();}}
   setReso(r){this.reso=r;this.k=r*4.2;}
+  // True-circuit character: per-voice cutoff tolerance + asymmetric saturation
+  // (even harmonics). Mirrors the C++ MoogLadderFilter::setAnalog.
+  setAnalog(a,seed){a=a<0?0:a>1?1:a;const s=seed*2-1;this.analog=a;this.tolG=1+s*0.02*a;this.asym=s*0.30*a;this.tanhBias=Math.tanh(this.asym);this.upd();}
   proc(x){
     let d=x;
     if(this.drv>1e-4)d=Math.tanh(d*(1+this.drv*5));
@@ -22881,7 +22994,8 @@ class Ladder{
       const b1=this.oG*z[0],b2=this.oG*z[1],b3=this.oG*z[2],b4=this.oG*z[3];
       const S=this.G3*b1+this.G2*b2+this.G*b3+b4;
       const y4=(this.G4*d+S)/(1+this.k*this.G4);
-      let u=d-this.k*Math.tanh(y4);
+      const fb=this.analog>1e-4?(Math.tanh(y4+this.asym)-this.tanhBias):Math.tanh(y4);
+      let u=d-this.k*fb;
       for(let s=0;s<4;s++){const v=(u-z[s])*this.G;const y=v+z[s];z[s]=y+v;u=y;}
       out=u;
     }
@@ -22944,7 +23058,12 @@ class Engine{
     this.flt=new Ladder(fs);this.fenv=new Env(fs);this.aenv=new Env(fs);
     this.held=[];this.tgt=60;this.gl=60;this.vel=1;this.bend=0;
     this.fb=0;this.lo3=0;this.ln=0;this.dph=[0,0,0];this.meter=0;this.sph=0;this.usph=0;
+    // Per-voice stochastic instability (mirrors the C++ engine).
+    this.rng=(Math.random()*4294967296)>>>0;
+    this.voiceSeed=this.rndf(); this.envTol=1+(this.rndf()-0.5)*0.06;
+    this.drw=[0,0,0]; this.dtar=[this.rndf()*2-1,this.rndf()*2-1,this.rndf()*2-1]; this.dctr=0;
   }
+  rndf(){this.rng=(this.rng*1664525+1013904223)>>>0;return (this.rng>>>8)/16777216;}
   midiHz(n){return 440*Math.pow(2,(n-69)/12);}
   noteOn(n,v){
     const silent=this.held.length===0; this.held.push(n); this.tgt=n; this.vel=0.2+0.8*v;
@@ -22960,15 +23079,21 @@ class Engine{
     this.o1.wave=P.osc1Wave;this.o2.wave=P.osc2Wave;this.o3.wave=P.osc3Wave;
     this.noise.type=P.noiseType;
     this.flt.setReso(P.filterReso); this.flt.drv=P.filterDrive; this.flt.thin=P.bassThin;
-    this.fenv.set(P.filterAttack,P.filterDecay,P.filterSustain,P.filterRelease);
-    this.aenv.set(P.ampAttack,P.ampDecay,P.ampSustain,P.ampRelease);
+    this.flt.setAnalog(P.drift,this.voiceSeed);
+    const et=1+(this.envTol-1)*Math.min(1,P.drift*2);
+    this.fenv.set(P.filterAttack*et,P.filterDecay*et,P.filterSustain,P.filterRelease*et);
+    this.aenv.set(P.ampAttack*et,P.ampDecay*et,P.ampSustain,P.ampRelease*et);
     this.m1=rangeMul(P.osc1Range);this.m2=rangeMul(P.osc2Range);this.m3=rangeMul(P.osc3Range);
     this.kt=keyTrkAmt(P.filterKeyTrack);
   }
   sample(){
     this.gl+=this.gc*(this.tgt-this.gl);
     let dr=[0,0,0];
-    if(P.drift>1e-4){const rt=[0.11,0.17,0.23];for(let i=0;i<3;i++){this.dph[i]+=rt[i]/this.fs;if(this.dph[i]>=1)this.dph[i]-=1;dr[i]=P.drift*0.08*Math.sin(2*Math.PI*this.dph[i]);}}
+    if(P.drift>1e-4){
+      if(--this.dctr<=0){this.dctr=(this.fs*0.05)|0;for(let i=0;i<3;i++)this.dtar[i]=this.rndf()*2-1;}
+      const rt=[0.11,0.17,0.23], rw=8/this.fs;
+      for(let i=0;i<3;i++){this.dph[i]+=rt[i]/this.fs;if(this.dph[i]>=1)this.dph[i]-=1;this.drw[i]+=(this.dtar[i]-this.drw[i])*rw;dr[i]=P.drift*(0.05*Math.sin(2*Math.PI*this.dph[i])+0.06*this.drw[i]);}
+    }
     const modSrc=(1-P.modMix)*this.lo3+P.modMix*this.ln;
     const eff=P.modWheel;
     const pMod=P.modOscOn?modSrc*eff*7:0;
@@ -23414,12 +23539,13 @@ function randomizeFX(){
   allControls.forEach(c=>c._render&&c._render());
 }
 // Perform — chord + arpeggiator + randomize (the LEADR-style performance bay)
-panel.appendChild(section("Perform",
+const performSect=section("Perform",
   row(mk(CM("chordType","Chord",CHORD_NAMES,true))),
   row(mk(SW("arpOn","Arp","blue")), mk(CM("arpRate","Rate",ARP_RATE_NAMES)), mk(CM("arpMode","Mode",ARP_MODES,true))),
   row(mk(CM("arpOct","Oct",ARP_OCTS)), mk(K("arpGate","Gate",0,1,0.6)), mk(K("arpBpm","BPM",40,240,120,1,v=>Math.round(v)+""))),
   row(btn("RANDOM", ()=>randomize()))
-));
+);
+panel.appendChild(performSect);
 // make knob-band-ish rows fixed height for alignment
 document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
 
@@ -23518,6 +23644,133 @@ function applyPresetParams(params){
   PERF_KEYS.forEach(k=>P[k]=keep[k]);
   allControls.forEach(c=>c._render&&c._render());
 }
+
+//====================================================================
+// MORPH pad (interpolate 4 patch slots) + algorithmic IDEA generator
+//====================================================================
+// Keys that are enum indices or booleans must be snapped, not blended.
+const MORPH_ROUND={osc1Wave:1,osc1Range:1,osc2Wave:1,osc2Range:1,osc3Wave:1,osc3Range:1,osc3Kb:1,
+  noiseType:1,filterKeyTrack:1,sampleSel:1,mixOsc1On:1,mixOsc2On:1,mixOsc3On:1,mixNoiseOn:1,mixExtOn:1,
+  sampleOn:1,glideOn:1,modOscOn:1,modFilterOn:1,fxDriveOn:1,fxChorusOn:1,fxPhaserOn:1,fxCrushOn:1,
+  fxToneOn:1,fxDelayOn:1,fxReverbOn:1};
+const expandPatch=params=>{const o=JSON.parse(DEFAULTS); if(params)Object.assign(o,params); return o;};
+function collectPresets(n){
+  const all=[]; for(const lib of LIBS){for(const cat of Object.keys(lib.presets||{}))for(const pr of (lib.presets[cat]||[]))all.push(pr.params||{});}
+  const picks=[]; for(let i=0;i<n;i++)picks.push(all.length?all[Math.floor((i+0.5)/n*all.length)]:{});
+  return picks;
+}
+let morphSlots=collectPresets(4).map(expandPatch);   // corners A B C D
+// Bilinear blend of the 4 slots at (x,y) in [0,1]; PERF state is untouched.
+function morph(x,y){
+  x=Math.max(0,Math.min(1,x)); y=Math.max(0,Math.min(1,y));
+  const wA=(1-x)*(1-y), wB=x*(1-y), wC=(1-x)*y, wD=x*y, S=morphSlots;
+  for(const k in P){ if(PERF_KEYS.indexOf(k)>=0)continue;
+    let v=wA*S[0][k]+wB*S[1][k]+wC*S[2][k]+wD*S[3][k];
+    if(MORPH_ROUND[k])v=Math.round(v);
+    P[k]=v;
+  }
+  allControls.forEach(c=>c._render&&c._render());
+}
+function buildMorphPad(){
+  const wrap=document.createElement("div");
+  wrap.style.cssText="position:relative;width:150px;height:150px;border-radius:8px;cursor:crosshair;touch-action:none;"
+    +"background:linear-gradient(135deg,rgba(0,230,216,.10),rgba(0,0,0,.25)),"
+    +"radial-gradient(circle at 0 0,rgba(0,230,216,.28),transparent 62%),"
+    +"radial-gradient(circle at 100% 100%,rgba(255,45,120,.24),transparent 62%);"
+    +"border:1px solid #05070b;box-shadow:inset 0 0 18px rgba(0,0,0,.7),0 0 0 1px rgba(0,230,216,.16);";
+  const dot=document.createElement("div");
+  dot.style.cssText="position:absolute;width:14px;height:14px;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);"
+    +"background:#8ffff5;box-shadow:0 0 10px rgba(0,230,216,.9),0 0 0 2px rgba(0,0,0,.5);pointer-events:none;";
+  wrap.appendChild(dot);
+  [["A","left:5px;top:3px"],["B","right:5px;top:3px"],["C","left:5px;bottom:3px"],["D","right:5px;bottom:3px"]].forEach(([t,pos])=>{
+    const s=document.createElement("span"); s.textContent=t;
+    s.style.cssText="position:absolute;font-size:9px;letter-spacing:1px;color:rgba(0,230,216,.7);pointer-events:none;"+pos; wrap.appendChild(s);});
+  let drag=false;
+  const upd=ev=>{const r=wrap.getBoundingClientRect();
+    const cx=ev.clientX!=null?ev.clientX:(ev.touches&&ev.touches[0].clientX);
+    const cy=ev.clientY!=null?ev.clientY:(ev.touches&&ev.touches[0].clientY);
+    const x=Math.max(0,Math.min(1,(cx-r.left)/r.width)), y=Math.max(0,Math.min(1,(cy-r.top)/r.height));
+    dot.style.left=(x*100)+"%"; dot.style.top=(y*100)+"%"; morph(x,y);};
+  wrap.addEventListener("pointerdown",e=>{drag=true; if(wrap.setPointerCapture)try{wrap.setPointerCapture(e.pointerId);}catch(_){}; upd(e);});
+  wrap.addEventListener("pointermove",e=>{if(drag)upd(e);});
+  wrap.addEventListener("pointerup",()=>{drag=false;});
+  wrap.addEventListener("pointercancel",()=>{drag=false;});
+  return wrap;
+}
+function setBtn(label,i){
+  const b=document.createElement("button"); b.className="tn-btn"; b.type="button"; b.textContent=label;
+  b.style.cssText="padding:4px 8px;font-size:9px;letter-spacing:.5px";
+  b.addEventListener("click",e=>{e.stopPropagation(); morphSlots[i]=JSON.parse(JSON.stringify(P));});
+  const w=document.createElement("div"); w.className="cmb"; w.appendChild(b); return w;
+}
+// IDEA: one press -> a finished, coherent musical patch (sound + chord + arp + FX).
+function idea(){
+  const rr=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)], ch=p=>Math.random()<p?1:0;
+  const bpm=P.arpBpm; Object.assign(P, JSON.parse(DEFAULTS)); P.arpBpm=bpm;
+  P.mixOsc1On=1; P.mixOsc1Vol=rr(0.78,0.95); P.drift=rr(0.2,0.45);
+  const arch=pick(["bass","lead","pad","pluck","keys"]);
+  if(arch==="bass"){
+    P.polyOn=0; P.osc1Wave=pick([2,3]); P.osc1Range=1;
+    P.mixOsc2On=1; P.mixOsc2Vol=rr(0.4,0.7); P.osc2Wave=2; P.osc2Range=2; P.osc2Detune=rr(-0.05,0.05);
+    P.filterCutoff=Math.round(rr(180,720)); P.filterReso=rr(0.15,0.45); P.filterEnv=rr(0.4,0.8);
+    P.filterAttack=rr(2,10); P.filterDecay=rr(120,350); P.filterSustain=rr(0.1,0.4); P.filterRelease=rr(80,200);
+    P.ampAttack=3; P.ampDecay=rr(200,450); P.ampSustain=rr(0.5,0.8); P.ampRelease=rr(80,200);
+    P.filterDrive=rr(0.2,0.5); P.glideOn=ch(0.4); P.glideTime=rr(0.04,0.12);
+    P.chordType=0; P.arpOn=0;
+    P.fxDriveOn=ch(0.5); P.fxDrive=rr(0.2,0.5); P.fxReverbOn=ch(0.3); P.fxReverbMix=rr(0.1,0.25);
+  } else if(arch==="lead"){
+    P.polyOn=0; P.osc1Wave=pick([2,3,4]); P.osc1Range=3;
+    P.mixOsc2On=1; P.mixOsc2Vol=rr(0.5,0.8); P.osc2Wave=pick([2,3]); P.osc2Range=3; P.osc2Detune=rr(-0.1,0.1);
+    P.filterCutoff=Math.round(rr(1200,5000)); P.filterReso=rr(0.2,0.55); P.filterEnv=rr(0.3,0.7);
+    P.filterAttack=rr(2,20); P.filterDecay=rr(150,500); P.filterSustain=rr(0.4,0.8); P.filterRelease=rr(120,350);
+    P.ampAttack=rr(2,15); P.ampDecay=rr(200,500); P.ampSustain=rr(0.7,0.95); P.ampRelease=rr(120,350);
+    P.glideOn=ch(0.6); P.glideTime=rr(0.05,0.15);
+    P.arpOn=ch(0.4); P.arpMode=pick([0,2]); P.arpRate=pick([1,3]); P.arpOct=pick([0,1]);
+    P.fxChorusOn=ch(0.6); P.fxChorus=rr(0.3,0.6);
+    P.fxDelayOn=ch(0.6); P.fxDelayMix=rr(0.2,0.4); P.fxDelayTime=rr(0.2,0.5);
+    P.fxReverbOn=ch(0.6); P.fxReverbMix=rr(0.2,0.4);
+  } else if(arch==="pad"){
+    P.polyOn=1; P.osc1Wave=pick([0,2,3]); P.osc1Range=3;
+    P.mixOsc2On=1; P.mixOsc2Vol=rr(0.5,0.8); P.osc2Wave=pick([0,2]); P.osc2Range=3; P.osc2Detune=rr(-0.12,0.12);
+    P.mixOsc3On=ch(0.6); P.mixOsc3Vol=rr(0.3,0.6); P.osc3Wave=0; P.osc3Range=pick([2,3]); P.osc3Detune=rr(-0.1,0.1);
+    P.filterCutoff=Math.round(rr(600,2600)); P.filterReso=rr(0.1,0.4); P.filterEnv=rr(0.2,0.6);
+    P.filterAttack=rr(200,900); P.filterDecay=rr(400,1200); P.filterSustain=rr(0.5,0.85); P.filterRelease=rr(400,1200);
+    P.ampAttack=rr(200,1000); P.ampDecay=rr(400,1200); P.ampSustain=rr(0.7,0.95); P.ampRelease=rr(500,1500);
+    P.chordType=pick([4,5,7,8]); P.arpOn=0;
+    P.fxChorusOn=1; P.fxChorus=rr(0.4,0.7); P.fxReverbOn=1; P.fxReverbMix=rr(0.35,0.6);
+    P.fxPhaserOn=ch(0.3); P.fxPhaser=rr(0.3,0.6);
+  } else if(arch==="pluck"){
+    P.polyOn=1; P.osc1Wave=pick([2,3]); P.osc1Range=3;
+    P.sampleOn=1; P.sampleSel=pick([4,5]); P.sampleVol=rr(0.3,0.6);
+    P.mixOsc2On=ch(0.5); P.mixOsc2Vol=rr(0.3,0.6); P.osc2Range=3; P.osc2Detune=rr(-0.06,0.06);
+    P.filterCutoff=Math.round(rr(1500,6000)); P.filterReso=rr(0.2,0.5); P.filterEnv=rr(0.4,0.8);
+    P.filterAttack=2; P.filterDecay=rr(120,350); P.filterSustain=rr(0.05,0.3); P.filterRelease=rr(120,300);
+    P.ampAttack=2; P.ampDecay=rr(180,450); P.ampSustain=rr(0.05,0.3); P.ampRelease=rr(150,400);
+    P.chordType=pick([0,4,5]); P.arpOn=ch(0.6); P.arpMode=pick([0,5]); P.arpRate=pick([3,4]); P.arpOct=pick([0,1,2]);
+    P.fxDelayOn=ch(0.6); P.fxDelayMix=rr(0.2,0.45); P.fxDelayTime=rr(0.15,0.5); P.fxReverbOn=1; P.fxReverbMix=rr(0.25,0.5);
+  } else { // keys
+    P.polyOn=1; P.osc1Wave=1; P.osc1Range=3;
+    P.sampleOn=ch(0.6); P.sampleSel=pick([1,2]); P.sampleVol=rr(0.3,0.6);
+    P.mixOsc2On=1; P.mixOsc2Vol=rr(0.4,0.7); P.osc2Wave=1; P.osc2Range=pick([2,4]); P.osc2Detune=rr(-0.05,0.05);
+    P.filterCutoff=Math.round(rr(1200,4000)); P.filterReso=rr(0.1,0.35); P.filterEnv=rr(0.2,0.5);
+    P.filterAttack=rr(2,20); P.filterDecay=rr(200,600); P.filterSustain=rr(0.5,0.85); P.filterRelease=rr(150,400);
+    P.ampAttack=rr(2,15); P.ampDecay=rr(200,600); P.ampSustain=rr(0.7,0.95); P.ampRelease=rr(150,450);
+    P.chordType=pick([0,4,7]); P.arpOn=ch(0.3); P.arpMode=pick([0,2]); P.arpRate=pick([1,3]);
+    P.fxChorusOn=ch(0.6); P.fxChorus=rr(0.3,0.6); P.fxReverbOn=1; P.fxReverbMix=rr(0.25,0.45);
+  }
+  allControls.forEach(c=>c._render&&c._render());
+}
+// Fold the Morph pad + IDEA into the existing Perform section (avoids adding an
+// 8th flex column, which would over-compress the panel). Added here so the
+// DEFAULTS/LIBS the morph slots depend on already exist.
+(function(){
+  const pb=performSect.querySelector(".body"), h=performSect.querySelector("h2");
+  if(h)h.textContent="Perform / Morph";
+  pb.appendChild(row(buildMorphPad()));
+  pb.appendChild(row(setBtn("A",0), setBtn("B",1), setBtn("C",2), setBtn("D",3)));
+  pb.appendChild(row(btn("IDEA", ()=>idea())));
+})();
+document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
 
 // Nested preset browser: library -> category folders -> presets (flyout).
 // A node is either a leaf {label,value} or a folder {label, folders?, items?}.
@@ -23666,10 +23919,63 @@ document.addEventListener("click",()=>setTimeout(()=>Perf.refresh&&Perf.refresh(
 //====================================================================
 const vuL=document.getElementById("vuL"),vuR=document.getElementById("vuR"),vuLp=document.getElementById("vuLp"),vuRp=document.getElementById("vuRp");let vd=0,vp=0;
 
+// GPU visualiser: fragment-shader scope/spectrum reacting to level + drive.
+// Returns null when WebGL is unavailable so we fall back to the 2D canvas.
+function glSupported(){ try{const c=document.createElement("canvas");return !!(c.getContext("webgl")||c.getContext("experimental-webgl"));}catch(e){return false;} }
+function makeGLViz(canvas){
+  let gl; try{gl=canvas.getContext("webgl",{antialias:true,alpha:false})||canvas.getContext("experimental-webgl");}catch(e){gl=null;}
+  if(!gl)return null;
+  const VS="attribute vec2 p; varying vec2 vUv; void main(){ vUv=p*0.5+0.5; gl_Position=vec4(p,0.0,1.0); }";
+  const FS=
+    "precision mediump float; varying vec2 vUv; uniform sampler2D uData; uniform float uMode,uInt,uPhase;"+
+    "const vec3 C1=vec3(0.0,0.90,0.85); const vec3 C2=vec3(1.0,0.18,0.47);"+
+    "void main(){ vec2 uv=vUv; vec3 col=vec3(0.0); float vig=smoothstep(1.25,0.25,length(uv-0.5));"+
+    " if(uMode<0.5){ float s=texture2D(uData,vec2(uv.x,0.5)).r; float wy=0.5+(s-0.5)*(0.72+0.5*uInt);"+
+    "   float d=abs(uv.y-wy); float line=smoothstep(0.05,0.0,d); float glow=smoothstep(0.28,0.0,d)*0.55;"+
+    "   vec3 lc=mix(C1,C2,uv.x); col+=lc*(line*1.5+glow); col+=C1*0.035*(0.5+0.5*sin(uv.y*150.0+uPhase)); }"+
+    " else { float h=texture2D(uData,vec2(uv.x,0.5)).r; float top=0.12+h*0.82;"+
+    "   float bar=smoothstep(0.0,0.02,top-uv.y)*step(uv.y,top); vec3 bc=mix(C1,C2,h);"+
+    "   col+=bc*bar*(0.35+0.75*h); col+=bc*smoothstep(0.025,0.0,abs(uv.y-top))*1.3; col+=bc*smoothstep(0.0,0.4,h)*0.05; }"+
+    " col*=vig; col+=vec3(0.01,0.02,0.03); gl_FragColor=vec4(col,1.0); }";
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);
+    if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(o)||"shader");return o;};
+  let prog; try{ prog=gl.createProgram(); gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS)); gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));
+    gl.linkProgram(prog); if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error("link"); }catch(e){return null;}
+  gl.useProgram(prog);
+  const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(prog,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const tex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  const N=256,data=new Uint8Array(N);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,N,1,0,gl.LUMINANCE,gl.UNSIGNED_BYTE,data);
+  const uMode=gl.getUniformLocation(prog,"uMode"),uInt=gl.getUniformLocation(prog,"uInt"),uPh=gl.getUniformLocation(prog,"uPhase");
+  gl.uniform1i(gl.getUniformLocation(prog,"uData"),0); let phase=0;
+  return { draw(arr,mode,intensity){
+    if(!arr||!arr.length)return; const last=arr.length-1;
+    for(let i=0;i<N;i++){const v=arr[Math.round((i/(N-1))*last)]||0; const m=mode<0.5?(v*0.5+0.5):v; data[i]=Math.max(0,Math.min(255,m*255));}
+    gl.viewport(0,0,canvas.width,canvas.height); gl.useProgram(prog);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,N,1,gl.LUMINANCE,gl.UNSIGNED_BYTE,data);
+    phase+=0.16; gl.uniform1f(uMode,mode); gl.uniform1f(uInt,Math.max(0,Math.min(1.5,intensity||0))); gl.uniform1f(uPh,phase);
+    gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  } };
+}
+
 // Scope + spectrum displays, driven by the master analyser node.
 const scopeC=document.getElementById("scope"), specC=document.getElementById("spectrum");
-const sctx=scopeC?scopeC.getContext("2d"):null, pctx=specC?specC.getContext("2d"):null;
+const canGL=glSupported();
+const glScope=(canGL&&scopeC)?makeGLViz(scopeC):null;
+const glSpec=(canGL&&specC)?makeGLViz(specC):null;
+const useGLViz=!!(glScope&&glSpec);
+const sctx=(!glScope&&scopeC)?scopeC.getContext("2d"):null, pctx=(!glSpec&&specC)?specC.getContext("2d"):null;
 let tdata=null, fdata=null;
+function waveArr(){ if(!analyser)return null; if(!tdata)tdata=new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(tdata);
+  const n=256,a=new Float32Array(n),N=tdata.length; for(let i=0;i<n;i++)a[i]=(tdata[Math.floor(i/(n-1)*(N-1))]-128)/128; return a; }
+function specArr(){ if(!analyser)return null; if(!fdata)fdata=new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(fdata);
+  const n=128,a=new Float32Array(n),src=Math.floor(fdata.length*0.72); for(let i=0;i<n;i++){const t=i/(n-1);a[i]=fdata[Math.floor(Math.pow(t,1.4)*src)]/255;} return a; }
 function grid(c,w,h,cols,rows,col){c.strokeStyle=col;c.lineWidth=1;
   for(let i=1;i<cols;i++){const x=(i/cols)*w;c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
   for(let j=1;j<rows;j++){const y=(j/rows)*h;c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}}
@@ -23704,7 +24010,9 @@ function drawSpectrum(){
 }
 function vu(){
   if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; vp=m>vp?m:vp*0.94; const h=Math.min(1,vd)*100+"%",ph=Math.min(1,vp)*100+"%"; vuL.style.height=h; vuR.style.height=h; if(vuLp)vuLp.style.bottom=ph; if(vuRp)vuRp.style.bottom=ph;}
-  if(sctx)drawScope(); if(pctx)drawSpectrum();
+  const inten=Math.min(1.5,(engine?engine.meter:0)*1.6 + (P.fxDriveOn?P.fxDrive*0.4:0));
+  if(glScope){const wa=waveArr(); if(wa)glScope.draw(wa,0,inten);} else if(sctx)drawScope();
+  if(glSpec){const sa=specArr(); if(sa)glSpec.draw(sa,1,inten);} else if(pctx)drawSpectrum();
   if(fx)fx.update(P);
   requestAnimationFrame(vu);
 }
@@ -23749,5 +24057,5 @@ document.getElementById("power").addEventListener("click",()=>{
 });
 
 // QA/automation hook (read-only accessors to internal state).
-window.__moog={get P(){return P},get engine(){return engine},Perf,randomize};
+window.__moog={get P(){return P},get engine(){return engine},Perf,randomize,morph,idea,get gl(){return useGLViz}};
 </script>

@@ -54,35 +54,39 @@ function formatValue(id, v) {
 // ---------------------------------------------------------------------------
 // Procedural material textures (walnut wood + brushed metal) as data-URIs.
 // ---------------------------------------------------------------------------
+// Cyber-Dark carbon weave (keeps the --wood-tex hook; no longer wood).
 function makeWoodTexture() {
   const w = 512, h = 256, c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d");
   const g = x.createLinearGradient(0, 0, w, h);
-  g.addColorStop(0, "#6a4526"); g.addColorStop(0.5, "#3a2413"); g.addColorStop(1, "#241608");
+  g.addColorStop(0, "#12161d"); g.addColorStop(0.5, "#0b0e13"); g.addColorStop(1, "#070a0e");
   x.fillStyle = g; x.fillRect(0, 0, w, h);
   let seed = 7;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) & 0x7fffffff; return seed / 0x7fffffff; };
-  // Deep grain streaks (higher contrast, cathedral-like flow).
-  for (let i = 0; i < 520; i++) {
-    const yy = rnd() * h, amp = 3 + rnd() * 12, freq = 0.005 + rnd() * 0.022, ph = rnd() * 6.28;
+  // Woven carbon-fibre twill: diagonal hairline tows, a few cyan glints.
+  for (let i = 0; i < 620; i++) {
+    const yy = rnd() * h, amp = 2 + rnd() * 6, freq = 0.01 + rnd() * 0.03, ph = rnd() * 6.28;
     x.beginPath();
     for (let px = 0; px <= w; px += 3) x.lineTo(px, yy + Math.sin(px * freq + ph) * amp);
-    const dark = rnd() > 0.55;
-    x.strokeStyle = dark
-      ? `rgba(${10 + rnd() * 18},${6 + rnd() * 12},${2 + rnd() * 6},${0.10 + rnd() * 0.20})`
-      : `rgba(${120 + rnd() * 70},${80 + rnd() * 40},${40 + rnd() * 24},${0.04 + rnd() * 0.08})`;
-    x.lineWidth = 0.5 + rnd() * 1.8; x.stroke();
+    const glint = rnd() > 0.92;
+    x.strokeStyle = glint
+      ? `rgba(0,230,216,${0.04 + rnd() * 0.06})`
+      : (rnd() > 0.5
+          ? `rgba(${4 + rnd() * 10},${8 + rnd() * 12},${10 + rnd() * 14},${0.12 + rnd() * 0.22})`
+          : `rgba(${40 + rnd() * 40},${52 + rnd() * 40},${58 + rnd() * 40},${0.03 + rnd() * 0.06})`);
+    x.lineWidth = 0.5 + rnd() * 1.4; x.stroke();
   }
   return c.toDataURL("image/png");
 }
+// Brushed graphite plate (keeps the --metal-tex hook).
 function makeMetalTexture() {
   const w = 512, h = 96, c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d");
-  x.fillStyle = "#232327"; x.fillRect(0, 0, w, h);
+  x.fillStyle = "#12161c"; x.fillRect(0, 0, w, h);
   let seed = 3; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   for (let i = 0; i < 1400; i++) {
-    const yy = rnd() * h, len = 40 + rnd() * 300, xx = rnd() * w, gray = 40 + rnd() * 90;
-    x.strokeStyle = `rgba(${gray},${gray},${gray + 4},${0.05 + rnd() * 0.08})`;
+    const yy = rnd() * h, len = 40 + rnd() * 300, xx = rnd() * w, gray = 30 + rnd() * 70;
+    x.strokeStyle = `rgba(${gray},${gray + 6},${gray + 10},${0.05 + rnd() * 0.08})`;
     x.lineWidth = 0.6; x.beginPath(); x.moveTo(xx, yy); x.lineTo(xx + len, yy + (rnd() - 0.5) * 1.2); x.stroke();
   }
   return c.toDataURL("image/png");
@@ -98,7 +102,7 @@ function installTextures() {
 // specular sheen and a lit pointer, plus a soft cast shadow.
 function drawKnob(ctx, size, norm, accent) {
   const cx = size / 2, cy = size / 2, R = size / 2;
-  const A = accent || "rgba(90,170,255,0.9)";
+  const A = accent || "rgba(0,230,216,0.95)";
   ctx.clearRect(0, 0, size, size);
 
   // Cast shadow.
@@ -107,16 +111,16 @@ function drawKnob(ctx, size, norm, accent) {
   ctx.beginPath(); ctx.arc(cx, cy, R * 0.9, 0, Math.PI * 2); ctx.fillStyle = "#000"; ctx.fill();
   ctx.restore();
 
-  // Chrome bevel ring (outer).
+  // Dark machined bevel ring (outer).
   let gr = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
-  gr.addColorStop(0, "#c7ccd4"); gr.addColorStop(0.5, "#3a3d44"); gr.addColorStop(1, "#0c0c0e");
+  gr.addColorStop(0, "#3b444c"); gr.addColorStop(0.5, "#1a2026"); gr.addColorStop(1, "#050709");
   ctx.beginPath(); ctx.arc(cx, cy, R * 0.97, 0, Math.PI * 2); ctx.fillStyle = gr; ctx.fill();
 
-  // Machined skirt.
+  // Anodised graphite skirt.
   let gs = ctx.createRadialGradient(cx, cy - R * 0.55, R * 0.1, cx, cy, R * 0.9);
-  gs.addColorStop(0, "#a7a7ae"); gs.addColorStop(0.45, "#5a5a61"); gs.addColorStop(0.82, "#2c2c31"); gs.addColorStop(1, "#111114");
+  gs.addColorStop(0, "#3a434b"); gs.addColorStop(0.45, "#232c33"); gs.addColorStop(0.82, "#141a20"); gs.addColorStop(1, "#080b0e");
   ctx.beginPath(); ctx.arc(cx, cy, R * 0.9, 0, Math.PI * 2); ctx.fillStyle = gs; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, R * 0.83, Math.PI * 1.02, Math.PI * 1.98); ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = R * 0.045; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.83, Math.PI * 1.02, Math.PI * 1.98); ctx.strokeStyle = "rgba(0,230,216,0.28)"; ctx.lineWidth = R * 0.045; ctx.stroke();
 
   // Tick ring with an active-value glow arc.
   const start = -135, sweep = 270;
@@ -139,7 +143,7 @@ function drawKnob(ctx, size, norm, accent) {
   // Anodised cap.
   const br = R * 0.66;
   let gb = ctx.createRadialGradient(cx - br * 0.4, cy - br * 0.55, br * 0.1, cx, cy, br);
-  gb.addColorStop(0, "#54545e"); gb.addColorStop(0.5, "#1d1d22"); gb.addColorStop(1, "#040406");
+  gb.addColorStop(0, "#2b343b"); gb.addColorStop(0.5, "#12181d"); gb.addColorStop(1, "#040507");
   ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI * 2); ctx.fillStyle = gb; ctx.fill();
 
   // Specular sheen.
@@ -172,10 +176,10 @@ function setupKnob(el) {
   const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
   const valueEl = el.querySelector(".value");
 
-  const accent = /CUTOFF|RESO|FILTER|EMPHASIS|CONTOUR/.test(id) ? "rgba(230,140,70,0.95)"
-               : /^MIX_|VOLUME|MASTER/.test(id)                 ? "rgba(90,170,255,0.95)"
-               : /AMP_|LOUD/.test(id)                           ? "rgba(90,220,140,0.95)"
-               :                                                   "rgba(200,180,120,0.95)";
+  const accent = /CUTOFF|RESO|FILTER|EMPHASIS|CONTOUR/.test(id) ? "rgba(0,230,216,0.95)"
+               : /^MIX_|VOLUME|MASTER/.test(id)                 ? "rgba(255,45,120,0.95)"
+               : /AMP_|LOUD/.test(id)                           ? "rgba(120,240,170,0.95)"
+               :                                                   "rgba(120,200,220,0.95)";
 
   let state;
   try {
@@ -425,14 +429,96 @@ function setupKeyboard() {
 }
 
 // ---------------------------------------------------------------------------
+// GPU visualiser: a compact fragment-shader renderer for the scope/spectrum
+// displays. Reacts to signal intensity (drive/level). Returns null when WebGL
+// is unavailable (e.g. some WebKitGTK builds) so the caller falls back to 2D.
+// ---------------------------------------------------------------------------
+function makeGLViz(canvas) {
+  let gl;
+  try { gl = canvas.getContext("webgl", { antialias: true, alpha: false })
+             || canvas.getContext("experimental-webgl"); } catch (e) { gl = null; }
+  if (!gl) return null;
+
+  const VS = "attribute vec2 p; varying vec2 vUv;" +
+             "void main(){ vUv = p*0.5+0.5; gl_Position = vec4(p,0.0,1.0); }";
+  const FS =
+    "precision mediump float; varying vec2 vUv; uniform sampler2D uData;" +
+    "uniform float uMode, uInt, uPhase; const vec3 C1=vec3(0.0,0.90,0.85); const vec3 C2=vec3(1.0,0.18,0.47);" +
+    "void main(){ vec2 uv=vUv; vec3 col=vec3(0.0); float vig=smoothstep(1.25,0.25,length(uv-0.5));" +
+    " if(uMode<0.5){ float s=texture2D(uData,vec2(uv.x,0.5)).r; float wy=0.5+(s-0.5)*(0.72+0.5*uInt);" +
+    "   float d=abs(uv.y-wy); float line=smoothstep(0.05,0.0,d); float glow=smoothstep(0.28,0.0,d)*0.55;" +
+    "   vec3 lc=mix(C1,C2,uv.x); col+=lc*(line*1.5+glow); col+=C1*0.035*(0.5+0.5*sin(uv.y*150.0+uPhase)); }" +
+    " else { float h=texture2D(uData,vec2(uv.x,0.5)).r; float top=0.12+h*0.82;" +
+    "   float bar=smoothstep(0.0,0.02,top-uv.y)*step(uv.y,top); vec3 bc=mix(C1,C2,h);" +
+    "   col+=bc*bar*(0.35+0.75*h); col+=bc*smoothstep(0.025,0.0,abs(uv.y-top))*1.3;" +
+    "   col+=bc*smoothstep(0.0,0.4,h)*0.05; }" +
+    " col*=vig; col+=vec3(0.01,0.02,0.03); gl_FragColor=vec4(col,1.0); }";
+
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o);
+    if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o) || "shader"); return o; };
+  let prog;
+  try {
+    prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("link");
+  } catch (e) { return null; }
+
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const N = 256, data = new Uint8Array(N);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, N, 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data);
+  const uMode = gl.getUniformLocation(prog, "uMode");
+  const uInt  = gl.getUniformLocation(prog, "uInt");
+  const uPh   = gl.getUniformLocation(prog, "uPhase");
+  gl.uniform1i(gl.getUniformLocation(prog, "uData"), 0);
+  let phase = 0;
+
+  return {
+    draw(arr, mode, intensity) {
+      if (!arr || !arr.length) return;
+      const last = arr.length - 1;
+      for (let i = 0; i < N; i++) {
+        const v = arr[Math.round((i / (N - 1)) * last)] || 0;
+        const m = mode < 0.5 ? (v * 0.5 + 0.5) : v;          // wave -> 0..1, spectrum already 0..1
+        data[i] = Math.max(0, Math.min(255, m * 255));
+      }
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.useProgram(prog);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, N, 1, gl.LUMINANCE, gl.UNSIGNED_BYTE, data);
+      phase += 0.16;
+      gl.uniform1f(uMode, mode); gl.uniform1f(uInt, Math.max(0, Math.min(1.5, intensity || 0))); gl.uniform1f(uPh, phase);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Visualiser  <-  "visualiser" backend event (waveform + spectrum)
 // ---------------------------------------------------------------------------
 function setupVisualiser() {
   const scope = document.getElementById("scope");
   const spectrum = document.getElementById("spectrum");
   if (!scope || !spectrum) return;
-  const sctx = scope.getContext("2d");
-  const pctx = spectrum.getContext("2d");
+  const glScope = makeGLViz(scope);
+  const glSpec  = glScope ? makeGLViz(spectrum) : null;   // both GPU, or neither
+  const useGL = !!(glScope && glSpec);
+  const sctx = useGL ? null : scope.getContext("2d");
+  const pctx = useGL ? null : spectrum.getContext("2d");
 
   const grid = (ctx, w, h, cols, rows, col) => {
     ctx.strokeStyle = col; ctx.lineWidth = 1;
@@ -494,8 +580,15 @@ function setupVisualiser() {
 
   try {
     window.__JUCE__.backend.addEventListener("visualiser", (payload) => {
-      if (payload.wave) drawScope(payload.wave);
-      if (payload.spectrum) drawSpectrum(payload.spectrum);
+      const lv = payload.levels || [0, 0];
+      const inten = Math.max(lv[0] || 0, lv[1] || 0) * 1.4;
+      if (useGL) {
+        if (payload.wave) glScope.draw(payload.wave, 0, inten);
+        if (payload.spectrum) glSpec.draw(payload.spectrum, 1, inten);
+      } else {
+        if (payload.wave) drawScope(payload.wave);
+        if (payload.spectrum) drawSpectrum(payload.spectrum);
+      }
       if (payload.levels) drawVU(payload.levels);
     });
   } catch (e) { /* dev browser */ }
@@ -737,6 +830,80 @@ function setupRandom() {
 }
 
 // ---------------------------------------------------------------------------
+// IDEA  ->  one press yields a finished, coherent musical patch (sound + chord
+// + arp + FX), chosen from a musical archetype rather than pure randomness.
+// Slider values are in normalised (0..1) parameter space, like setupRandom.
+// ---------------------------------------------------------------------------
+function setupIdea() {
+  const btn = document.getElementById("ideaBtn");
+  if (!btn) return;
+  const rn = (a, b) => a + Math.random() * (b - a);
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const ch = (p) => Math.random() < p;
+  const setS = (id, n) => { try { getSliderState(id).setNormalisedValue(Math.max(0, Math.min(1, n))); } catch (e) {} };
+  const setC = (id, ix) => { try { getComboBoxState(id).setChoiceIndex(ix); } catch (e) {} };
+  const setT = (id, on) => { try { getToggleState(id).setValue(!!on); } catch (e) {} };
+  const clearFX = () => ["FX_DRIVE_ON","FX_CHORUS_ON","FX_PHASER_ON","FX_CRUSH_ON","FX_TONE_ON","FX_DELAY_ON","FX_REVERB_ON"].forEach(i => setT(i, false));
+  btn.addEventListener("click", () => {
+    // Shared base.
+    setT("MIX_OSC1_ON", true); setS("MIX_OSC1_VOL", rn(0.78, 0.95)); setS("DRIFT_AMOUNT", rn(0.2, 0.45));
+    setT("MIX_NOISE_ON", false); setT("MIX_EXT_ON", false); setT("SAMPLE_ON", false); setT("MIX_OSC3_ON", false);
+    clearFX();
+    const arch = pick(["bass", "lead", "pad", "pluck", "keys"]);
+    if (arch === "bass") {
+      setT("POLY_ON", false); setC("OSC1_WAVE", pick([2,3])); setC("OSC1_RANGE", 1);
+      setT("MIX_OSC2_ON", true); setS("MIX_OSC2_VOL", rn(0.4,0.7)); setC("OSC2_WAVE", 2); setC("OSC2_RANGE", 2); setS("OSC2_DETUNE", rn(0.47,0.53));
+      setS("FILTER_CUTOFF", rn(0.1,0.32)); setS("FILTER_RESO", rn(0.15,0.45)); setS("FILTER_ENV", rn(0.4,0.8));
+      setS("FILTER_ATTACK", rn(0,0.08)); setS("FILTER_DECAY", rn(0.2,0.4)); setS("FILTER_SUSTAIN", rn(0.1,0.4)); setS("FILTER_RELEASE", rn(0.05,0.25));
+      setS("AMP_ATTACK", 0.02); setS("AMP_DECAY", rn(0.25,0.45)); setS("AMP_SUSTAIN", rn(0.5,0.8)); setS("AMP_RELEASE", rn(0.05,0.2));
+      setS("FILTER_DRIVE", rn(0.2,0.5)); setT("GLIDE_ON", ch(0.4));
+      setC("CHORD_TYPE", 0); setT("ARP_ON", false);
+      setT("FX_DRIVE_ON", ch(0.5)); setS("FX_DRIVE", rn(0.2,0.5)); setT("FX_REVERB_ON", ch(0.3)); setS("FX_REVERB_MIX", rn(0.1,0.25));
+    } else if (arch === "lead") {
+      setT("POLY_ON", false); setC("OSC1_WAVE", pick([2,3,4])); setC("OSC1_RANGE", 3);
+      setT("MIX_OSC2_ON", true); setS("MIX_OSC2_VOL", rn(0.5,0.8)); setC("OSC2_WAVE", pick([2,3])); setC("OSC2_RANGE", 3); setS("OSC2_DETUNE", rn(0.44,0.56));
+      setS("FILTER_CUTOFF", rn(0.4,0.72)); setS("FILTER_RESO", rn(0.2,0.55)); setS("FILTER_ENV", rn(0.3,0.7));
+      setS("FILTER_ATTACK", rn(0,0.15)); setS("FILTER_DECAY", rn(0.25,0.5)); setS("FILTER_SUSTAIN", rn(0.4,0.8)); setS("FILTER_RELEASE", rn(0.15,0.4));
+      setS("AMP_ATTACK", rn(0,0.12)); setS("AMP_DECAY", rn(0.3,0.55)); setS("AMP_SUSTAIN", rn(0.7,0.95)); setS("AMP_RELEASE", rn(0.15,0.4));
+      setT("GLIDE_ON", ch(0.6));
+      setC("CHORD_TYPE", 0); setT("ARP_ON", ch(0.4)); setC("ARP_MODE", pick([0,2])); setC("ARP_RATE", pick([1,3])); setC("ARP_OCT", pick([0,1]));
+      setT("FX_CHORUS_ON", ch(0.6)); setS("FX_CHORUS", rn(0.3,0.6));
+      setT("FX_DELAY_ON", ch(0.6)); setS("FX_DELAY_MIX", rn(0.2,0.4)); setS("FX_DELAY_TIME", rn(0.2,0.5));
+      setT("FX_REVERB_ON", ch(0.6)); setS("FX_REVERB_MIX", rn(0.2,0.4));
+    } else if (arch === "pad") {
+      setT("POLY_ON", true); setC("OSC1_WAVE", pick([0,2,3])); setC("OSC1_RANGE", 3);
+      setT("MIX_OSC2_ON", true); setS("MIX_OSC2_VOL", rn(0.5,0.8)); setC("OSC2_WAVE", pick([0,2])); setC("OSC2_RANGE", 3); setS("OSC2_DETUNE", rn(0.42,0.58));
+      setT("MIX_OSC3_ON", ch(0.6)); setS("MIX_OSC3_VOL", rn(0.3,0.6)); setC("OSC3_WAVE", 0); setC("OSC3_RANGE", pick([2,3]));
+      setS("FILTER_CUTOFF", rn(0.3,0.6)); setS("FILTER_RESO", rn(0.1,0.4)); setS("FILTER_ENV", rn(0.2,0.6));
+      setS("FILTER_ATTACK", rn(0.4,0.7)); setS("FILTER_DECAY", rn(0.4,0.7)); setS("FILTER_SUSTAIN", rn(0.5,0.85)); setS("FILTER_RELEASE", rn(0.45,0.75));
+      setS("AMP_ATTACK", rn(0.4,0.7)); setS("AMP_DECAY", rn(0.4,0.7)); setS("AMP_SUSTAIN", rn(0.7,0.95)); setS("AMP_RELEASE", rn(0.5,0.8));
+      setC("CHORD_TYPE", pick([4,5,7,8])); setT("ARP_ON", false);
+      setT("FX_CHORUS_ON", true); setS("FX_CHORUS", rn(0.4,0.7)); setT("FX_REVERB_ON", true); setS("FX_REVERB_MIX", rn(0.35,0.6));
+      setT("FX_PHASER_ON", ch(0.3)); setS("FX_PHASER", rn(0.3,0.6));
+    } else if (arch === "pluck") {
+      setT("POLY_ON", true); setC("OSC1_WAVE", pick([2,3])); setC("OSC1_RANGE", 3);
+      setT("SAMPLE_ON", true); setC("SAMPLE_SEL", pick([4,5])); setS("SAMPLE_VOL", rn(0.3,0.6));
+      setT("MIX_OSC2_ON", ch(0.5)); setS("MIX_OSC2_VOL", rn(0.3,0.6)); setC("OSC2_RANGE", 3); setS("OSC2_DETUNE", rn(0.47,0.53));
+      setS("FILTER_CUTOFF", rn(0.45,0.75)); setS("FILTER_RESO", rn(0.2,0.5)); setS("FILTER_ENV", rn(0.4,0.8));
+      setS("FILTER_ATTACK", 0); setS("FILTER_DECAY", rn(0.2,0.4)); setS("FILTER_SUSTAIN", rn(0.05,0.3)); setS("FILTER_RELEASE", rn(0.15,0.35));
+      setS("AMP_ATTACK", 0); setS("AMP_DECAY", rn(0.25,0.45)); setS("AMP_SUSTAIN", rn(0.05,0.3)); setS("AMP_RELEASE", rn(0.2,0.45));
+      setC("CHORD_TYPE", pick([0,4,5])); setT("ARP_ON", ch(0.6)); setC("ARP_MODE", pick([0,5])); setC("ARP_RATE", pick([3,4])); setC("ARP_OCT", pick([0,1,2]));
+      setT("FX_DELAY_ON", ch(0.6)); setS("FX_DELAY_MIX", rn(0.2,0.45)); setS("FX_DELAY_TIME", rn(0.15,0.5));
+      setT("FX_REVERB_ON", true); setS("FX_REVERB_MIX", rn(0.25,0.5));
+    } else { // keys
+      setT("POLY_ON", true); setC("OSC1_WAVE", 1); setC("OSC1_RANGE", 3);
+      setT("SAMPLE_ON", ch(0.6)); setC("SAMPLE_SEL", pick([1,2])); setS("SAMPLE_VOL", rn(0.3,0.6));
+      setT("MIX_OSC2_ON", true); setS("MIX_OSC2_VOL", rn(0.4,0.7)); setC("OSC2_WAVE", 1); setC("OSC2_RANGE", pick([2,4])); setS("OSC2_DETUNE", rn(0.47,0.53));
+      setS("FILTER_CUTOFF", rn(0.4,0.65)); setS("FILTER_RESO", rn(0.1,0.35)); setS("FILTER_ENV", rn(0.2,0.5));
+      setS("FILTER_ATTACK", rn(0,0.15)); setS("FILTER_DECAY", rn(0.3,0.55)); setS("FILTER_SUSTAIN", rn(0.5,0.85)); setS("FILTER_RELEASE", rn(0.2,0.45));
+      setS("AMP_ATTACK", rn(0,0.12)); setS("AMP_DECAY", rn(0.3,0.55)); setS("AMP_SUSTAIN", rn(0.7,0.95)); setS("AMP_RELEASE", rn(0.2,0.45));
+      setC("CHORD_TYPE", pick([0,4,7])); setT("ARP_ON", ch(0.3)); setC("ARP_MODE", pick([0,2])); setC("ARP_RATE", pick([1,3]));
+      setT("FX_CHORUS_ON", ch(0.6)); setS("FX_CHORUS", rn(0.3,0.6)); setT("FX_REVERB_ON", true); setS("FX_REVERB_MIX", rn(0.25,0.45));
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 (async () => {
@@ -751,4 +918,5 @@ function setupRandom() {
   setupVisualiser();
   setupPresets();
   setupRandom();
+  setupIdea();
 })();

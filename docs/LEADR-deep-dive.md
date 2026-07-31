@@ -97,11 +97,17 @@ copiarlo, destilar QUÉ lo hace vender para inspirar a MoogVA.
    file-chooser al WebView; siguiente iteración).
 
 **P2 — carácter y descubrimiento:**
-4. **Ampliar FX a ~8–12** (phaser, bitcrush, formant, filtro, EQ, width) + un
-   **"FX RANDOM" musical** dedicado (combina 2–3 FX con sentido).
-5. **Physical modeling ligero** (Karplus-Strong: cuerda/pluck) como 4ª fuente.
-6. **Macro "IDEA"**: un botón que hace acorde+arp+FX+random tasteful de golpe
-   (la promesa "una tecla → idea").
+4. ✅ **Macro "IDEA"**: un botón que genera un parche musical completo (sonido +
+   acorde + arp + FX) por arquetipo — la promesa "una tecla → idea". Web + plugin.
+5. ✅ **Pad XY morph**: interpola en tiempo real entre 4 slots de parche (web).
+6. ✅ **DSP next-gen**: saturación de ladder asimétrica dependiente de tolerancia
+   (armónicos pares) + inestabilidad estocástica de voltaje por voz — ambos
+   motores, gobernados por el knob Drift.
+7. ✅ **Identidad Cyber-Dark** (web + plugin) + **visualizador WebGL** reactivo
+   con fallback 2D.
+Pendiente P2: más FX (~8–12); physical modeling ligero (Karplus-Strong).
+**Aplazado:** MPE; FX drag-and-drop; oversampling adaptativo 8×/16×; morph XY en
+el plugin (interpolación nativa de presets).
 
 **P3 — producto/mercado:**
 7. **Marca propia** (fuera "Moog", marca registrada) + web + demos sociales.

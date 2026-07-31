@@ -1,6 +1,7 @@
 #include "MonoSynthEngine.h"
 #include <array>
 #include <cmath>
+#include <cstdint>
 
 namespace
 {
@@ -62,6 +63,15 @@ void MonoSynthEngine::prepare (double newSampleRate, int samplesPerBlock)
     noise.reset();
     heldNotes.reserve (16);
     juce::ignoreUnused (samplesPerBlock);
+
+    // Give every voice its own stable "unit tolerance" so a poly stack sounds
+    // like several slightly-different physical instruments, not N clones.
+    rng = (uint32_t) (reinterpret_cast<std::uintptr_t> (this) >> 4) | 1u;
+    voiceSeed = rndf();
+    envTol    = 1.0f + (rndf() - 0.5f) * 0.06f;   // +-3% ADSR time tolerance
+    for (int i = 0; i < 3; ++i)
+        driftTarget[i] = (double) rndf() * 2.0 - 1.0;
+
     reset();
 }
 
@@ -171,15 +181,19 @@ void MonoSynthEngine::updateBlockParameters()
     c.keyTrack = ParamChoices::keyTrackAmount ((int) params->filterKeyTrack->load());
     c.drift   = params->driftAmount->load();
 
-    filterEnv.setAttackMs  (params->filterAttack->load());
-    filterEnv.setDecayMs   (params->filterDecay->load());
-    filterEnv.setSustain   (params->filterSustain->load());
-    filterEnv.setReleaseMs (params->filterRelease->load());
+    // Per-voice ADSR time tolerance, faded in with the Drift control (sustain
+    // levels are untouched — only the RC-like timings vary between units).
+    const float et = 1.0f + (envTol - 1.0f) * juce::jmin (1.0f, c.drift * 2.0f);
 
-    ampEnv.setAttackMs  (params->ampAttack->load());
-    ampEnv.setDecayMs   (params->ampDecay->load());
+    filterEnv.setAttackMs  (params->filterAttack->load()  * et);
+    filterEnv.setDecayMs   (params->filterDecay->load()   * et);
+    filterEnv.setSustain   (params->filterSustain->load());
+    filterEnv.setReleaseMs (params->filterRelease->load() * et);
+
+    ampEnv.setAttackMs  (params->ampAttack->load()  * et);
+    ampEnv.setDecayMs   (params->ampDecay->load()   * et);
     ampEnv.setSustain   (params->ampSustain->load());
-    ampEnv.setReleaseMs (params->ampRelease->load());
+    ampEnv.setReleaseMs (params->ampRelease->load() * et);
 
     osc1.setWaveform (static_cast<MoogOscillator::Waveform> (c.osc1Wave));
     osc2.setWaveform (static_cast<MoogOscillator::Waveform> (c.osc2Wave));
@@ -191,6 +205,7 @@ void MonoSynthEngine::updateBlockParameters()
     filter.setResonance (c.reso);
     filter.setInputDrive (params->filterDrive->load());
     filter.setBassThin (params->bassThin->load());
+    filter.setAnalog (c.drift, voiceSeed);   // true-circuit tolerance + asymmetric sat
 }
 
 inline float MonoSynthEngine::renderSample()
@@ -198,16 +213,29 @@ inline float MonoSynthEngine::renderSample()
     // ---- Glide -------------------------------------------------------------
     glidingNoteNumber += c.glideCoef * (targetNoteNumber - glidingNoteNumber);
 
-    // ---- Analog drift (slow, per-oscillator) -------------------------------
+    // ---- Analog drift (slow LFO + stochastic voltage random-walk) ----------
     float drift[3] = { 0.0f, 0.0f, 0.0f };
     if (c.drift > 0.0001f)
     {
+        // Refresh the random-walk targets a few dozen times a second so the
+        // wander is organic (not a pure, repeating LFO).
+        if (--driftCtr <= 0)
+        {
+            driftCtr = (int) (sampleRate * 0.05);           // ~20 Hz target update
+            for (int i = 0; i < 3; ++i)
+                driftTarget[i] = (double) rndf() * 2.0 - 1.0;
+        }
+
         const double rates[3] = { 0.11, 0.17, 0.23 };
+        const double rwCoef = 8.0 / sampleRate;             // slew toward the target
         for (int i = 0; i < 3; ++i)
         {
             driftPhase[i] += rates[i] / sampleRate;
             if (driftPhase[i] >= 1.0) driftPhase[i] -= 1.0;
-            drift[i] = c.drift * 0.08f * std::sin (juce::MathConstants<float>::twoPi * (float) driftPhase[i]);
+            driftRW[i] += (driftTarget[i] - driftRW[i]) * rwCoef;
+
+            const float sine = std::sin (juce::MathConstants<float>::twoPi * (float) driftPhase[i]);
+            drift[i] = c.drift * (0.05f * sine + 0.06f * (float) driftRW[i]);
         }
     }
 

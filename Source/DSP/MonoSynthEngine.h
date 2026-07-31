@@ -65,6 +65,24 @@ private:
     float lastNoise { 0.0f };
     double driftPhase[3] { 0.0, 0.0, 0.0 };
 
+    // ---- Stochastic analog instability (per voice) -------------------------
+    // A tiny voltage-noise model: each oscillator's pitch wanders on a slow
+    // random walk on top of the deterministic drift LFO, and per-voice
+    // component tolerance nudges the filter cutoff and the ADSR times. All of
+    // it is scaled by the Drift control, so at 0 the engine is bit-identical.
+    uint32_t rng { 0x9E3779B9u };
+    double driftRW[3] { 0.0, 0.0, 0.0 };      // random-walk state per oscillator
+    double driftTarget[3] { 0.0, 0.0, 0.0 };  // current random-walk target
+    int    driftCtr { 0 };                    // samples until the next target
+    float  voiceSeed { 0.5f };                // this voice's tolerance seed (0..1)
+    float  envTol { 1.0f };                   // this voice's ADSR time tolerance
+
+    float rndf() noexcept                     // fast per-voice LCG, returns 0..1
+    {
+        rng = rng * 1664525u + 1013904223u;
+        return (float) (rng >> 8) / (float) (1u << 24);
+    }
+
     struct Cached
     {
         float masterTune = 0.0f;
