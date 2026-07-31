@@ -120,6 +120,14 @@
   .cmb .dd{width:88px;}
   .cmb.wide .dd{width:104px;}
   .cmb .lab{font-size:9px;color:var(--dim);text-transform:uppercase;}
+  /* Action button (Randomize) */
+  .tn-btn{font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#ffcf8a;cursor:pointer;
+    padding:7px 16px;border:1px solid #000;border-top-color:#5a4a33;border-radius:5px;
+    background:linear-gradient(180deg,#3a2a18,#1a1109);
+    box-shadow:inset 0 1px 1px rgba(255,205,120,.18),inset 0 -3px 6px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.5);
+    text-shadow:0 0 6px rgba(255,180,90,.5),0 1px 0 rgba(0,0,0,.7);}
+  .tn-btn:hover{border-top-color:#7a6544;background:linear-gradient(180deg,#4a3620,#20150b);}
+  .tn-btn:active{background:linear-gradient(180deg,#d8863a,#8f3313);color:#fff;}
 
   /* Metal dropdown (in-DOM replacement for native <select>) */
   .dd{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;}
@@ -22806,8 +22814,11 @@ const P = {
   filterCutoff:12000, filterReso:0.1, filterEnv:0.5, filterKeyTrack:2,
   filterAttack:20, filterDecay:400, filterSustain:0.4, filterRelease:200,
   ampAttack:10, ampDecay:400, ampSustain:0.8, ampRelease:150,
-  drift:0.25, filterDrive:0, bassThin:0.3, pitchBend:0
+  drift:0.25, filterDrive:0, bassThin:0.3, pitchBend:0,
+  chordType:0, arpOn:0, arpRate:1, arpMode:0, arpOct:0, arpGate:0.6, arpBpm:120
 };
+// Performance params are player state, not part of a sound preset (kept on load).
+const PERF_KEYS=["polyOn","chordType","arpOn","arpRate","arpMode","arpOct","arpGate","arpBpm"];
 
 const fmtHz = v=> v>=1000 ? (v/1000).toFixed(2)+" kHz" : Math.round(v)+" Hz";
 const fmtMs = v=> v>=1000 ? (v/1000).toFixed(2)+" s" : Math.round(v)+" ms";
@@ -23200,6 +23211,18 @@ function mixCh(lab,volId,onId,extra){
   return r;
 }
 
+// ---- Performance feature tables (chord + arpeggiator) ----
+const CHORDS=[[0],[0,12],[0,7],[0,7,12],[0,4,7],[0,3,7],[0,5,7],[0,4,7,11],[0,3,7,10],[0,4,7,14]];
+const CHORD_NAMES=["Off","Oct","5th","Power","Maj","Min","Sus4","Maj7","Min7","Add9"];
+const ARP_RATE_NAMES=["1/4","1/8","1/8T","1/16","1/16T","1/32"];
+const ARP_RATE_STEPS=[1,2,3,4,6,8];   // steps per beat
+const ARP_MODES=["Up","Down","Up-Down","Random","As-Played"];
+const ARP_OCTS=["1","2","3","4"];
+// A momentary metal button (for Randomize / actions).
+function btn(label,onClick){const b=document.createElement("button");b.className="tn-btn";b.type="button";b.textContent=label;
+  b.addEventListener("click",e=>{e.stopPropagation();onClick();});
+  const w=document.createElement("div");w.className="cmb";w.appendChild(b);return w;}
+
 const panel=document.getElementById("panel");
 // Controllers
 panel.appendChild(section("Controllers",
@@ -23233,8 +23256,78 @@ panel.appendChild(section("Output — Loudness",
   row(mk(K("ampAttack","Attack",1,10000,10,200,fmtMs)), mk(K("ampDecay","Decay",4,35000,400,600,fmtMs))),
   row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs)))
 ));
+// Perform — chord + arpeggiator + randomize (the LEADR-style performance bay)
+panel.appendChild(section("Perform",
+  row(mk(CM("chordType","Chord",CHORD_NAMES,true))),
+  row(mk(SW("arpOn","Arp","blue")), mk(CM("arpRate","Rate",ARP_RATE_NAMES)), mk(CM("arpMode","Mode",ARP_MODES,true))),
+  row(mk(CM("arpOct","Oct",ARP_OCTS)), mk(K("arpGate","Gate",0,1,0.6)), mk(K("arpBpm","BPM",40,240,120,1,v=>Math.round(v)+""))),
+  row(btn("RANDOM", ()=>randomize()))
+));
 // make knob-band-ish rows fixed height for alignment
 document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
+
+//====================================================================
+// PERFORMER: chord expansion + arpeggiator on top of the sound engine
+//====================================================================
+const Perf=(()=>{
+  const held=[]; let arpTimer=null, arpPos=0, lastNote=-1, seed=98765;
+  const rnd=()=>{seed=(seed*1664525+1013904223)&0x7fffffff;return seed/0x7fffffff;};
+  const chordOf=n=>CHORDS[P.chordType||0].map(iv=>n+iv);
+  const on=(n,v)=>{if(engine)engine.noteOn(n,v);};
+  const off=n=>{if(engine)engine.noteOff(n);};
+  const buildSeq=()=>{
+    let base=[];
+    if((P.arpMode||0)===4){held.forEach(n=>chordOf(n).forEach(x=>base.push(x)));}
+    else{const s=new Set();held.forEach(n=>chordOf(n).forEach(x=>s.add(x)));base=[...s].sort((a,b)=>a-b);}
+    const oct=(P.arpOct||0)+1; let seq=[];
+    for(let o=0;o<oct;o++)base.forEach(n=>seq.push(n+o*12));
+    if((P.arpMode||0)===1)seq.reverse();
+    else if((P.arpMode||0)===2){const dn=seq.slice().reverse().slice(1,-1);seq=seq.concat(dn);}
+    return seq;
+  };
+  const stepSec=()=>(60/(P.arpBpm||120))/ARP_RATE_STEPS[P.arpRate||1];
+  const tick=()=>{
+    if(lastNote>=0){off(lastNote);lastNote=-1;}
+    if(!P.arpOn){arpTimer=null;return;}   // arp switched off mid-hold
+    const seq=buildSeq(); const iv=stepSec();
+    if(seq.length){
+      arpPos=(P.arpMode||0)===3?Math.floor(rnd()*seq.length):arpPos%seq.length;
+      const n=seq[arpPos]; arpPos++; on(n,0.9); lastNote=n;
+      const gate=Math.max(0.05,Math.min(0.98,P.arpGate||0.6));
+      setTimeout(()=>{if(lastNote===n){off(n);lastNote=-1;}},iv*gate*1000);
+    }
+    arpTimer=setTimeout(tick,iv*1000);
+  };
+  const startArp=()=>{if(!arpTimer){arpPos=0;tick();}};
+  const stopArp=()=>{if(arpTimer){clearTimeout(arpTimer);arpTimer=null;}if(lastNote>=0){off(lastNote);lastNote=-1;}};
+  return {
+    on(n,v){ if(held.includes(n))return; held.push(n);
+      if(P.arpOn){startArp();return;} chordOf(n).forEach(x=>on(x,v)); },
+    off(n){ const i=held.indexOf(n); if(i>=0)held.splice(i,1);
+      if(P.arpOn){if(!held.length)stopArp();return;} chordOf(n).forEach(x=>off(x)); },
+    panic(){ held.length=0; stopArp(); },
+    refresh(){ if(P.arpOn&&held.length)startArp(); else if(!P.arpOn)stopArp(); },
+  };
+})();
+
+//====================================================================
+// RANDOMIZE: musical randomization of the sound (inspiration button)
+//====================================================================
+function randomize(){
+  const rr=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)], ch=p=>Math.random()<p?1:0;
+  P.osc1Wave=pick([0,1,2,3]); P.osc1Range=pick([1,2,3]);
+  P.osc2Wave=pick([0,1,2,3]); P.osc2Range=pick([1,2,3]); P.osc2Detune=rr(-0.12,0.12);
+  P.osc3Wave=pick([0,2,3]);   P.osc3Range=pick([1,2,3]); P.osc3Detune=rr(-0.1,0.1);
+  P.mixOsc1On=1; P.mixOsc1Vol=rr(0.7,0.95);
+  P.mixOsc2On=ch(0.8); P.mixOsc2Vol=rr(0.4,0.8);
+  P.mixOsc3On=ch(0.5); P.mixOsc3Vol=rr(0.3,0.7);
+  P.mixNoiseOn=ch(0.3); P.mixNoiseVol=rr(0.05,0.3); P.noiseType=pick([0,1]);
+  P.filterCutoff=Math.round(rr(200,6500)); P.filterReso=rr(0.1,0.6); P.filterEnv=rr(0.2,0.85);
+  P.filterAttack=rr(2,60); P.filterDecay=rr(150,900); P.filterSustain=rr(0.2,0.7); P.filterRelease=rr(120,500);
+  P.ampAttack=rr(2,40); P.ampDecay=rr(150,700); P.ampSustain=rr(0.5,0.92); P.ampRelease=rr(100,420);
+  P.filterDrive=rr(0.1,0.6); P.bassThin=rr(0.1,0.45); P.drift=rr(0.15,0.4);
+  allControls.forEach(c=>c._render&&c._render());
+}
 
 //====================================================================
 // PRESETS  (shared bank, grouped into category folders)
@@ -23250,9 +23343,9 @@ function findPreset(id){
   return (lib.presets[p[1]]||[]).find(x=>x.name===p[2])||null;
 }
 function applyPresetParams(params){
-  const keepPoly=P.polyOn;   // Poly/Mono is a performance mode, not part of a preset
+  const keep={}; PERF_KEYS.forEach(k=>keep[k]=P[k]);   // performance state survives preset loads
   Object.assign(P, JSON.parse(DEFAULTS)); Object.assign(P, params);
-  P.polyOn=keepPoly;
+  PERF_KEYS.forEach(k=>P[k]=keep[k]);
   allControls.forEach(c=>c._render&&c._render());
 }
 
@@ -23379,7 +23472,7 @@ function press(pid,x,y){
   if(prev===hit.note)return;
   if(prev!=null)releaseNote(pid);
   active.set(pid,hit.note); hit.el.classList.add("held");
-  if(engine)engine.noteOn(hit.note,0.9);
+  Perf.on(hit.note,0.9);
 }
 function releaseNote(pid){
   const n=active.get(pid); if(n==null)return; active.delete(pid);
@@ -23387,14 +23480,16 @@ function releaseNote(pid){
   // only clear .held if no other pointer holds it
   let stillHeld=false; active.forEach(v=>{if(v===n)stillHeld=true;});
   if(!stillHeld&&el)el.classList.remove("held");
-  if(engine)engine.noteOff(n);
+  Perf.off(n);
 }
 kbd.addEventListener("pointerdown",e=>{kbd.setPointerCapture(e.pointerId);press(e.pointerId,e.clientX,e.clientY);e.preventDefault();});
 kbd.addEventListener("pointermove",e=>{if(active.has(e.pointerId))press(e.pointerId,e.clientX,e.clientY);});
 kbd.addEventListener("pointerup",e=>releaseNote(e.pointerId));
 kbd.addEventListener("pointercancel",e=>releaseNote(e.pointerId));
-document.getElementById("octUp").addEventListener("click",()=>{if(startNote<84){startNote+=12;buildKbd();}});
-document.getElementById("octDn").addEventListener("click",()=>{if(startNote>24){startNote-=12;buildKbd();}});
+document.getElementById("octUp").addEventListener("click",()=>{if(startNote<84){Perf.panic();active.clear();startNote+=12;buildKbd();}});
+document.getElementById("octDn").addEventListener("click",()=>{if(startNote>24){Perf.panic();active.clear();startNote-=12;buildKbd();}});
+// keep the arpeggiator in sync when its switch is toggled while holding notes
+document.addEventListener("click",()=>setTimeout(()=>Perf.refresh&&Perf.refresh(),0));
 
 //====================================================================
 // VU meter
@@ -23481,4 +23576,7 @@ document.getElementById("power").addEventListener("click",()=>{
   startAudio();
   document.getElementById("gate").style.display="none";
 });
+
+// QA/automation hook (read-only accessors to internal state).
+window.__moog={get P(){return P},get engine(){return engine},Perf,randomize};
 </script>
