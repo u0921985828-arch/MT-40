@@ -449,7 +449,7 @@ html, body {
   background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0)); }
 
 /* ---- Rebalanced bays: 6 sections incl. Perform (osc bank widest) -------- */
-#panel { grid-template-columns: 1.9fr 4.35fr 2.8fr 3.6fr 2.2fr 2.85fr; }
+#panel { grid-template-columns: 1.75fr 3.95fr 3.4fr 3.75fr 2.0fr 2.6fr; }
 
 /* ---- Perform: action button (Randomize) — amber tube styling ---- */
 .tn-btn { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: #ffcf8a;
@@ -534,12 +534,13 @@ html, body {
 /* ---- Mixer: regletas that fill the whole bay (no dead right margin) ---- */
 #mixer .sect-body { padding: 6px 10px; }
 .mix-grid { gap: 13px; padding: 4px 4px; }
-.mrow { grid-template-columns: 52px 1fr 40px 78px; gap: 12px; padding: 7px 12px; width: 100%; }
+.mrow { grid-template-columns: 46px 1fr 34px 68px; gap: 9px; padding: 6px 9px; width: 100%; }
+.mrow > * { min-width: 0; }
 .mlbl { justify-self: start; }
 .mk { width: 44px !important; justify-self: center; }
 #mixer .rocker.mini { justify-self: center; }
 #mixer .combo.tiny { width: 100%; margin: 0; justify-self: stretch; }
-#mixer .combo.tiny .dd-btn { padding: 4px 15px 4px 6px; font-size: 10px; letter-spacing: 0.3px; }
+#mixer .combo.tiny .dd-btn { padding: 4px 13px 4px 6px; font-size: 10px; letter-spacing: 0.2px; }
 #mixer .combo.tiny .dd-arw { width: 8px; }
 .mspace { width: 100%; }
 

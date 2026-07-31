@@ -86,7 +86,11 @@ private:
 
         float cutoff = 1000.0f, reso = 0.0f, contour = 0.0f, keyTrack = 0.0f;
         float drift = 0.0f;
+
+        bool  sampleOn = false; int sampleSel = 0; float sampleVol = 0.0f;
     } c;
+
+    double samplePhase { 0.0 };  // wavetable read phase (0..1)
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MonoSynthEngine)
 };

@@ -73,6 +73,11 @@ namespace ParamID
     static constexpr auto filterDrive = "FILTER_DRIVE"; // mixer -> filter overdrive (growl)
     static constexpr auto bassThin    = "BASS_THIN";    // resonance bass-thinning
 
+    // ---- Sample / wavetable layer (blends with the oscillators) --------------
+    static constexpr auto sampleOn  = "SAMPLE_ON";
+    static constexpr auto sampleSel = "SAMPLE_SEL";  // 0..7 built-in timbre
+    static constexpr auto sampleVol = "SAMPLE_VOL";
+
     // ---- Perform: chord + arpeggiator (global performance mode) --------------
     static constexpr auto chordType = "CHORD_TYPE"; // 0=Off..9=Add9
     static constexpr auto arpOn     = "ARP_ON";
@@ -105,6 +110,12 @@ namespace ParamChoices
     inline juce::StringArray noiseTypes()
     {
         return { "White", "Pink" };
+    }
+
+    // ---- Sample / wavetable timbres -----------------------------------------
+    inline juce::StringArray sampleTables()
+    {
+        return { "Digital", "Organ", "Voice", "Reed", "Bell", "Pluck", "Glass", "Saw2" };
     }
 
     // ---- Perform ------------------------------------------------------------

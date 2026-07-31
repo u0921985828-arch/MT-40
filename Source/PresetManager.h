@@ -200,6 +200,7 @@ private:
             {"ampAttack",ParamID::ampAttack},{"ampDecay",ParamID::ampDecay},
             {"ampSustain",ParamID::ampSustain},{"ampRelease",ParamID::ampRelease},
             {"drift",ParamID::driftAmount},{"filterDrive",ParamID::filterDrive},{"bassThin",ParamID::bassThin},
+            {"sampleOn",ParamID::sampleOn},{"sampleSel",ParamID::sampleSel},{"sampleVol",ParamID::sampleVol},
         };
         return m;
     }

@@ -725,6 +725,7 @@ function setupRandom() {
     setS("FILTER_ATTACK", rn(0.0,0.35)); setS("FILTER_DECAY", rn(0.2,0.6)); setS("FILTER_SUSTAIN", rn(0.2,0.7)); setS("FILTER_RELEASE", rn(0.1,0.5));
     setS("AMP_ATTACK", rn(0.0,0.3)); setS("AMP_DECAY", rn(0.2,0.6)); setS("AMP_SUSTAIN", rn(0.5,0.95)); setS("AMP_RELEASE", rn(0.1,0.45));
     setS("FILTER_DRIVE", rn(0.1,0.6)); setS("DRIFT_AMOUNT", rn(0.15,0.4)); setS("BASS_THIN", rn(0.1,0.45));
+    setT("SAMPLE_ON", Math.random()<0.35); setC("SAMPLE_SEL", Math.floor(Math.random()*8)); setS("SAMPLE_VOL", rn(0.3,0.7));
   });
 }
 

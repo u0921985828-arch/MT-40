@@ -22815,6 +22815,7 @@ const P = {
   filterAttack:20, filterDecay:400, filterSustain:0.4, filterRelease:200,
   ampAttack:10, ampDecay:400, ampSustain:0.8, ampRelease:150,
   drift:0.25, filterDrive:0, bassThin:0.3, pitchBend:0,
+  sampleOn:0, sampleSel:0, sampleVol:0.6,
   chordType:0, arpOn:0, arpRate:1, arpMode:0, arpOct:0, arpGate:0.6, arpBpm:120
 };
 // Performance params are player state, not part of a sound preset (kept on load).
@@ -22902,13 +22903,39 @@ class Env{
     return this.level;
   }
 }
+// Sample/wavetable layer — a bank of single-cycle timbres generated additively
+// (self-contained, no external assets), blended with the analog oscillators.
+function buildWavetables(){
+  const N=2048, names=[], tables=[];
+  const add=(name,partial)=>{
+    const t=new Float32Array(N); let peak=0;
+    for(let i=0;i<N;i++){const ph=2*Math.PI*i/N; let s=0;
+      for(let k=1;k<=64;k++){const a=partial(k); if(a)s+=a*Math.sin(k*ph);}
+      t[i]=s; const m=Math.abs(s); if(m>peak)peak=m;}
+    if(peak>0)for(let i=0;i<N;i++)t[i]/=peak;
+    names.push(name); tables.push(t);
+  };
+  add("Digital", k=> (k%2?1:0.6)/k );
+  add("Organ",   k=> ([0,1,0,0.7,0,0.5,0,0,0,0.35][k])||0 );
+  add("Voice",   k=>{ const hz=k*110, F=[700,1150,2600]; let a=Math.exp(-Math.pow((hz-260)/120,2));
+                      F.forEach(c=>a+=0.8*Math.exp(-Math.pow((hz-c)/420,2))); return a/Math.sqrt(k); });
+  add("Reed",    k=> (k%2?1/(k*k):0) );
+  add("Bell",    k=> ([0,1,0,0,0.6,0,0,0.4,0,0,0.3][k])||0 );
+  add("Pluck",   k=> Math.exp(-k*0.12) );
+  add("Glass",   k=> (k>3?Math.exp(-(k-3)*0.2):0) );
+  add("Saw2",    k=> 1/k );
+  return {names, tables, N};
+}
+const WT=buildWavetables();
+const WT_NAMES=WT.names;
+
 class Engine{
   constructor(fs){
     this.fs=fs;
     this.o1=new Osc();this.o2=new Osc();this.o3=new Osc();this.noise=new Noise();
     this.flt=new Ladder(fs);this.fenv=new Env(fs);this.aenv=new Env(fs);
     this.held=[];this.tgt=60;this.gl=60;this.vel=1;this.bend=0;
-    this.fb=0;this.lo3=0;this.ln=0;this.dph=[0,0,0];this.meter=0;
+    this.fb=0;this.lo3=0;this.ln=0;this.dph=[0,0,0];this.meter=0;this.sph=0;
   }
   midiHz(n){return 440*Math.pow(2,(n-69)/12);}
   noteOn(n,v){
@@ -22951,6 +22978,13 @@ class Engine{
     if(P.mixOsc3On)mix+=s3*P.mixOsc3Vol;
     if(P.mixNoiseOn)mix+=n*P.mixNoiseVol;
     if(P.mixExtOn)mix+=this.fb*P.mixExtVol*0.7;
+    if(P.sampleOn){
+      const f=this.midiHz(base+dr[0])*this.m1, N=WT.N;
+      const tbl=WT.tables[(P.sampleSel|0)]||WT.tables[0];
+      const x=this.sph*N, i0=x|0, frac=x-i0, i1=(i0+1)&(N-1);
+      mix+=(tbl[i0]+(tbl[i1]-tbl[i0])*frac)*P.sampleVol;
+      this.sph+=f/this.fs; while(this.sph>=1)this.sph-=1;
+    }
     const fe=this.fenv.next();
     const ko=this.kt*(this.gl-60)/12, eo=P.filterEnv*fe*5;
     let cut=P.filterCutoff*Math.pow(2,ko+eo+cMod);
@@ -23242,7 +23276,8 @@ panel.appendChild(section("Mixer",
   mixCh("Osc 2","mixOsc2Vol","mixOsc2On"),
   mixCh("Osc 3","mixOsc3Vol","mixOsc3On"),
   mixCh("Ext","mixExtVol","mixExtOn"),
-  mixCh("Noise","mixNoiseVol","mixNoiseOn", mk(CM("noiseType","",NOISE)))
+  mixCh("Noise","mixNoiseVol","mixNoiseOn", mk(CM("noiseType","",NOISE))),
+  mixCh("Sample","sampleVol","sampleOn", mk(CM("sampleSel","",WT_NAMES)))
 ));
 // Modifiers
 panel.appendChild(section("Modifiers — Filter",
@@ -23326,6 +23361,7 @@ function randomize(){
   P.filterAttack=rr(2,60); P.filterDecay=rr(150,900); P.filterSustain=rr(0.2,0.7); P.filterRelease=rr(120,500);
   P.ampAttack=rr(2,40); P.ampDecay=rr(150,700); P.ampSustain=rr(0.5,0.92); P.ampRelease=rr(100,420);
   P.filterDrive=rr(0.1,0.6); P.bassThin=rr(0.1,0.45); P.drift=rr(0.15,0.4);
+  P.sampleOn=ch(0.35); P.sampleSel=Math.floor(Math.random()*WT.names.length); P.sampleVol=rr(0.3,0.7);
   allControls.forEach(c=>c._render&&c._render());
 }
 

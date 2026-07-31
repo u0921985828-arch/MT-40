@@ -154,6 +154,12 @@ MoogSynthAudioProcessor::createParameterLayout()
     params.push_back (std::make_unique<APF> (ParamID::bassThin, "Bass Thinning",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.3f));
 
+    // ---- Sample / wavetable layer -------------------------------------------
+    params.push_back (std::make_unique<APB> (ParamID::sampleOn, "Sample On", false));
+    params.push_back (std::make_unique<APC> (ParamID::sampleSel, "Sample", ParamChoices::sampleTables(), 0));
+    params.push_back (std::make_unique<APF> (ParamID::sampleVol, "Sample Volume",
+                                             juce::NormalisableRange<float> (0.0f, 1.0f), 0.6f));
+
     // ---- Perform: chord + arpeggiator ---------------------------------------
     params.push_back (std::make_unique<APC> (ParamID::chordType, "Chord", ParamChoices::chordTypes(), 0));
     params.push_back (std::make_unique<APB> (ParamID::arpOn, "Arp On", false));

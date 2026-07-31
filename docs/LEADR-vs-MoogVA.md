@@ -9,7 +9,7 @@ brecha y llevar MoogVA de "un Moog" a un producto de industria.
 | Área | LEADR | MoogVA (antes) | MoogVA (ahora) |
 |---|---|---|---|
 | Síntesis | Osciladores + modelado físico + 2 one-shots | 3 osc VA + ruido + ladder ZDF | 3 osc VA + ruido + ladder ZDF |
-| Capa de samples | **Sí** (500+ one-shots + tus carpetas) | No | No *(roadmap)* |
+| Capa de samples | **Sí** (500+ one-shots + tus carpetas) | No | **Sí — capa wavetable** (8 timbres: Digital/Organ/Voice/Reed/Bell/Pluck/Glass/Saw2) *(import de carpetas: roadmap)* |
 | Acordes | Chord lock 3 modos | No | **Sí — 10 tipos** (Oct/5th/Power/Maj/Min/Sus4/Maj7/Min7/Add9) |
 | Arpegiador | WATERFALL | No | **Sí** (Up/Down/Up-Down/Random/As-Played · 1/4–1/32 · 1–4 oct · gate · sync host/BPM) |
 | Randomize | FX aleatorizables | No | **Sí — Randomize musical** de todo el patch |
@@ -26,6 +26,8 @@ con los ganchos comerciales de LEADR).
 
 ## Implementado en esta sesión (plugin + web, en paridad)
 
+- **Capa SAMPLE** (mixer): 8 timbres wavetable generados aditivamente (sin assets
+  externos), mezclables con los osciladores y enrutados por filtro/envolvente.
 - **Sección PERFORM**: Chord · Arp (on/rate/mode/oct/gate/BPM) · RANDOM.
 - Plugin C++: params APVTS nuevos + `applyPerform()` (expansión de acordes +
   arpegiador sample-accurate con tempo de host o BPM propio) en `processBlock`.
@@ -35,9 +37,8 @@ con los ganchos comerciales de LEADR).
 ## Roadmap para "explotar la industria"
 
 **P1 — diferenciación de sonido (lo que más vende):**
-1. **Capa de samples/wavetables**: 1–2 one-shots mezclables con los osc (el núcleo
-   de LEADR). En web via `AudioBufferSourceNode`; en plugin via `juce::Synthesiser`
-   sampler o buffer propio. Librería de fábrica + carga de carpeta del usuario.
+1. **Import de samples del usuario** + librería de one-shots reales (la capa
+   wavetable ya existe; falta cargar WAV propios y una librería de fábrica).
 2. **Rack de FX** (8–18): drive, chorus, phaser, delay ping-pong, reverb, bitcrush,
    filtro, width — con **Randomize de FX** "musical".
 

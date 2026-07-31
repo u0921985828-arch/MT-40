@@ -60,6 +60,10 @@ struct SynthParameters
         driftAmount = apvts.getRawParameterValue (ParamID::driftAmount);
         filterDrive = apvts.getRawParameterValue (ParamID::filterDrive);
         bassThin    = apvts.getRawParameterValue (ParamID::bassThin);
+
+        sampleOn  = apvts.getRawParameterValue (ParamID::sampleOn);
+        sampleSel = apvts.getRawParameterValue (ParamID::sampleSel);
+        sampleVol = apvts.getRawParameterValue (ParamID::sampleVol);
     }
 
     std::atomic<float>* masterVolume   = nullptr;
@@ -111,4 +115,8 @@ struct SynthParameters
     std::atomic<float>* driftAmount = nullptr;
     std::atomic<float>* filterDrive = nullptr;
     std::atomic<float>* bassThin    = nullptr;
+
+    std::atomic<float>* sampleOn  = nullptr;
+    std::atomic<float>* sampleSel = nullptr;
+    std::atomic<float>* sampleVol = nullptr;
 };

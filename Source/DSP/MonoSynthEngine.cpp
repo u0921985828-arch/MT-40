@@ -1,4 +1,54 @@
 #include "MonoSynthEngine.h"
+#include <array>
+#include <cmath>
+
+namespace
+{
+    // Sample/wavetable bank: 8 single-cycle timbres generated additively once,
+    // shared read-only by all voices (mirrors the web app's tables).
+    static constexpr int kWaveLen = 2048;
+    using WaveTable = std::array<float, kWaveLen>;
+
+    const std::array<WaveTable, 8>& waveBank()
+    {
+        static const std::array<WaveTable, 8> bank = []
+        {
+            std::array<WaveTable, 8> b {};
+            auto build = [] (WaveTable& t, auto partial)
+            {
+                float peak = 0.0f;
+                for (int i = 0; i < kWaveLen; ++i)
+                {
+                    const double ph = juce::MathConstants<double>::twoPi * i / kWaveLen;
+                    double s = 0.0;
+                    for (int k = 1; k <= 64; ++k)
+                    {
+                        const double a = partial (k);
+                        if (a != 0.0) s += a * std::sin (k * ph);
+                    }
+                    t[(size_t) i] = (float) s;
+                    peak = juce::jmax (peak, std::abs ((float) s));
+                }
+                if (peak > 0.0f) for (auto& v : t) v /= peak;
+            };
+            auto organ = [] (int k){ static const double d[]={0,1,0,0.7,0,0.5,0,0,0,0.35}; return k<10? d[k]:0.0; };
+            auto bell  = [] (int k){ static const double d[]={0,1,0,0,0.6,0,0,0.4,0,0,0.3}; return k<11? d[k]:0.0; };
+            build (b[0], [] (int k){ return (k%2?1.0:0.6)/k; });                                   // Digital
+            build (b[1], organ);                                                                    // Organ
+            build (b[2], [] (int k){ const double hz=k*110.0, F[]={700,1150,2600};                  // Voice
+                     double a=std::exp(-std::pow((hz-260)/120,2));
+                     for (double c : F) a+=0.8*std::exp(-std::pow((hz-c)/420,2));
+                     return a/std::sqrt((double)k); });
+            build (b[3], [] (int k){ return (k%2? 1.0/((double)k*k):0.0); });                        // Reed
+            build (b[4], bell);                                                                      // Bell
+            build (b[5], [] (int k){ return std::exp(-k*0.12); });                                   // Pluck
+            build (b[6], [] (int k){ return k>3? std::exp(-(k-3)*0.2):0.0; });                       // Glass
+            build (b[7], [] (int k){ return 1.0/k; });                                               // Saw2
+            return b;
+        }();
+        return bank;
+    }
+}
 
 void MonoSynthEngine::prepare (double newSampleRate, int samplesPerBlock)
 {
@@ -22,6 +72,7 @@ void MonoSynthEngine::reset() noexcept
     ampEnv.reset();
     filter.reset();
     feedbackSample = lastOsc3 = lastNoise = 0.0f;
+    samplePhase = 0.0;
 }
 
 float MonoSynthEngine::midiNoteToHz (float noteNumber) const noexcept
@@ -110,6 +161,9 @@ void MonoSynthEngine::updateBlockParameters()
     c.osc3Vol = params->mixOsc3Vol->load();  c.osc3On = params->mixOsc3On->load() > 0.5f;
     c.noiseVol = params->mixNoiseVol->load(); c.noiseOn = params->mixNoiseOn->load() > 0.5f;
     c.extVol = params->mixExtVol->load();     c.extOn = params->mixExtOn->load() > 0.5f;
+    c.sampleOn  = params->sampleOn->load() > 0.5f;
+    c.sampleVol = params->sampleVol->load();
+    c.sampleSel = juce::jlimit (0, 7, (int) params->sampleSel->load());
 
     c.cutoff  = params->filterCutoff->load();
     c.reso    = params->filterReso->load();
@@ -192,6 +246,21 @@ inline float MonoSynthEngine::renderSample()
     if (c.osc3On)  mix += s3 * c.osc3Vol;
     if (c.noiseOn) mix += n * c.noiseVol;
     if (c.extOn)   mix += feedbackSample * c.extVol * 0.7f;
+
+    // ---- Sample / wavetable layer (reads at Osc 1 pitch) -------------------
+    if (c.sampleOn)
+    {
+        const auto& tbl = waveBank()[(size_t) c.sampleSel];
+        const double x = samplePhase * kWaveLen;
+        const int    i0 = (int) x;
+        const float  frac = (float) (x - i0);
+        const int    i1 = (i0 + 1) & (kWaveLen - 1);
+        mix += (tbl[(size_t) i0] + (tbl[(size_t) i1] - tbl[(size_t) i0]) * frac) * c.sampleVol;
+
+        const double f = (double) midiNoteToHz (baseNote + drift[0]) * m1;
+        samplePhase += f / sampleRate;
+        while (samplePhase >= 1.0) samplePhase -= 1.0;
+    }
 
     // ---- Filter ------------------------------------------------------------
     const float fEnv = filterEnv.getNextSample();
