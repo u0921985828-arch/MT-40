@@ -409,6 +409,36 @@
   .wk.held{background:linear-gradient(180deg,#7fe9e0,#3fb9b0);}
   .bk{background:linear-gradient(180deg,#1a2228 0%,#0a0e12 55%,#05070a 100%);}
   .bk.held{background:linear-gradient(180deg,#0f6f68,#08423d);}
+
+  /* ========================================================================
+     LAYOUT FIX — panel a grid proporcional (paridad con el plugin): cada
+     sección recibe un ancho en fr acorde a su contenido, y las filas internas
+     (osciladores / mixer) usan minmax()+min-width:0 para encajar sin solapes.
+     ===================================================================== */
+  #panel{ display:grid;
+    grid-template-columns:1.5fr 2.9fr 2.7fr 3.0fr 1.5fr 1.7fr 2.2fr;
+    grid-template-rows:1fr; align-items:stretch; }
+  .sect{ flex:initial; min-width:0; max-width:none; }
+  /* Tighter row rhythm so the tall FX/Perform bays fit the panel height with
+     their name-plate still visible (no clipping). */
+  .sect .body{ min-width:0; width:100%; gap:10px; justify-content:center; }
+  /* Oscillator rows: Range | Tune | Wave | (Kbd) alineados y contenidos */
+  .osc{ display:grid; align-items:center; width:100%; padding-left:0;
+    grid-template-columns:14px minmax(0,0.9fr) 50px minmax(0,1.5fr) 42px; gap:6px; }
+  .osc > *{ min-width:0; }
+  .osc .n{ justify-self:center; }
+  .osc .cmb{ width:100%; }
+  .osc .cmb .dd, .osc .cmb.wide .dd{ width:100%; }
+  .osc .knob.sm, .osc .osc-fixed{ justify-self:center; }
+  /* Mixer channels: última columna (tipo / WAV) flexible, sin recortes */
+  .mch{ grid-template-columns:44px 36px 30px minmax(0,1fr); gap:8px; }
+  .mch > *{ min-width:0; }
+  .mch > .cmb{ width:100%; }
+  .mch > .cmb .dd{ width:100%; }
+  .mch .smp-extra{ display:flex; gap:4px; align-items:center; width:100%; min-width:0; }
+  .mch .smp-extra .cmb{ flex:1 1 auto; min-width:0; width:auto; }
+  .mch .smp-extra .cmb .dd{ width:100%; }
+  .mch .smp-extra .tn-btn{ flex:none; }
 </style>
 
 <div id="gate">
@@ -23483,7 +23513,7 @@ panel.appendChild(section("Mixer",
   mixCh("Ext","mixExtVol","mixExtOn"),
   mixCh("Noise","mixNoiseVol","mixNoiseOn", mk(CM("noiseType","",NOISE))),
   mixCh("Sample","sampleVol","sampleOn", (()=>{
-    const w=document.createElement("div"); w.style.cssText="display:flex;gap:4px;align-items:center";
+    const w=document.createElement("div"); w.className="smp-extra";
     w.appendChild(mk(CM("sampleSel","",SAMPLE_NAMES)));
     const inp=document.createElement("input"); inp.type="file"; inp.accept="audio/*"; inp.style.display="none";
     const lb=document.createElement("button"); lb.className="tn-btn"; lb.textContent="WAV"; lb.style.cssText="padding:4px 7px;font-size:9px;letter-spacing:.5px";
@@ -23503,13 +23533,13 @@ async function loadUserSample(file){
   }catch(e){ alert("No se pudo decodificar el audio: "+e); }
 }
 // Modifiers
-panel.appendChild(section("Modifiers — Filter",
+panel.appendChild(section("Modifiers",
   row(mk(K("filterCutoff","Cutoff",20,20000,12000,1000,fmtHz)), mk(K("filterReso","Emphasis",0,1,0.1)), mk(K("filterEnv","Contour",0,1,0.5))),
   row(mk(CM("filterKeyTrack","Kbd",KEYTRK)), mk(K("filterDrive","Drive",0,1,0)), mk(K("bassThin","Bass",0,1,0.3)), mk(SW("modFilterOn","Flt Mod"))),
   row(mk(K("filterAttack","Attack",1,10000,20,200,fmtMs)), mk(K("filterDecay","Decay",4,35000,400,600,fmtMs)), mk(K("filterSustain","Sustain",0,1,0.4)), mk(K("filterRelease","Release",1,10000,200,200,fmtMs)))
 ));
 // Output
-panel.appendChild(section("Output — Loudness",
+panel.appendChild(section("Output",
   row(mk(K("masterVolume","Volume",0,1,0.8))),
   row(mk(K("ampAttack","Attack",1,10000,10,200,fmtMs)), mk(K("ampDecay","Decay",4,35000,400,600,fmtMs))),
   row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs)))
@@ -23673,7 +23703,7 @@ function morph(x,y){
 }
 function buildMorphPad(){
   const wrap=document.createElement("div");
-  wrap.style.cssText="position:relative;width:150px;height:150px;border-radius:8px;cursor:crosshair;touch-action:none;"
+  wrap.style.cssText="position:relative;width:150px;max-width:100%;aspect-ratio:1;border-radius:8px;cursor:crosshair;touch-action:none;"
     +"background:linear-gradient(135deg,rgba(0,230,216,.10),rgba(0,0,0,.25)),"
     +"radial-gradient(circle at 0 0,rgba(0,230,216,.28),transparent 62%),"
     +"radial-gradient(circle at 100% 100%,rgba(255,45,120,.24),transparent 62%);"
@@ -24021,7 +24051,10 @@ requestAnimationFrame(vu);
 //====================================================================
 // RESOLUTION PRESETS + uniform scale-to-fit (any screen)
 //====================================================================
-const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9 · 1280×720",w:1280,h:720},{n:"16:10 · 1200×760",w:1200,h:760},{n:"Compacto · 1040×660",w:1040,h:660}];
+// Fixed aspect locks. The stage scales uniformly to fit, so only the aspect
+// matters — every canvas is 1000 tall so the dense panel always fits (the old
+// short heights, 720/660, clipped the panel under the keyboard).
+const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9",w:1778,h:1000},{n:"16:10",w:1600,h:1000},{n:"3:2",w:1500,h:1000}];
 let resIdx=0;const stageEl=document.getElementById("stage");
 // Auto mode derives the design-canvas aspect from the actual screen so the
 // (uniformly scaled) stage fills it edge-to-edge — no letterbox, no distortion.
