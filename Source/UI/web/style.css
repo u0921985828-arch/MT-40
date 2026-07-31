@@ -449,7 +449,7 @@ html, body {
   background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0)); }
 
 /* ---- Rebalanced bays: 6 sections incl. Perform (osc bank widest) -------- */
-#panel { grid-template-columns: 1.75fr 3.95fr 3.4fr 3.75fr 2.0fr 2.6fr; }
+#panel { grid-template-columns: 1.7fr 3.85fr 3.35fr 3.7fr 1.95fr 2.15fr 2.55fr; }
 
 /* ---- Perform: action button (Randomize) — amber tube styling ---- */
 .tn-btn { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: #ffcf8a;

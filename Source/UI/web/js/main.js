@@ -726,6 +726,10 @@ function setupRandom() {
     setS("AMP_ATTACK", rn(0.0,0.3)); setS("AMP_DECAY", rn(0.2,0.6)); setS("AMP_SUSTAIN", rn(0.5,0.95)); setS("AMP_RELEASE", rn(0.1,0.45));
     setS("FILTER_DRIVE", rn(0.1,0.6)); setS("DRIFT_AMOUNT", rn(0.15,0.4)); setS("BASS_THIN", rn(0.1,0.45));
     setT("SAMPLE_ON", Math.random()<0.35); setC("SAMPLE_SEL", Math.floor(Math.random()*8)); setS("SAMPLE_VOL", rn(0.3,0.7));
+    setT("FX_DRIVE_ON", Math.random()<0.3); setS("FX_DRIVE", rn(0.2,0.6));
+    setT("FX_CHORUS_ON", Math.random()<0.4); setS("FX_CHORUS", rn(0.2,0.7));
+    setT("FX_DELAY_ON", Math.random()<0.35); setS("FX_DELAY_MIX", rn(0.15,0.45)); setS("FX_DELAY_TIME", rn(0.1,0.5));
+    setT("FX_REVERB_ON", Math.random()<0.4); setS("FX_REVERB_MIX", rn(0.15,0.5));
   });
 }
 

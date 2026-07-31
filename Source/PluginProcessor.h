@@ -7,6 +7,7 @@
 #include <vector>
 #include "DSP/MonoSynthEngine.h"
 #include "DSP/SynthParameters.h"
+#include "DSP/FxRack.h"
 #include "PresetManager.h"
 
 /**
@@ -114,6 +115,8 @@ private:
     float lpAir[2]  { 0.0f, 0.0f };   // high-shelf (air) one-pole state
     float coefWarm { 0.02f };
     float coefAir  { 0.4f };
+
+    FxRack fxRack;   // master FX: drive / chorus / delay / reverb
 
     // Lock-free single-producer / single-consumer ring buffer feeding the
     // WebView oscilloscope + spectrum display.

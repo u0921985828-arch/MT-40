@@ -201,6 +201,10 @@ private:
             {"ampSustain",ParamID::ampSustain},{"ampRelease",ParamID::ampRelease},
             {"drift",ParamID::driftAmount},{"filterDrive",ParamID::filterDrive},{"bassThin",ParamID::bassThin},
             {"sampleOn",ParamID::sampleOn},{"sampleSel",ParamID::sampleSel},{"sampleVol",ParamID::sampleVol},
+            {"fxDriveOn",ParamID::fxDriveOn},{"fxDrive",ParamID::fxDrive},
+            {"fxChorusOn",ParamID::fxChorusOn},{"fxChorus",ParamID::fxChorus},
+            {"fxDelayOn",ParamID::fxDelayOn},{"fxDelayMix",ParamID::fxDelayMix},{"fxDelayTime",ParamID::fxDelayTime},
+            {"fxReverbOn",ParamID::fxReverbOn},{"fxReverbMix",ParamID::fxReverbMix},
         };
         return m;
     }

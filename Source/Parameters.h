@@ -78,6 +78,17 @@ namespace ParamID
     static constexpr auto sampleSel = "SAMPLE_SEL";  // 0..7 built-in timbre
     static constexpr auto sampleVol = "SAMPLE_VOL";
 
+    // ---- FX rack (master) ---------------------------------------------------
+    static constexpr auto fxDriveOn  = "FX_DRIVE_ON";
+    static constexpr auto fxDrive     = "FX_DRIVE";
+    static constexpr auto fxChorusOn = "FX_CHORUS_ON";
+    static constexpr auto fxChorus    = "FX_CHORUS";
+    static constexpr auto fxDelayOn  = "FX_DELAY_ON";
+    static constexpr auto fxDelayMix  = "FX_DELAY_MIX";
+    static constexpr auto fxDelayTime = "FX_DELAY_TIME";
+    static constexpr auto fxReverbOn = "FX_REVERB_ON";
+    static constexpr auto fxReverbMix = "FX_REVERB_MIX";
+
     // ---- Perform: chord + arpeggiator (global performance mode) --------------
     static constexpr auto chordType = "CHORD_TYPE"; // 0=Off..9=Add9
     static constexpr auto arpOn     = "ARP_ON";

@@ -160,6 +160,17 @@ MoogSynthAudioProcessor::createParameterLayout()
     params.push_back (std::make_unique<APF> (ParamID::sampleVol, "Sample Volume",
                                              juce::NormalisableRange<float> (0.0f, 1.0f), 0.6f));
 
+    // ---- FX rack ------------------------------------------------------------
+    params.push_back (std::make_unique<APB> (ParamID::fxDriveOn, "FX Drive On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxDrive, "FX Drive", juce::NormalisableRange<float> (0.0f, 1.0f), 0.35f));
+    params.push_back (std::make_unique<APB> (ParamID::fxChorusOn, "FX Chorus On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxChorus, "FX Chorus", juce::NormalisableRange<float> (0.0f, 1.0f), 0.4f));
+    params.push_back (std::make_unique<APB> (ParamID::fxDelayOn, "FX Delay On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxDelayMix, "FX Delay Mix", juce::NormalisableRange<float> (0.0f, 1.0f), 0.3f));
+    params.push_back (std::make_unique<APF> (ParamID::fxDelayTime, "FX Delay Time", juce::NormalisableRange<float> (0.02f, 1.2f), 0.28f, Attr().withLabel ("s")));
+    params.push_back (std::make_unique<APB> (ParamID::fxReverbOn, "FX Reverb On", false));
+    params.push_back (std::make_unique<APF> (ParamID::fxReverbMix, "FX Reverb Mix", juce::NormalisableRange<float> (0.0f, 1.0f), 0.3f));
+
     // ---- Perform: chord + arpeggiator ---------------------------------------
     params.push_back (std::make_unique<APC> (ParamID::chordType, "Chord", ParamChoices::chordTypes(), 0));
     params.push_back (std::make_unique<APB> (ParamID::arpOn, "Arp On", false));
@@ -205,6 +216,8 @@ void MoogSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     for (auto& d : dcY1) d = 0.0f;
     for (auto& d : lpWarm) d = 0.0f;
     for (auto& d : lpAir)  d = 0.0f;
+
+    fxRack.prepare (sampleRate, samplesPerBlock, juce::jmax (1, getTotalNumOutputChannels()));
 
     // Gentle analog tone shelves (warmth ~ 220 Hz, air ~ 6.5 kHz).
     coefWarm = (float) (1.0 - std::exp (-2.0 * juce::MathConstants<double>::pi * 220.0  / sampleRate));
@@ -356,6 +369,21 @@ void MoogSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
 
         oversampler->processSamplesDown (block);
+    }
+
+    // ---- Master FX rack (drive / chorus / delay / reverb) ------------------
+    {
+        FxRack::Params fp;
+        fp.driveOn   = apvts.getRawParameterValue (ParamID::fxDriveOn)->load() > 0.5f;
+        fp.drive     = apvts.getRawParameterValue (ParamID::fxDrive)->load();
+        fp.chorusOn  = apvts.getRawParameterValue (ParamID::fxChorusOn)->load() > 0.5f;
+        fp.chorus    = apvts.getRawParameterValue (ParamID::fxChorus)->load();
+        fp.delayOn   = apvts.getRawParameterValue (ParamID::fxDelayOn)->load() > 0.5f;
+        fp.delayMix  = apvts.getRawParameterValue (ParamID::fxDelayMix)->load();
+        fp.delayTime = apvts.getRawParameterValue (ParamID::fxDelayTime)->load();
+        fp.reverbOn  = apvts.getRawParameterValue (ParamID::fxReverbOn)->load() > 0.5f;
+        fp.reverbMix = apvts.getRawParameterValue (ParamID::fxReverbMix)->load();
+        fxRack.process (buffer, fp);
     }
 
     // ---- DC blocker + metering + scope feed --------------------------------

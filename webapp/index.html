@@ -22816,6 +22816,8 @@ const P = {
   ampAttack:10, ampDecay:400, ampSustain:0.8, ampRelease:150,
   drift:0.25, filterDrive:0, bassThin:0.3, pitchBend:0,
   sampleOn:0, sampleSel:0, sampleVol:0.6,
+  fxDriveOn:0, fxDrive:0.35, fxChorusOn:0, fxChorus:0.4,
+  fxDelayOn:0, fxDelayMix:0.3, fxDelayTime:0.28, fxReverbOn:0, fxReverbMix:0.3,
   chordType:0, arpOn:0, arpRate:1, arpMode:0, arpOct:0, arpGate:0.6, arpBpm:120
 };
 // Performance params are player state, not part of a sound preset (kept on load).
@@ -23036,7 +23038,48 @@ class Poly{
 //====================================================================
 // AUDIO
 //====================================================================
-let ctx,engine,node,analyser;
+let ctx,engine,node,analyser,fx=null;
+
+// FX rack: Drive -> Chorus -> Delay (ping-pong) -> Reverb, each with wet/dry
+// and a bypass. Built from native Web Audio nodes; updated from P each frame.
+function buildFX(ctx){
+  const io=(inNode,outNode)=>({in:inNode,out:outNode});
+  // Drive (waveshaper) with wet/dry.
+  const dIn=ctx.createGain(), dWet=ctx.createGain(), dDry=ctx.createGain(), dOut=ctx.createGain();
+  const shp=ctx.createWaveShaper(); shp.oversample="4x"; shp.curve=makeTubeCurve(3);
+  dIn.connect(shp); shp.connect(dWet); dWet.connect(dOut); dIn.connect(dDry); dDry.connect(dOut);
+  // Chorus: modulated delay.
+  const cIn=ctx.createGain(), cWet=ctx.createGain(), cDry=ctx.createGain(), cOut=ctx.createGain();
+  const cDel=ctx.createDelay(0.05); cDel.delayTime.value=0.018;
+  const lfo=ctx.createOscillator(); lfo.frequency.value=0.6; const lfoG=ctx.createGain(); lfoG.gain.value=0.004;
+  lfo.connect(lfoG); lfoG.connect(cDel.delayTime); lfo.start();
+  cIn.connect(cDel); cDel.connect(cWet); cWet.connect(cOut); cIn.connect(cDry); cDry.connect(cOut);
+  // Delay ping-pong with feedback.
+  const eIn=ctx.createGain(), eWet=ctx.createGain(), eDry=ctx.createGain(), eOut=ctx.createGain();
+  const dl=ctx.createDelay(1.5); dl.delayTime.value=0.28; const fb=ctx.createGain(); fb.gain.value=0.35;
+  const dTone=ctx.createBiquadFilter(); dTone.type="lowpass"; dTone.frequency.value=3200;
+  eIn.connect(dl); dl.connect(dTone); dTone.connect(fb); fb.connect(dl); dl.connect(eWet); eWet.connect(eOut); eIn.connect(eDry); eDry.connect(eOut);
+  // Reverb (convolver with a generated impulse).
+  const rIn=ctx.createGain(), rWet=ctx.createGain(), rDry=ctx.createGain(), rOut=ctx.createGain();
+  const conv=ctx.createConvolver(); conv.buffer=makeImpulse(ctx,2.2,2.5);
+  rIn.connect(conv); conv.connect(rWet); rWet.connect(rOut); rIn.connect(rDry); rDry.connect(rOut);
+  // Chain them.
+  dOut.connect(cIn); cOut.connect(eIn); eOut.connect(rIn);
+  return { in:dIn, out:rOut, nodes:{shp,dWet,dDry,cWet,cDry,cDel,lfoG,dl,fb,eWet,eDry,dTone,rWet,rDry,conv},
+    update(P){
+      const dOn=!!P.fxDriveOn, dv=P.fxDrive;
+      shp.curve=makeTubeCurve(1+dv*8); dWet.gain.value=dOn?1:0; dDry.gain.value=dOn?0.15:1;
+      const cOn=!!P.fxChorusOn; lfoG.gain.value=0.002+P.fxChorus*0.006; cWet.gain.value=cOn?P.fxChorus:0; cDry.gain.value=cOn?1:1;
+      const eOn=!!P.fxDelayOn; dl.delayTime.value=Math.max(0.02,Math.min(1.4,P.fxDelayTime)); fb.gain.value=eOn?0.15+P.fxDelayMix*0.5:0; eWet.gain.value=eOn?P.fxDelayMix:0; eDry.gain.value=1;
+      const rOn=!!P.fxReverbOn; rWet.gain.value=rOn?P.fxReverbMix:0; rDry.gain.value=1;
+    } };
+}
+function makeImpulse(ctx,dur,decay){
+  const rate=ctx.sampleRate, len=Math.floor(rate*dur), buf=ctx.createBuffer(2,len,rate);
+  for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+  return buf;
+}
 // Tube transfer curve: soft clip with a touch of asymmetry (2nd harmonic).
 function makeTubeCurve(drive){
   const n=2048,c=new Float32Array(n);
@@ -23076,7 +23119,8 @@ function startAudio(){
   air.connect(dR); dR.connect(wR); wR.connect(merger,0,1);
   // Visualiser tap: analyser after the master gain (pass-through, no tone change).
   analyser=ctx.createAnalyser(); analyser.fftSize=1024; analyser.smoothingTimeConstant=0.72;
-  merger.connect(comp); comp.connect(outG); outG.connect(analyser); analyser.connect(ctx.destination);
+  fx=buildFX(ctx); fx.update(P);
+  merger.connect(comp); comp.connect(outG); outG.connect(fx.in); fx.out.connect(analyser); analyser.connect(ctx.destination);
   ctx.resume();
 }
 
@@ -23291,6 +23335,14 @@ panel.appendChild(section("Output — Loudness",
   row(mk(K("ampAttack","Attack",1,10000,10,200,fmtMs)), mk(K("ampDecay","Decay",4,35000,400,600,fmtMs))),
   row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs)))
 ));
+// FX rack — drive / chorus / delay / reverb, each switch + amount
+const fxRow=(lab,onId,amtId,amtCap)=>row(mk(SW(onId,lab,"blue")), mk(K(amtId,amtCap||"Amt",0,1,0.35)));
+panel.appendChild(section("FX",
+  fxRow("Drive","fxDriveOn","fxDrive","Drive"),
+  fxRow("Chorus","fxChorusOn","fxChorus","Depth"),
+  row(mk(SW("fxDelayOn","Delay","blue")), mk(K("fxDelayMix","Mix",0,1,0.3)), mk(K("fxDelayTime","Time",0.02,1.2,0.28,1,v=>Math.round(v*1000)+" ms"))),
+  fxRow("Reverb","fxReverbOn","fxReverbMix","Mix")
+));
 // Perform — chord + arpeggiator + randomize (the LEADR-style performance bay)
 panel.appendChild(section("Perform",
   row(mk(CM("chordType","Chord",CHORD_NAMES,true))),
@@ -23362,6 +23414,8 @@ function randomize(){
   P.ampAttack=rr(2,40); P.ampDecay=rr(150,700); P.ampSustain=rr(0.5,0.92); P.ampRelease=rr(100,420);
   P.filterDrive=rr(0.1,0.6); P.bassThin=rr(0.1,0.45); P.drift=rr(0.15,0.4);
   P.sampleOn=ch(0.35); P.sampleSel=Math.floor(Math.random()*WT.names.length); P.sampleVol=rr(0.3,0.7);
+  P.fxDriveOn=ch(0.3);P.fxDrive=rr(0.2,0.6);P.fxChorusOn=ch(0.4);P.fxChorus=rr(0.2,0.7);
+  P.fxDelayOn=ch(0.35);P.fxDelayMix=rr(0.15,0.45);P.fxDelayTime=rr(0.12,0.5);P.fxReverbOn=ch(0.4);P.fxReverbMix=rr(0.15,0.5);
   allControls.forEach(c=>c._render&&c._render());
 }
 
@@ -23571,6 +23625,7 @@ function drawSpectrum(){
 function vu(){
   if(engine){const m=engine.meter; vd=m>vd?m:vd*0.85; vp=m>vp?m:vp*0.94; const h=Math.min(1,vd)*100+"%",ph=Math.min(1,vp)*100+"%"; vuL.style.height=h; vuR.style.height=h; if(vuLp)vuLp.style.bottom=ph; if(vuRp)vuRp.style.bottom=ph;}
   if(sctx)drawScope(); if(pctx)drawSpectrum();
+  if(fx)fx.update(P);
   requestAnimationFrame(vu);
 }
 requestAnimationFrame(vu);
