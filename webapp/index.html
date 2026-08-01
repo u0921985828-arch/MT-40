@@ -459,6 +459,29 @@
   .mch .smp-extra .cmb{ flex:1 1 auto; min-width:0; width:auto; }
   .mch .smp-extra .cmb .dd{ width:100%; }
   .mch .smp-extra .tn-btn{ flex:none; }
+
+  /* ===== PLUGIN FINISH — placas grabadas + bahías enmarcadas + filas recesadas ===== */
+  /* Engraved name-plate with flanking screws */
+  .sect h2{ position:relative; margin:0 8px 6px; padding:4px 18px; border-radius:4px;
+    background:linear-gradient(180deg,rgba(0,230,216,.10),rgba(0,0,0,.34));
+    border-top:1px solid rgba(0,230,216,.18); border-bottom:1px solid rgba(0,0,0,.72);
+    box-shadow:inset 0 1px 0 rgba(0,230,216,.14),0 1px 3px rgba(0,0,0,.6);
+    color:#d7efe9; letter-spacing:1.6px; text-shadow:0 0 8px rgba(0,230,216,.35),0 1px 0 #000; }
+  .sect h2::before,.sect h2::after{ content:""; position:absolute; top:50%; width:7px; height:7px;
+    transform:translateY(-50%); border-radius:50%;
+    background:radial-gradient(circle at 40% 34%,#cfe9e5,#4a5860 46%,#10161b 100%);
+    box-shadow:inset 0 0 2px rgba(0,0,0,.6),0 1px 1px rgba(0,0,0,.7); }
+  .sect h2::before{ left:5px; } .sect h2::after{ right:5px; }
+  /* Framed bays: bevelled edges + chamfered groove between columns */
+  .zone .sect{ position:relative; box-shadow:inset -1px 0 0 rgba(0,230,216,.06), inset 1px 0 0 rgba(0,0,0,.5); }
+  .zone .sect:not(:last-child)::after{ content:""; position:absolute; top:34px; bottom:10px; right:-1px; width:2px;
+    background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.5) 12%,rgba(0,0,0,.5) 88%,rgba(0,0,0,0));
+    box-shadow:1px 0 0 rgba(0,230,216,.06); pointer-events:none; }
+  /* Recessed row cards for the oscillator rows (mixer .mch already carded) */
+  .osc{ background:linear-gradient(180deg,rgba(0,230,216,.03),rgba(0,0,0,.18)); border-radius:6px;
+    box-shadow:inset 0 1px 0 rgba(0,230,216,.05),inset 0 -1px 0 rgba(0,0,0,.4); padding:5px 8px; }
+  /* Slightly stronger value ring readout */
+  .kval{ text-shadow:0 0 7px rgba(0,230,216,.5),0 1px 1px rgba(0,0,0,.8); }
 </style>
 
 <div id="gate">
@@ -23404,7 +23427,7 @@ function knobAccent(id){
 }
 function knobEl(spec){
   const el=document.createElement("div");el.className="knob"+(spec.sm?" sm":"");el.style.touchAction="none";
-  const size=spec.sm?38:46;const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+  const size=spec.sm?44:54;const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
   el.innerHTML=`<canvas class="kcv"></canvas><span class="kcap">${spec.cap}</span><span class="kval"></span>`;
   const cv=el.querySelector(".kcv");cv.width=size*dpr;cv.height=size*dpr;cv.style.width=size+"px";cv.style.height=size+"px";
   const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);const val=el.querySelector(".kval");const acc=knobAccent(spec.id);
@@ -24078,7 +24101,7 @@ requestAnimationFrame(vu);
 // Fixed aspect locks. The stage scales uniformly to fit, so only the aspect
 // matters — every canvas is 1000 tall so the dense panel always fits (the old
 // short heights, 720/660, clipped the panel under the keyboard).
-const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9",w:2130,h:1200},{n:"16:10",w:1920,h:1200},{n:"3:2",w:1800,h:1200}];
+const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9",w:2275,h:1280},{n:"16:10",w:2050,h:1280},{n:"3:2",w:1920,h:1280}];
 let resIdx=0;const stageEl=document.getElementById("stage");
 // Auto mode derives the design-canvas aspect from the actual screen so the
 // (uniformly scaled) stage fills it edge-to-edge — no letterbox, no distortion.
@@ -24086,7 +24109,7 @@ function dims(){
   const r=RES[resIdx];
   if(!r.auto)return {w:r.w,h:r.h};
   const long=Math.max(window.innerWidth,window.innerHeight),short=Math.min(window.innerWidth,window.innerHeight);
-  const A=Math.min(2.0,Math.max(1.45,long/short)),h=1200;
+  const A=Math.min(2.0,Math.max(1.45,long/short)),h=1280;
   return {w:Math.round(h*A),h};
 }
 function setScale(){
