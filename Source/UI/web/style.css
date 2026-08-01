@@ -448,8 +448,30 @@ html, body {
 #panel::before { height: 40px;
   background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0)); }
 
-/* ---- Rebalanced bays: 6 sections incl. Perform (osc bank widest) -------- */
-#panel { grid-template-columns: 1.7fr 3.85fr 3.35fr 3.7fr 1.95fr 2.15fr 2.55fr; }
+/* ---- Two stacked zones: A (sound) on top, B (perform) below ------------- */
+#panel {
+  display: grid;
+  grid-template-columns: none;
+  grid-template-rows: minmax(0,1.08fr) minmax(0,1fr);
+  row-gap: 14px; padding-top: 14px;
+}
+.zone { display: grid; align-items: stretch; min-height: 0; position: relative; padding-top: 12px; }
+.zone-a { grid-template-columns: 3.85fr 3.35fr 3.7fr 3.2fr; }   /* Osc · Mixer · Filter · Amp&Global */
+.zone-b { grid-template-columns: 2.6fr 2.4fr; border-top: 2px solid rgba(0,230,216,0.16); }  /* FX · Perform */
+.zone::before { content: attr(data-z); position: absolute; left: 10px; top: -1px; z-index: 5;
+  font-family: Georgia, serif; font-weight: 700; font-size: 9px; letter-spacing: 3px;
+  color: rgba(0,230,216,0.6); text-shadow: 0 0 7px rgba(0,230,216,0.4); pointer-events: none; }
+/* Section name-plate at the TOP of each bay (clearer for the two-tier stack) */
+.zone .sect { display: flex; flex-direction: column; min-height: 0; }
+.zone .sect .sect-body { flex: 1; justify-content: space-between; min-height: 0; }
+.zone .sect h2 { order: -1; margin-bottom: 4px; }
+.zone .sect:last-child { border-right: none; }
+/* FX two-column units */
+.fxu { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.zone-b #fx .krow > .fxu { flex: 1 1 0; }
+/* Amp & Global sub-group labels */
+.subhdr { font-family: Georgia, serif; font-weight: 700; font-size: 9px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--label-dim); text-align: center; opacity: 0.85; margin: 2px 0 -2px; }
 
 /* ---- Perform: action button (Randomize) — amber tube styling ---- */
 .tn-btn { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: #ffcf8a;

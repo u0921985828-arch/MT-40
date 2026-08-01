@@ -44,14 +44,15 @@ Delay (ping-pong) · Reverb — cada uno on/off + cantidad, con **FX RANDOM** mu
 
 **Máster:** shelves warmth/air + tube tanh sobre-oversampleado 4× + DC blocker.
 
-**UI (Cyber-Dark):** estética Hi-Tech industrial — carbón mate + acentos neón
-cian/magenta reactivos (pivote desde la madera "UA"; reduce el riesgo de trade
-dress). 7 secciones (Controllers · Oscillator Bank · Mixer · Modifiers · Output ·
-FX · Perform/Morph), selectores LCD cian, **visualizador WebGL** (shader
-reactivo al nivel/drive, con **fallback a canvas 2D** si WebGL no está) + VU.
-**Pad XY de morphing** (interpola 4 slots A/B/C/D) y **generador IDEA** (parche
-musical completo — sonido + acorde + arp + FX — de un botón) en Perform.
-Plugin 1520×820 (redimensionable). Web: modo **Auto pantalla completa**, lienzo 1000.
+**UI (Cyber-Dark, dos zonas):** estética Hi-Tech industrial — carbón mate +
+acentos neón cian/magenta reactivos (pivote desde la madera "UA"; reduce el riesgo
+de trade dress). Maquetado en **dos zonas apiladas** con placa de título arriba de
+cada bahía: **SOUND** (Oscillator Bank · Mixer · Filter · **Amp & Global** —
+Amp/Global fusionados) y **PERFORM** (FX en 2 columnas · Perform · Morph/Idea en
+web). Selectores LCD cian, **visualizador WebGL** (shader reactivo al nivel/drive,
+con **fallback a canvas 2D**) + VU. **Pad XY de morphing** (4 slots A/B/C/D) y
+**generador IDEA** (parche completo de un botón). Plugin 1360×1080 (redimensionable);
+web: modo **Auto pantalla completa** (lienzo alto ~1200 para las dos zonas).
 
 **Presets:** 10 bibliotecas, ~700 presets (`webapp/presets.json`, embebido).
 

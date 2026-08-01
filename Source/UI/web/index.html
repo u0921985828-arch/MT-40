@@ -27,27 +27,7 @@
 
     <!-- Main control panel: five sections left-to-right -->
     <main id="panel">
-      <!-- CONTROLLERS -->
-      <section class="sect" id="controllers">
-        <div class="sect-body">
-          <div class="krow">
-            <div class="knob" data-param="MASTER_TUNE" data-caption="Tune"></div>
-            <div class="knob" data-param="GLIDE_TIME" data-caption="Glide"></div>
-          </div>
-          <div class="krow">
-            <div class="knob" data-param="MOD_MIX" data-caption="Mod Mix"></div>
-            <div class="knob" data-param="PITCH_BEND_RANGE" data-caption="Bend"></div>
-          </div>
-          <div class="knob" data-param="DRIFT_AMOUNT" data-caption="Drift"></div>
-          <div class="swrow">
-            <div class="rocker mini" data-param="MOD_OSC_ON" data-caption="Osc Mod"></div>
-            <div class="rocker mini" data-param="GLIDE_ON" data-caption="Glide"></div>
-            <div class="rocker mini" data-param="POLY_ON" data-caption="Poly"></div>
-          </div>
-        </div>
-        <h2>Controllers</h2>
-      </section>
-
+      <div class="zone zone-a" data-z="SOUND">
       <!-- OSCILLATOR BANK -->
       <section class="sect" id="oscillators">
         <div class="sect-body">
@@ -110,14 +90,15 @@
             <div class="knob small" data-param="FILTER_RELEASE" data-caption="Release"></div>
           </div>
         </div>
-        <h2>Modifiers</h2>
+        <h2>Filter</h2>
       </section>
 
-      <!-- OUTPUT -->
-      <section class="sect" id="output">
+      <!-- AMP & GLOBAL (merged output + controllers) -->
+      <section class="sect" id="ampglobal">
         <div class="sect-body">
-          <div class="knob" data-param="MASTER_VOLUME" data-caption="Volume"></div>
-          <div class="krow env">
+          <div class="subhdr">Amp</div>
+          <div class="krow">
+            <div class="knob small" data-param="MASTER_VOLUME" data-caption="Volume"></div>
             <div class="knob small" data-param="AMP_ATTACK" data-caption="Attack"></div>
             <div class="knob small" data-param="AMP_DECAY" data-caption="Decay"></div>
           </div>
@@ -125,20 +106,43 @@
             <div class="knob small" data-param="AMP_SUSTAIN" data-caption="Sustain"></div>
             <div class="knob small" data-param="AMP_RELEASE" data-caption="Release"></div>
           </div>
+          <div class="subhdr">Global</div>
+          <div class="krow">
+            <div class="knob small" data-param="MASTER_TUNE" data-caption="Tune"></div>
+            <div class="knob small" data-param="GLIDE_TIME" data-caption="Glide"></div>
+            <div class="knob small" data-param="MOD_MIX" data-caption="Mod Mix"></div>
+          </div>
+          <div class="krow">
+            <div class="knob small" data-param="PITCH_BEND_RANGE" data-caption="Bend"></div>
+            <div class="knob small" data-param="DRIFT_AMOUNT" data-caption="Drift"></div>
+          </div>
+          <div class="swrow">
+            <div class="rocker mini" data-param="MOD_OSC_ON" data-caption="Osc Mod"></div>
+            <div class="rocker mini" data-param="GLIDE_ON" data-caption="Glide"></div>
+            <div class="rocker mini" data-param="POLY_ON" data-caption="Poly"></div>
+          </div>
         </div>
-        <h2>Output</h2>
+        <h2>Amp &amp; Global</h2>
       </section>
+      </div><!-- /zone-a -->
 
-      <!-- FX RACK: drive / chorus / delay / reverb -->
+      <div class="zone zone-b" data-z="PERFORM">
+      <!-- FX RACK — two columns -->
       <section class="sect" id="fx">
         <div class="sect-body">
-          <div class="krow"><div class="rocker mini" data-param="FX_DRIVE_ON" data-caption="Drive"></div><div class="knob small" data-param="FX_DRIVE" data-caption="Drive"></div></div>
-          <div class="krow"><div class="rocker mini" data-param="FX_CHORUS_ON" data-caption="Chorus"></div><div class="knob small" data-param="FX_CHORUS" data-caption="Depth"></div></div>
-          <div class="krow"><div class="rocker mini" data-param="FX_PHASER_ON" data-caption="Phaser"></div><div class="knob small" data-param="FX_PHASER" data-caption="Amt"></div></div>
-          <div class="krow"><div class="rocker mini" data-param="FX_CRUSH_ON" data-caption="Crush"></div><div class="knob small" data-param="FX_CRUSH" data-caption="Amt"></div></div>
-          <div class="krow"><div class="rocker mini" data-param="FX_TONE_ON" data-caption="Tone"></div><div class="knob small" data-param="FX_TONE" data-caption="Tone"></div></div>
+          <div class="krow">
+            <div class="fxu"><div class="rocker mini" data-param="FX_DRIVE_ON" data-caption="Drive"></div><div class="knob small" data-param="FX_DRIVE" data-caption="Drive"></div></div>
+            <div class="fxu"><div class="rocker mini" data-param="FX_CHORUS_ON" data-caption="Chorus"></div><div class="knob small" data-param="FX_CHORUS" data-caption="Depth"></div></div>
+          </div>
+          <div class="krow">
+            <div class="fxu"><div class="rocker mini" data-param="FX_PHASER_ON" data-caption="Phaser"></div><div class="knob small" data-param="FX_PHASER" data-caption="Amt"></div></div>
+            <div class="fxu"><div class="rocker mini" data-param="FX_CRUSH_ON" data-caption="Crush"></div><div class="knob small" data-param="FX_CRUSH" data-caption="Amt"></div></div>
+          </div>
+          <div class="krow">
+            <div class="fxu"><div class="rocker mini" data-param="FX_TONE_ON" data-caption="Tone"></div><div class="knob small" data-param="FX_TONE" data-caption="Tone"></div></div>
+            <div class="fxu"><div class="rocker mini" data-param="FX_REVERB_ON" data-caption="Reverb"></div><div class="knob small" data-param="FX_REVERB_MIX" data-caption="Mix"></div></div>
+          </div>
           <div class="krow"><div class="rocker mini" data-param="FX_DELAY_ON" data-caption="Delay"></div><div class="knob small" data-param="FX_DELAY_MIX" data-caption="Mix"></div><div class="knob small" data-param="FX_DELAY_TIME" data-caption="Time"></div></div>
-          <div class="krow"><div class="rocker mini" data-param="FX_REVERB_ON" data-caption="Reverb"></div><div class="knob small" data-param="FX_REVERB_MIX" data-caption="Mix"></div></div>
         </div>
         <h2>FX</h2>
       </section>
@@ -169,6 +173,7 @@
         </div>
         <h2>Perform</h2>
       </section>
+      </div><!-- /zone-b -->
     </main>
 
     <!-- Bottom: wheels + keyboard -->

@@ -415,9 +415,20 @@
      sección recibe un ancho en fr acorde a su contenido, y las filas internas
      (osciladores / mixer) usan minmax()+min-width:0 para encajar sin solapes.
      ===================================================================== */
-  #panel{ display:grid;
-    grid-template-columns:1.6fr 3.4fr 3.0fr 3.5fr 1.6fr 2.5fr 2.6fr;
-    grid-template-rows:1fr; align-items:stretch; }
+  /* Two stacked zones: A (sound) on top, B (perform) below */
+  #panel{ display:grid; grid-template-rows:minmax(0,1.1fr) minmax(0,1fr); grid-template-columns:none; row-gap:16px; padding-top:16px; }
+  .zone{ display:grid; align-items:stretch; min-height:0; position:relative; padding-top:12px; }
+  .zone .sect{ min-height:0; }
+  .zone-a{ grid-template-columns:3.2fr 2.8fr 3.4fr 3.0fr; }   /* Osc · Mixer · Filter · Amp&Global */
+  .zone-b{ grid-template-columns:2.6fr 2.4fr 1.9fr; border-top:2px solid rgba(0,230,216,.16); }  /* FX · Perform · Morph */
+  /* Zone banner (SOUND / PERFORM) spanning the whole zone width */
+  .zone::before{ content:attr(data-z); position:absolute; left:10px; top:-1px; z-index:5;
+    font-family:Georgia,serif; font-weight:700; font-size:9px; letter-spacing:3px; color:rgba(0,230,216,.6);
+    text-shadow:0 0 7px rgba(0,230,216,.4); pointer-events:none; }
+  /* Section name-plate at the TOP of each bay (clearer for the two-tier stack) */
+  .sect h2{ order:-1; margin:0 6px 4px; }
+  .subhdr{ font-family:Georgia,serif; font-weight:700; font-size:8.5px; letter-spacing:1.6px; text-transform:uppercase;
+    color:var(--dim); text-align:center; opacity:.85; margin:1px 0 -2px; }
   .sect{ flex:initial; min-width:0; max-width:none; }
   .sect .body{ min-width:0; width:100%; gap:14px; justify-content:space-between; padding:12px 0 8px; }
   /* FX: two switch+knob units per row */
@@ -23504,20 +23515,18 @@ function btn(label,onClick){const b=document.createElement("button");b.className
   const w=document.createElement("div");w.className="cmb";w.appendChild(b);return w;}
 
 const panel=document.getElementById("panel");
-// Controllers
-panel.appendChild(section("Controllers",
-  row(mk(K("masterTune","Tune",-12,12,0,1,fmtSt)), mk(K("glideTime","Glide",0,5,0.05,0.5,v=>v.toFixed(2)+" s"))),
-  row(mk(K("modMix","Mod Mix",0,1,0)), mk(K("drift","Drift",0,1,0.25))),
-  swrow(mk(SW("modOscOn","Osc Mod")), mk(SW("glideOn","Glide")), mk(SW("polyOn","Poly")))
-));
-// Oscillator Bank
-panel.appendChild(section("Oscillator Bank",
+// Two zones: A = sound design (osc/mix/filter/amp+global), B = performance (fx/perform/morph).
+const zoneA=document.createElement("div"); zoneA.className="zone zone-a"; zoneA.dataset.z="SOUND";
+const zoneB=document.createElement("div"); zoneB.className="zone zone-b"; zoneB.dataset.z="PERFORM";
+const sub=t=>{const d=document.createElement("div");d.className="subhdr";d.textContent=t;return d;};
+
+// ===== ZONE A — SOUND DESIGN =====
+zoneA.appendChild(section("Oscillator Bank",
   oscRow(1,"osc1Wave","osc1Range",null),
   oscRow(2,"osc2Wave","osc2Range","osc2Detune"),
   (()=>{const r=oscRow(3,"osc3Wave","osc3Range","osc3Detune");r.appendChild(mk(SW("osc3Kb","Kbd")));return r;})()
 ));
-// Mixer
-panel.appendChild(section("Mixer",
+zoneA.appendChild(section("Mixer",
   mixCh("Osc 1","mixOsc1Vol","mixOsc1On"),
   mixCh("Osc 2","mixOsc2Vol","mixOsc2On"),
   mixCh("Osc 3","mixOsc3Vol","mixOsc3On"),
@@ -23543,23 +23552,26 @@ async function loadUserSample(file){
     allControls.forEach(c=>c._render&&c._render());
   }catch(e){ alert("No se pudo decodificar el audio: "+e); }
 }
-// Modifiers
-panel.appendChild(section("Modifiers",
+zoneA.appendChild(section("Filter",
   row(mk(K("filterCutoff","Cutoff",20,20000,12000,1000,fmtHz)), mk(K("filterReso","Emphasis",0,1,0.1)), mk(K("filterEnv","Contour",0,1,0.5))),
   row(mk(CM("filterKeyTrack","Kbd",KEYTRK)), mk(K("filterDrive","Drive",0,1,0)), mk(K("bassThin","Bass",0,1,0.3)), mk(SW("modFilterOn","Flt Mod"))),
   row(mk(K("filterAttack","Attack",1,10000,20,200,fmtMs)), mk(K("filterDecay","Decay",4,35000,400,600,fmtMs)), mk(K("filterSustain","Sustain",0,1,0.4)), mk(K("filterRelease","Release",1,10000,200,200,fmtMs)))
 ));
-// Output
-panel.appendChild(section("Output",
-  row(mk(K("masterVolume","Volume",0,1,0.8))),
-  row(mk(K("ampAttack","Attack",1,10000,10,200,fmtMs)), mk(K("ampDecay","Decay",4,35000,400,600,fmtMs))),
-  row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs)))
+// Amp & Global — master volume + amp env, plus tuning/glide/mod/drift + switches.
+zoneA.appendChild(section("Amp & Global",
+  sub("Amp"),
+  row(mk(K("masterVolume","Volume",0,1,0.8)), mk(K("ampAttack","Attack",1,10000,10,200,fmtMs)), mk(K("ampDecay","Decay",4,35000,400,600,fmtMs))),
+  row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs))),
+  sub("Global"),
+  row(mk(K("masterTune","Tune",-12,12,0,1,fmtSt)), mk(K("glideTime","Glide",0,5,0.05,0.5,v=>v.toFixed(2)+" s")), mk(K("modMix","Mod Mix",0,1,0)), mk(K("drift","Drift",0,1,0.25))),
+  swrow(mk(SW("modOscOn","Osc Mod")), mk(SW("glideOn","Glide")), mk(SW("polyOn","Poly")))
 ));
-// FX rack — two columns (switch + amount per unit) so the bay is dense, not a
-// tall single stack; Delay (mix+time) + FX RANDOM span the full width.
+
+// ===== ZONE B — PERFORMANCE =====
+// FX rack — two columns (switch + amount per unit).
 const fxUnit=(lab,onId,amtId,cap)=>{const d=document.createElement("div");d.className="fxu";
   d.appendChild(mk(SW(onId,lab,"blue")));d.appendChild(mk(K(amtId,cap||"Amt",0,1,0.35)));return d;};
-panel.appendChild(section("FX",
+zoneB.appendChild(section("FX",
   row(fxUnit("Drive","fxDriveOn","fxDrive","Drive"), fxUnit("Chorus","fxChorusOn","fxChorus","Depth")),
   row(fxUnit("Phaser","fxPhaserOn","fxPhaser","Amt"), fxUnit("Crush","fxCrushOn","fxCrush","Amt")),
   row(fxUnit("Tone","fxToneOn","fxTone","Tone"), fxUnit("Reverb","fxReverbOn","fxReverbMix","Mix")),
@@ -23578,13 +23590,18 @@ function randomizeFX(){
   P.fxReverbOn=ch(0.6);P.fxReverbMix=rr(0.15,0.5);
   allControls.forEach(c=>c._render&&c._render());
 }
-// Perform — chord + arpeggiator + randomize (the LEADR-style performance bay)
 const performSect=section("Perform",
   row(mk(CM("chordType","Chord",CHORD_NAMES,true))),
   row(mk(SW("arpOn","Arp","blue")), mk(CM("arpRate","Rate",ARP_RATE_NAMES)), mk(CM("arpMode","Mode",ARP_MODES,true))),
   row(mk(CM("arpOct","Oct",ARP_OCTS)), mk(K("arpGate","Gate",0,1,0.6)), mk(K("arpBpm","BPM",40,240,120,1,v=>Math.round(v)+"")))
 );
-panel.appendChild(performSect);
+zoneB.appendChild(performSect);
+// Morph / Idea gets its own bay in zone B (filled by the fold-in IIFE below).
+const morphSect=section("Morph / Idea");
+zoneB.appendChild(morphSect);
+
+panel.appendChild(zoneA);
+panel.appendChild(zoneB);
 // make knob-band-ish rows fixed height for alignment
 document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="50px";r.style.alignItems="center";});
 
@@ -23799,12 +23816,10 @@ function idea(){
   }
   allControls.forEach(c=>c._render&&c._render());
 }
-// Fold the Morph pad + IDEA into the existing Perform section (avoids adding an
-// 8th flex column, which would over-compress the panel). Added here so the
-// DEFAULTS/LIBS the morph slots depend on already exist.
+// Fill the Morph / Idea bay (zone B) — placed here so the DEFAULTS/LIBS/morphSlots
+// the pad depends on already exist.
 (function(){
-  const pb=performSect.querySelector(".body"), h=performSect.querySelector("h2");
-  if(h)h.textContent="Perform / Morph";
+  const pb=morphSect.querySelector(".body");
   pb.appendChild(row(buildMorphPad()));
   pb.appendChild(row(setBtn("A",0), setBtn("B",1), setBtn("C",2), setBtn("D",3)));
   pb.appendChild(row(btn("IDEA", ()=>idea()), btn("RANDOM", ()=>randomize())));
@@ -24063,7 +24078,7 @@ requestAnimationFrame(vu);
 // Fixed aspect locks. The stage scales uniformly to fit, so only the aspect
 // matters — every canvas is 1000 tall so the dense panel always fits (the old
 // short heights, 720/660, clipped the panel under the keyboard).
-const RES=[{n:"Auto · pantalla completa",auto:true},{n:"21:9",w:1980,h:850},{n:"16:9",w:1512,h:850},{n:"Ancho",w:1658,h:850}];
+const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9",w:2130,h:1200},{n:"16:10",w:1920,h:1200},{n:"3:2",w:1800,h:1200}];
 let resIdx=0;const stageEl=document.getElementById("stage");
 // Auto mode derives the design-canvas aspect from the actual screen so the
 // (uniformly scaled) stage fills it edge-to-edge — no letterbox, no distortion.
@@ -24071,7 +24086,7 @@ function dims(){
   const r=RES[resIdx];
   if(!r.auto)return {w:r.w,h:r.h};
   const long=Math.max(window.innerWidth,window.innerHeight),short=Math.min(window.innerWidth,window.innerHeight);
-  const A=Math.min(2.5,Math.max(1.95,long/short)),h=850;
+  const A=Math.min(2.0,Math.max(1.45,long/short)),h=1200;
   return {w:Math.round(h*A),h};
 }
 function setScale(){
