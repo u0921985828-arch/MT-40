@@ -50,6 +50,8 @@ namespace phenotype::dsp
         void setCaudal (float caudal01) noexcept
         {
             caudal01 = clamp01 (caudal01);
+            if (caudal01 == lastCaudal) return;   // skip per-block re-solve of tau
+            lastCaudal = caudal01;
             //  High flow -> short fill time. Invert so 1.0 = fastest.
             tauAbsorb = mapTau (1.0f - caudal01);
             dirty = true;
@@ -58,6 +60,8 @@ namespace phenotype::dsp
         void setDensidadSuelo (float density01) noexcept
         {
             density01 = clamp01 (density01);
+            if (density01 == lastDensity) return;
+            lastDensity = density01;
             //  Dense soil -> slow drainage (long tau). 1.0 = slowest.
             tauDrain = mapTau (density01);
             dirty = true;
@@ -66,7 +70,10 @@ namespace phenotype::dsp
         //  Capacity of the substrate before it tips into drainage (0.5 .. 1.0).
         void setSaturation (float saturation01) noexcept
         {
-            capacity = 0.5f + 0.5f * clamp01 (saturation01);
+            saturation01 = clamp01 (saturation01);
+            if (saturation01 == lastSaturation) return;
+            lastSaturation = saturation01;
+            capacity = 0.5f + 0.5f * saturation01;
             dirty = true;
         }
 
@@ -143,5 +150,10 @@ namespace phenotype::dsp
         float  level       = 0.0f;
         bool   dirty       = true;
         Phase  phase       = Phase::Absorption;
+
+        //  Change-detection sentinels (-1 forces the first setter to apply).
+        float  lastCaudal     = -1.0f;
+        float  lastDensity    = -1.0f;
+        float  lastSaturation = -1.0f;
     };
 }

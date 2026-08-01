@@ -18,6 +18,7 @@ namespace phenotype::dsp
         sourceB.assign (static_cast<size_t> (sourceLen), 0.0f);
 
         modulator.prepare (newSampleRate);
+        gainPole = fastmath::onePoleCoeff (0.005f, newSampleRate);  // ~5 ms de-zip
         reset();
     }
 
@@ -25,6 +26,7 @@ namespace phenotype::dsp
     {
         writeHead      = 0;
         grainClock     = 0.0f;
+        smoothedGain   = 0.0f;
         liveGrainCount = 0;
         modulator.reset();
         for (auto& g : grains)
@@ -147,9 +149,10 @@ namespace phenotype::dsp
             }
             liveGrainCount = live;
 
-            const float gain = p.outputGain;
-            if (outL) outL[n] = fastmath::softClip (accL * gain);
-            if (outR) outR[n] = fastmath::softClip (accR * gain);
+            //  Per-sample gain smoothing removes zipper noise on automation.
+            smoothedGain = p.outputGain + (smoothedGain - p.outputGain) * gainPole;
+            if (outL) outL[n] = fastmath::softClip (accL * smoothedGain);
+            if (outR) outR[n] = fastmath::softClip (accR * smoothedGain);
         }
     }
 }

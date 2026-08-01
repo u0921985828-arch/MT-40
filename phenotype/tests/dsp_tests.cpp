@@ -65,6 +65,18 @@ static void testEqualPower()
     check (minSum > 0.95 && maxSum < 1.05, "equal-power gains preserve energy (~1)");
 }
 
+static void testOnePoleRamp()
+{
+    std::printf ("one-pole smoothing:\n");
+    const float g = fastmath::onePoleCoeff (0.005f, 48000.0);   // 5 ms, 240 samples
+    float y = 0.0f;
+    for (int i = 0; i < 240; ++i)                                // one time constant
+        y = 1.0f + (y - 1.0f) * g;
+    std::printf ("  level after 1 tau = %.4f (expect ~0.632)\n", y);
+    check (y > 0.60f && y < 0.66f, "one-pole reaches ~63% after one time constant");
+    check (g > 0.0f && g < 1.0f, "one-pole coeff is a stable pole in (0,1)");
+}
+
 static void testCapillaryCycle()
 {
     std::printf ("capillary:\n");
@@ -139,6 +151,7 @@ int main()
     std::printf ("== Phenotype DSP tests ==\n");
     testFastExp();
     testEqualPower();
+    testOnePoleRamp();
     testCapillaryCycle();
     testGranularFiniteAllocFree();
 
