@@ -419,10 +419,18 @@
     grid-template-columns:1.6fr 3.4fr 3.0fr 3.5fr 1.6fr 2.5fr 2.6fr;
     grid-template-rows:1fr; align-items:stretch; }
   .sect{ flex:initial; min-width:0; max-width:none; }
-  .sect .body{ min-width:0; width:100%; gap:14px; justify-content:flex-start; padding:12px 0 4px; }
+  .sect .body{ min-width:0; width:100%; gap:14px; justify-content:space-between; padding:12px 0 8px; }
   /* FX: two switch+knob units per row */
   .fxu{ display:flex; align-items:center; justify-content:center; gap:8px; min-width:0; }
   #panel .row > .fxu{ flex:1 1 0; }
+  /* Header: three balanced zones (logo · preset/res · meters) across full width */
+  header{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; padding:6px 14px; }
+  header .hz{ display:flex; align-items:center; gap:8px; }
+  header .hz.left{ justify-self:start; gap:10px; }
+  header .hz.center{ justify-self:center; }
+  header .hz.right{ justify-self:end; }
+  #res{ min-width:140px; } #preset{ min-width:210px; }
+  .disp{ height:56px; }
   /* Oscillator rows: Range | Tune | Wave | (Kbd) alineados y contenidos */
   .osc{ display:grid; align-items:center; width:100%; padding-left:0;
     grid-template-columns:14px minmax(0,0.9fr) 50px minmax(0,1.5fr) 42px; gap:6px; }
@@ -451,15 +459,17 @@
 
 <div id="stage">
 <header>
-  <div>
+  <div class="hz left">
     <div class="logo">MoogVA</div>
     <div class="model">MODEL VA</div>
   </div>
-  <div class="right">
-    <div class="dd preset-dd" id="res" title="Resolución"></div>
+  <div class="hz center">
     <div class="dd preset-dd" id="preset"></div>
-    <div class="disp"><canvas id="scope" width="176" height="44"></canvas><span class="dlab">SCOPE</span></div>
-    <div class="disp"><canvas id="spectrum" width="176" height="44"></canvas><span class="dlab">SPECTRUM</span></div>
+    <div class="dd preset-dd" id="res" title="Resolución"></div>
+  </div>
+  <div class="hz right">
+    <div class="disp"><canvas id="scope" width="240" height="48"></canvas><span class="dlab">SCOPE</span></div>
+    <div class="disp"><canvas id="spectrum" width="240" height="48"></canvas><span class="dlab">SPECTRUM</span></div>
     <div class="disp vudisp"><div class="vu"><i><b id="vuL"></b><u id="vuLp"></u></i><i><b id="vuR"></b><u id="vuRp"></u></i></div><span class="dlab">OUT</span></div>
   </div>
 </header>
@@ -23576,7 +23586,7 @@ const performSect=section("Perform",
 );
 panel.appendChild(performSect);
 // make knob-band-ish rows fixed height for alignment
-document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
+document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="50px";r.style.alignItems="center";});
 
 //====================================================================
 // PERFORMER: chord expansion + arpeggiator on top of the sound engine
@@ -23702,7 +23712,7 @@ function morph(x,y){
 }
 function buildMorphPad(){
   const wrap=document.createElement("div");
-  wrap.style.cssText="position:relative;width:104px;max-width:100%;aspect-ratio:1;border-radius:8px;cursor:crosshair;touch-action:none;"
+  wrap.style.cssText="position:relative;width:84px;max-width:100%;aspect-ratio:1;border-radius:8px;cursor:crosshair;touch-action:none;"
     +"background:linear-gradient(135deg,rgba(0,230,216,.10),rgba(0,0,0,.25)),"
     +"radial-gradient(circle at 0 0,rgba(0,230,216,.28),transparent 62%),"
     +"radial-gradient(circle at 100% 100%,rgba(255,45,120,.24),transparent 62%);"
@@ -23799,7 +23809,7 @@ function idea(){
   pb.appendChild(row(setBtn("A",0), setBtn("B",1), setBtn("C",2), setBtn("D",3)));
   pb.appendChild(row(btn("IDEA", ()=>idea()), btn("RANDOM", ()=>randomize())));
 })();
-document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
+document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="50px";r.style.alignItems="center";});
 
 // Nested preset browser: library -> category folders -> presets (flyout).
 // A node is either a leaf {label,value} or a folder {label, folders?, items?}.
