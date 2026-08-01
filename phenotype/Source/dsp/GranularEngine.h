@@ -61,6 +61,10 @@ namespace phenotype::dsp
         void allNotesOff() noexcept;
         [[nodiscard]] int activeVoices() const noexcept;
 
+        //  Arpeggiator: when enabled, held notes are sequenced (up) at rateHz
+        //  instead of sounding as a chord.
+        void setArp (bool enabled, float rateHz) noexcept;
+
         //  Global pitch bend (semitones) and portamento (seconds, 0 = off).
         void setPitchBend (float semitones) noexcept
         {
@@ -98,6 +102,11 @@ namespace phenotype::dsp
         void  advanceVoices() noexcept;              // per-sample envelope integration
         int   pickVoice() noexcept;                  // round-robin over sounding voices
         int   allocateVoice (int note) noexcept;     // free slot, else steal
+        void  triggerVoice (int note, float vel) noexcept;  // sound a note now
+        void  releaseVoice (int note) noexcept;             // release a sounding note
+        void  arpAddHeld (int note, float vel) noexcept;
+        void  arpRemoveHeld (int note) noexcept;
+        void  arpStep() noexcept;
 
         //  Fast, deterministic, allocation-free RNG (xorshift32) for spray.
         [[nodiscard]] float nextRandom() noexcept
@@ -121,7 +130,18 @@ namespace phenotype::dsp
         CapillaryModulator modulator;
         ParameterHub       hub;
 
+        static constexpr int kMaxHeld = 32;
+
         MelodyVoice voices[kMaxVoices];
+        int      heldNote[kMaxHeld] {};
+        float    heldVel[kMaxHeld]  {};
+        int      heldCount     = 0;
+        bool     arpEnabled    = false;
+        float    arpRateHz     = 8.0f;
+        float    arpClock      = 0.0f;
+        int      arpIndex      = 0;
+        int      arpCurrentNote = -1;
+
         bool     instrumentMode = false;
         float    attackCoeff  = 0.0f; // one-pole attack pole
         float    releaseCoeff = 0.0f; // one-pole release pole

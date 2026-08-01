@@ -40,6 +40,13 @@ const RACK: { title: string; controls: ControlDef[] }[] = [
       { id: "outputGain", label: "Salida" },
     ],
   },
+  {
+    title: "Arpeggiator",
+    controls: [
+      { id: "arpOn", label: "Arpegiador" },
+      { id: "arpRate", label: "Velocidad" },
+    ],
+  },
 ];
 
 function Slider({ def }: { def: ControlDef }) {

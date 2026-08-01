@@ -33,6 +33,10 @@ namespace phenotype::dsp
         smoothedGain   = 0.0f;
         liveGrainCount = 0;
         voiceRR        = 0;
+        heldCount      = 0;
+        arpClock       = 0.0f;
+        arpIndex       = 0;
+        arpCurrentNote = -1;
         modulator.reset();
         for (auto& g : grains)
             g.active = false;
@@ -179,7 +183,7 @@ namespace phenotype::dsp
         return freeSlot >= 0 ? freeSlot : steal;
     }
 
-    void GranularEngine::noteOn (int midiNote, float velocity) noexcept
+    void GranularEngine::triggerVoice (int midiNote, float velocity) noexcept
     {
         auto& v = voices[(size_t) allocateVoice (midiNote)];
         const bool wasFree = (v.note < 0);
@@ -191,17 +195,100 @@ namespace phenotype::dsp
         v.gate  = true;             // env ramps up from its current level (click-free on steal)
     }
 
-    void GranularEngine::noteOff (int midiNote) noexcept
+    void GranularEngine::releaseVoice (int midiNote) noexcept
     {
         for (auto& v : voices)
             if (v.note == midiNote)
                 v.gate = false;   // enter release
     }
 
+    void GranularEngine::noteOn (int midiNote, float velocity) noexcept
+    {
+        if (arpEnabled) { arpAddHeld (midiNote, velocity); return; }
+        triggerVoice (midiNote, velocity);
+    }
+
+    void GranularEngine::noteOff (int midiNote) noexcept
+    {
+        if (arpEnabled) { arpRemoveHeld (midiNote); return; }
+        releaseVoice (midiNote);
+    }
+
     void GranularEngine::allNotesOff() noexcept
     {
+        heldCount = 0;
+        arpCurrentNote = -1;
         for (auto& v : voices)
             v.gate = false;
+    }
+
+    //==========================================================================
+    //  Arpeggiator
+    //==========================================================================
+    void GranularEngine::setArp (bool enabled, float rateHz) noexcept
+    {
+        if (! enabled && arpEnabled && arpCurrentNote >= 0)
+        {
+            releaseVoice (arpCurrentNote);   // silence the running step on disable
+            arpCurrentNote = -1;
+        }
+        arpEnabled = enabled;
+        arpRateHz  = rateHz < 0.1f ? 0.1f : rateHz;
+    }
+
+    void GranularEngine::arpAddHeld (int note, float vel) noexcept
+    {
+        for (int i = 0; i < heldCount; ++i)
+            if (heldNote[i] == note) { heldVel[i] = vel; return; }   // already held
+        if (heldCount >= kMaxHeld)
+            return;
+        //  Sorted ascending insert (up pattern).
+        int pos = heldCount;
+        while (pos > 0 && heldNote[pos - 1] > note)
+        {
+            heldNote[pos] = heldNote[pos - 1];
+            heldVel[pos]  = heldVel[pos - 1];
+            --pos;
+        }
+        heldNote[pos] = note;
+        heldVel[pos]  = vel;
+        ++heldCount;
+    }
+
+    void GranularEngine::arpRemoveHeld (int note) noexcept
+    {
+        for (int i = 0; i < heldCount; ++i)
+        {
+            if (heldNote[i] == note)
+            {
+                for (int j = i; j < heldCount - 1; ++j)
+                {
+                    heldNote[j] = heldNote[j + 1];
+                    heldVel[j]  = heldVel[j + 1];
+                }
+                --heldCount;
+                return;
+            }
+        }
+    }
+
+    void GranularEngine::arpStep() noexcept
+    {
+        if (arpCurrentNote >= 0)
+        {
+            releaseVoice (arpCurrentNote);
+            arpCurrentNote = -1;
+        }
+        if (heldCount <= 0)
+            return;
+
+        if (arpIndex >= heldCount)
+            arpIndex = 0;
+        const int   note = heldNote[arpIndex];
+        const float vel  = heldVel[arpIndex];
+        triggerVoice (note, vel);
+        arpCurrentNote = note;
+        arpIndex = (arpIndex + 1) % heldCount;
     }
 
     int GranularEngine::activeVoices() const noexcept
@@ -224,6 +311,10 @@ namespace phenotype::dsp
         modulator.setDensidadSuelo (p.soilDensity);
         modulator.setSaturation    (p.saturation);
 
+        //  Arpeggiator control (rate 0..1 -> 0.5 .. 20 Hz).
+        if (instrumentMode)
+            setArp (p.arpOn > 0.5f, 0.5f + p.arpRate * 19.5f);
+
         //  Grains-per-second from density (2 .. 200 gr/s).
         const float grainsPerSec = 2.0f + p.grainDensity * 198.0f;
         const float spawnPeriod  = static_cast<float> (sampleRate) / grainsPerSec;
@@ -241,6 +332,17 @@ namespace phenotype::dsp
             else
             {
                 advanceVoices();
+
+                //  Arpeggiator clock: sequence held notes at arpRateHz.
+                if (arpEnabled)
+                {
+                    arpClock -= 1.0f;
+                    if (arpClock <= 0.0f)
+                    {
+                        arpStep();
+                        arpClock += static_cast<float> (sampleRate) / arpRateHz;
+                    }
+                }
             }
 
             //  2) Advance the non-linear modulator.

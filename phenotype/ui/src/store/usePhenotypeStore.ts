@@ -25,6 +25,8 @@ export interface ParamState {
   crossBlend: number;
   modDepth: number;
   outputGain: number;
+  arpOn: number;
+  arpRate: number;
 }
 
 export type ParamId = keyof ParamState;
@@ -42,6 +44,8 @@ const DEFAULT_PARAMS: ParamState = {
   crossBlend: 0.5,
   modDepth: 0.5,
   outputGain: 0.8,
+  arpOn: 0.0,
+  arpRate: 0.4,
 };
 
 // --- Transient telemetry buffer (mutable, non-reactive) ---------------------

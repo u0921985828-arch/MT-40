@@ -265,6 +265,60 @@ static void testPitchAndBend()
     eng.allNotesOff();
 }
 
+static void testArpeggiator()
+{
+    std::printf ("arpeggiator:\n");
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+    eng.setInstrumentMode (true);
+    eng.params().set ("grainDensity", 0.9f);
+    eng.params().set ("grainSize", 0.4f);
+    eng.params().set ("spray", 0.0f);
+    eng.params().set ("outputGain", 0.8f);
+    eng.params().set ("arpOn", 1.0f);
+    eng.params().set ("arpRate", 0.8f);   // fast
+
+    constexpr int N = 512;
+
+    //  Hold a triad; the arp should sequence it (mono-ish), producing sound and
+    //  changing pitch across steps rather than a static chord.
+    eng.noteOn (60, 1.0f);
+    eng.noteOn (64, 1.0f);
+    eng.noteOn (67, 1.0f);
+
+    std::vector<float> outL ((size_t) N), outR ((size_t) N);
+    float peak = 0.0f; bool finite = true;
+    int   maxSounding = 0;
+    long  crossings = 0, total = 0; float prev = 0.0f;
+    for (int b = 0; b < 120; ++b)
+    {
+        eng.process (nullptr, nullptr, outL.data(), outR.data(), N);
+        maxSounding = std::max (maxSounding, eng.activeVoices());
+        for (int n = 0; n < N; ++n)
+        {
+            const float s = outL[(size_t) n];
+            if (! std::isfinite (s)) finite = false;
+            peak = std::max (peak, std::fabs (s));
+            if ((prev <= 0.0f && s > 0.0f)) ++crossings;
+            prev = s; ++total;
+        }
+    }
+    std::printf ("  peak=%.3f finite=%d maxVoices=%d\n", peak, (int) finite, maxSounding);
+    check (finite, "arp output is finite");
+    check (peak > 1.0e-2f, "arp produces sound from held notes");
+    check (peak <= 1.0f + 1e-4f, "arp master stays within [-1,1]");
+    check (maxSounding <= 3, "arp is broadly monophonic (steps, not a chord)");
+    check (crossings > 0, "arp output is tonal");
+
+    //  Releasing all held notes silences the arp within a step + release.
+    eng.allNotesOff();
+    float tail = 0.0f; bool tf = true;
+    renderBlocks (eng, 120, N, tail, tf);
+    renderBlocks (eng, 20,  N, tail, tf);
+    std::printf ("  post-release tail=%.5f\n", tail);
+    check (tail < 1.0e-2f, "arp stops when notes released");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -275,6 +329,7 @@ int main()
     testGranularFiniteAllocFree();
     testMelodicInstrument();
     testPitchAndBend();
+    testArpeggiator();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;

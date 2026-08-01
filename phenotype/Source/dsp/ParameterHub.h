@@ -29,6 +29,8 @@ namespace phenotype::dsp
         float crossBlend    = 0.5f;   // A/B genotype mix
         float modDepth      = 0.5f;   // capillary -> position/blend depth
         float outputGain    = 0.8f;
+        float arpOn         = 0.0f;   // arpeggiator enable (>0.5)
+        float arpRate       = 0.4f;   // arpeggiator rate (normalised)
     };
 
     class ParameterHub
@@ -52,6 +54,8 @@ namespace phenotype::dsp
             else if (match (id, "crossBlend"))   crossBlend.store   (value, rel);
             else if (match (id, "modDepth"))     modDepth.store     (value, rel);
             else if (match (id, "outputGain"))   outputGain.store   (value, rel);
+            else if (match (id, "arpOn"))        arpOn.store        (value, rel);
+            else if (match (id, "arpRate"))      arpRate.store      (value, rel);
         }
 
         //  --- audio thread reader ---------------------------------------------
@@ -70,6 +74,8 @@ namespace phenotype::dsp
             s.crossBlend   = crossBlend.load   (acq);
             s.modDepth     = modDepth.load     (acq);
             s.outputGain   = outputGain.load   (acq);
+            s.arpOn        = arpOn.load        (acq);
+            s.arpRate      = arpRate.load      (acq);
             return s;
         }
 
@@ -95,5 +101,7 @@ namespace phenotype::dsp
         std::atomic<float> crossBlend   { 0.5f };
         std::atomic<float> modDepth     { 0.5f };
         std::atomic<float> outputGain   { 0.8f };
+        std::atomic<float> arpOn        { 0.0f };
+        std::atomic<float> arpRate      { 0.4f };
     };
 }
