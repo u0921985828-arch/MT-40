@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Phenotype — C40 aesthetic. Flat #F4F4F4 field, ink text, chlorophyll +
+   LED-magenta accents. Monospace/technical, dense, high-contrast.
+   ========================================================================== */
+
+:root {
+  --bg: #f4f4f4;
+  --ink: #222222;
+  --chlorophyll: #00ff00;
+  --magenta: #ff00ff;
+  --hair: #d8d8d8;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ph-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ph-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.ph-header h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.35em;
+  font-weight: 700;
+}
+
+.ph-status {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.8;
+}
+
+.ph-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--hair);
+  border: 1px solid var(--ink);
+}
+
+.ph-dot--live {
+  background: var(--chlorophyll);
+  box-shadow: 0 0 8px var(--chlorophyll);
+}
+
+.ph-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  min-height: 0;
+}
+
+.ph-viewport {
+  position: relative;
+  min-width: 0;
+  border-right: 2px solid var(--ink);
+}
+
+.ph-viewport canvas {
+  display: block;
+}
+
+.ph-rack {
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ph-group {
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 12px 12px 14px;
+  margin: 0;
+}
+
+.ph-group legend {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.ph-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 8px;
+  margin: 10px 0;
+}
+
+.ph-slider__label {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+.ph-slider input[type="range"] {
+  width: 100%;
+  height: 3px;
+  background: var(--hair);
+  cursor: pointer;
+}
+
+.ph-slider__value {
+  font-size: 11px;
+  min-width: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
