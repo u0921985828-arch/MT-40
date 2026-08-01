@@ -34,7 +34,7 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
     const energy = fft[bin] ?? 0;
     const mesh = meshRef.current;
     if (!mesh) return;
-    const s = 0.28 + energy * 0.55;
+    const s = 0.18 + energy * 0.4;
     mesh.scale.setScalar(s);
     const mat = mesh.material as THREE.MeshStandardMaterial;
     mat.emissiveIntensity = 0.3 + energy * 2.5;
@@ -61,11 +61,11 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
 export function NodeGraph() {
   const nodes = useMemo<NodeDef[]>(() => {
     const out: NodeDef[] = [];
-    const radius = 3.2;
+    const radius = 4.3;
     for (let i = 0; i < NODE_COUNT; i++) {
       const a = (i / NODE_COUNT) * Math.PI * 2;
       out.push({
-        position: new THREE.Vector3(Math.cos(a) * radius, 0.4, Math.sin(a) * radius),
+        position: new THREE.Vector3(Math.cos(a) * radius, 0.1, Math.sin(a) * radius),
         band: i / NODE_COUNT,
         chromosome: (i % 2) as 0 | 1,
       });
