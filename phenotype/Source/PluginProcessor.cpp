@@ -16,6 +16,10 @@ namespace phenotype
         //  Resolve raw atomic pointers once (audio thread reads these directly).
         for (size_t i = 0; i < params::kDefs.size(); ++i)
             rawParams[i] = apvts.getRawParameterValue (params::kDefs[i].id);
+
+        //  Phenotype is a MIDI-driven granular instrument: granulate the internal
+        //  wavetable genome per note rather than live input.
+        granular.setInstrumentMode (true);
     }
 
     void PhenotypeAudioProcessor::syncParametersToEngine() noexcept
@@ -44,7 +48,7 @@ namespace phenotype
     }
 
     void PhenotypeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-                                                juce::MidiBuffer&)
+                                                juce::MidiBuffer& midi)
     {
         juce::ScopedNoDenormals noDenormals;
 
@@ -57,8 +61,26 @@ namespace phenotype
         //  Pull host/UI parameter state into the lock-free engine hub.
         syncParametersToEngine();
 
-        //  Granular cross-synthesis in place (allocation-free).
-        granular.process (left, right, left, right, numSamples);
+        //  Sample-accurate MIDI: render the granular cloud in segments split at
+        //  each event so note timing is not quantised to the block boundary.
+        int pos = 0;
+        for (const auto meta : midi)
+        {
+            const int ts = juce::jlimit (0, numSamples, meta.samplePosition);
+            if (ts > pos)
+            {
+                granular.process (left + pos, right + pos, left + pos, right + pos, ts - pos);
+                pos = ts;
+            }
+
+            const auto m = meta.getMessage();
+            if (m.isNoteOn())            granular.noteOn  (m.getNoteNumber(), m.getFloatVelocity());
+            else if (m.isNoteOff())      granular.noteOff (m.getNoteNumber());
+            else if (m.isAllNotesOff()
+                  || m.isAllSoundOff())  granular.allNotesOff();
+        }
+        if (pos < numSamples)
+            granular.process (left + pos, right + pos, left + pos, right + pos, numSamples - pos);
 
         //  Feed a mono sum into the analysis FIFO for the UI spectrum.
         for (int n = 0; n < numSamples; ++n)

@@ -63,6 +63,21 @@ cmake --build build --parallel
 Pass `-DJUCE_DIR=/path/to/JUCE` to reuse a local JUCE 8 checkout instead of the
 `FetchContent` download. Formats produced: VST3, AU (macOS), Standalone.
 
+## Melodic instrument mode
+
+Phenotype runs as a MIDI-driven granular **instrument**: instead of granulating
+live input, it granulates an internal band-limited wavetable genome (saw on
+chromosome A, square on B, rooted at C4) under note control. Each held MIDI note
+is a polyphonic voice (up to 16) with a gated attack/release envelope; grains
+inherit the note's pitch ratio (`2^((note-60)/12)`) and amplitude, so playing the
+keyboard sequences melodies from the granular cloud. MIDI is handled
+sample-accurately (the block is split at each event). The `pitchA`/`pitchB` knobs
+act as per-chromosome detune around the played note.
+
+The engine still supports the original **effect** path
+(`setInstrumentMode(false)` → granulate live stereo input); the processor selects
+instrument mode.
+
 ## Parameters & automation
 
 All 12 controls are defined once in `Source/Parameters.h` and exposed through a

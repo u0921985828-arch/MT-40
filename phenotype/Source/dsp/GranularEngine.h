@@ -28,9 +28,11 @@ namespace phenotype::dsp
     {
     public:
         static constexpr int   kMaxGrains        = 128;
-        static constexpr float kSourceSeconds    = 4.0f;   // capture window
+        static constexpr int   kMaxVoices        = 16;
+        static constexpr float kSourceSeconds    = 4.0f;   // capture / genome window
         static constexpr float kMinGrainMs       = 8.0f;
         static constexpr float kMaxGrainMs       = 400.0f;
+        static constexpr float kGenomeHz         = 261.6256f; // C4 -> note 60 == ratio 1
 
         GranularEngine() = default;
 
@@ -39,12 +41,25 @@ namespace phenotype::dsp
 
         void reset() noexcept;
 
-        //  Real-time entry point. Reads `numSamples` of stereo input from
-        //  (inL,inR), writes the granulated cross-synthesis to (outL,outR).
-        //  Buffers may alias in place. Allocation-free.
+        //  Real-time entry point. In effect mode reads `numSamples` of stereo
+        //  input from (inL,inR) as the genome; in instrument mode the input is
+        //  ignored and the internal wavetable genome is granulated per note.
+        //  Writes the granulated cross-synthesis to (outL,outR). Buffers may
+        //  alias in place. Allocation-free.
         void process (const float* inL, const float* inR,
                       float* outL, float* outR,
                       int numSamples) noexcept;
+
+        //  --- Melodic (instrument) interface ----------------------------------
+        //  Switches between granulating live input (effect) and granulating the
+        //  internal wavetable genome under MIDI control (instrument).
+        void setInstrumentMode (bool shouldBeInstrument) noexcept { instrumentMode = shouldBeInstrument; }
+        [[nodiscard]] bool isInstrumentMode() const noexcept { return instrumentMode; }
+
+        void noteOn  (int midiNote, float velocity) noexcept;
+        void noteOff (int midiNote) noexcept;
+        void allNotesOff() noexcept;
+        [[nodiscard]] int activeVoices() const noexcept;
 
         //  Bridge to the shared atomic parameter store.
         ParameterHub& params() noexcept { return hub; }
@@ -54,8 +69,24 @@ namespace phenotype::dsp
         [[nodiscard]] int   activeGrains()   const noexcept { return liveGrainCount; }
 
     private:
-        int   spawnGrain (const ParameterSnapshot& p, float modValue) noexcept;
+        //  One held note. Pitch is baked as a playback ratio relative to the
+        //  genome's root; amplitude follows a gated attack/release envelope.
+        struct MelodyVoice
+        {
+            int   note  = -1;      // -1 == free
+            float ratio = 1.0f;    // 2^((note-60)/12)
+            float vel   = 0.0f;    // 0..1
+            float env   = 0.0f;    // current envelope level
+            bool  gate  = false;   // key held
+        };
+
+        int   spawnGrain (const ParameterSnapshot& p, float modValue,
+                          float pitchMul, float ampMul) noexcept;
         float readSource (const std::vector<float>& buf, float pos) const noexcept;
+        void  fillGenome() noexcept;                 // band-limited wavetables -> source A/B
+        void  advanceVoices() noexcept;              // per-sample envelope integration
+        int   pickVoice() noexcept;                  // round-robin over sounding voices
+        int   allocateVoice (int note) noexcept;     // free slot, else steal
 
         //  Fast, deterministic, allocation-free RNG (xorshift32) for spray.
         [[nodiscard]] float nextRandom() noexcept
@@ -78,6 +109,12 @@ namespace phenotype::dsp
 
         CapillaryModulator modulator;
         ParameterHub       hub;
+
+        MelodyVoice voices[kMaxVoices];
+        bool     instrumentMode = false;
+        float    attackCoeff  = 0.0f; // one-pole attack pole
+        float    releaseCoeff = 0.0f; // one-pole release pole
+        int      voiceRR      = 0;    // round-robin cursor for grain assignment
 
         float    grainClock   = 0.0f; // fractional samples until next spawn
         float    smoothedGain = 0.0f; // de-zippered master gain

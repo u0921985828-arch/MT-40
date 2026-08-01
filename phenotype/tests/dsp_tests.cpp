@@ -146,6 +146,69 @@ static void testGranularFiniteAllocFree()
     check (aliasFinite, "granular tolerates in-place (aliased) buffers");
 }
 
+static void renderBlocks (GranularEngine& eng, int blocks, int N,
+                          float& peak, bool& finite)
+{
+    std::vector<float> outL ((size_t) N), outR ((size_t) N);
+    peak = 0.0f; finite = true;
+    for (int b = 0; b < blocks; ++b)
+    {
+        eng.process (nullptr, nullptr, outL.data(), outR.data(), N);
+        for (int n = 0; n < N; ++n)
+        {
+            if (! std::isfinite (outL[(size_t) n]) || ! std::isfinite (outR[(size_t) n]))
+                finite = false;
+            peak = std::max (peak, std::fabs (outL[(size_t) n]));
+        }
+    }
+}
+
+static void testMelodicInstrument()
+{
+    std::printf ("melodic instrument:\n");
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+    eng.setInstrumentMode (true);
+    eng.params().set ("grainDensity", 0.6f);
+    eng.params().set ("grainSize", 0.3f);
+    eng.params().set ("outputGain", 0.8f);
+    eng.params().set ("pitchA", 0.5f);
+    eng.params().set ("pitchB", 0.5f);
+
+    constexpr int N = 512;
+    float peak = 0.0f; bool finite = true;
+
+    //  Silence before any note.
+    renderBlocks (eng, 20, N, peak, finite);
+    check (peak < 1.0e-3f, "instrument is silent with no notes held");
+
+    //  Note on -> sound.
+    eng.noteOn (60, 1.0f);   // C4
+    check (eng.activeVoices() == 1, "noteOn allocates a voice");
+    renderBlocks (eng, 40, N, peak, finite);
+    std::printf ("  held-note peak = %.3f, voices = %d\n", peak, eng.activeVoices());
+    check (finite, "instrument output is finite");
+    check (peak > 1.0e-2f, "held note produces sound");
+    check (peak <= 1.0f + 1e-4f, "instrument master stays within [-1,1]");
+
+    //  A chord adds voices.
+    eng.noteOn (64, 0.9f);   // E4
+    eng.noteOn (67, 0.8f);   // G4
+    check (eng.activeVoices() == 3, "chord allocates three voices");
+
+    //  Note off -> release + grain tail decay. Let it settle, then measure only
+    //  the final window (the release ramp and in-flight grains are loud at first
+    //  and must not count against the silence check).
+    eng.allNotesOff();
+    renderBlocks (eng, 120, N, peak, finite);        // settle past release + grain tail
+    check (eng.activeVoices() == 0, "voices free after release");
+
+    float tailPeak = 0.0f; bool tailFinite = true;
+    renderBlocks (eng, 20, N, tailPeak, tailFinite); // measure the settled tail only
+    std::printf ("  settled tail peak = %.5f, voices = %d\n", tailPeak, eng.activeVoices());
+    check (tailPeak < 1.0e-2f, "output decays to near silence after note off");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -154,6 +217,7 @@ int main()
     testOnePoleRamp();
     testCapillaryCycle();
     testGranularFiniteAllocFree();
+    testMelodicInstrument();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;
