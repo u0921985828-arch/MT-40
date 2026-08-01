@@ -416,12 +416,13 @@
      (osciladores / mixer) usan minmax()+min-width:0 para encajar sin solapes.
      ===================================================================== */
   #panel{ display:grid;
-    grid-template-columns:1.5fr 2.9fr 2.7fr 3.0fr 1.5fr 1.7fr 2.2fr;
+    grid-template-columns:1.6fr 3.4fr 3.0fr 3.5fr 1.6fr 2.5fr 2.6fr;
     grid-template-rows:1fr; align-items:stretch; }
   .sect{ flex:initial; min-width:0; max-width:none; }
-  /* Tighter row rhythm so the tall FX/Perform bays fit the panel height with
-     their name-plate still visible (no clipping). */
-  .sect .body{ min-width:0; width:100%; gap:10px; justify-content:center; }
+  .sect .body{ min-width:0; width:100%; gap:14px; justify-content:flex-start; padding:12px 0 4px; }
+  /* FX: two switch+knob units per row */
+  .fxu{ display:flex; align-items:center; justify-content:center; gap:8px; min-width:0; }
+  #panel .row > .fxu{ flex:1 1 0; }
   /* Oscillator rows: Range | Tune | Wave | (Kbd) alineados y contenidos */
   .osc{ display:grid; align-items:center; width:100%; padding-left:0;
     grid-template-columns:14px minmax(0,0.9fr) 50px minmax(0,1.5fr) 42px; gap:6px; }
@@ -23544,16 +23545,15 @@ panel.appendChild(section("Output",
   row(mk(K("ampAttack","Attack",1,10000,10,200,fmtMs)), mk(K("ampDecay","Decay",4,35000,400,600,fmtMs))),
   row(mk(K("ampSustain","Sustain",0,1,0.8)), mk(K("ampRelease","Release",1,10000,150,200,fmtMs)))
 ));
-// FX rack — drive / chorus / delay / reverb, each switch + amount
-const fxRow=(lab,onId,amtId,amtCap)=>row(mk(SW(onId,lab,"blue")), mk(K(amtId,amtCap||"Amt",0,1,0.35)));
+// FX rack — two columns (switch + amount per unit) so the bay is dense, not a
+// tall single stack; Delay (mix+time) + FX RANDOM span the full width.
+const fxUnit=(lab,onId,amtId,cap)=>{const d=document.createElement("div");d.className="fxu";
+  d.appendChild(mk(SW(onId,lab,"blue")));d.appendChild(mk(K(amtId,cap||"Amt",0,1,0.35)));return d;};
 panel.appendChild(section("FX",
-  fxRow("Drive","fxDriveOn","fxDrive","Drive"),
-  fxRow("Chorus","fxChorusOn","fxChorus","Depth"),
-  fxRow("Phaser","fxPhaserOn","fxPhaser","Amt"),
-  fxRow("Crush","fxCrushOn","fxCrush","Amt"),
-  fxRow("Tone","fxToneOn","fxTone","Tone"),
+  row(fxUnit("Drive","fxDriveOn","fxDrive","Drive"), fxUnit("Chorus","fxChorusOn","fxChorus","Depth")),
+  row(fxUnit("Phaser","fxPhaserOn","fxPhaser","Amt"), fxUnit("Crush","fxCrushOn","fxCrush","Amt")),
+  row(fxUnit("Tone","fxToneOn","fxTone","Tone"), fxUnit("Reverb","fxReverbOn","fxReverbMix","Mix")),
   row(mk(SW("fxDelayOn","Delay","blue")), mk(K("fxDelayMix","Mix",0,1,0.3)), mk(K("fxDelayTime","Time",0.02,1.2,0.28,1,v=>Math.round(v*1000)+" ms"))),
-  fxRow("Reverb","fxReverbOn","fxReverbMix","Mix"),
   row(btn("FX RANDOM", ()=>randomizeFX()))
 ));
 // Musical FX randomization: enable a tasteful subset with sensible amounts.
@@ -23572,8 +23572,7 @@ function randomizeFX(){
 const performSect=section("Perform",
   row(mk(CM("chordType","Chord",CHORD_NAMES,true))),
   row(mk(SW("arpOn","Arp","blue")), mk(CM("arpRate","Rate",ARP_RATE_NAMES)), mk(CM("arpMode","Mode",ARP_MODES,true))),
-  row(mk(CM("arpOct","Oct",ARP_OCTS)), mk(K("arpGate","Gate",0,1,0.6)), mk(K("arpBpm","BPM",40,240,120,1,v=>Math.round(v)+""))),
-  row(btn("RANDOM", ()=>randomize()))
+  row(mk(CM("arpOct","Oct",ARP_OCTS)), mk(K("arpGate","Gate",0,1,0.6)), mk(K("arpBpm","BPM",40,240,120,1,v=>Math.round(v)+"")))
 );
 panel.appendChild(performSect);
 // make knob-band-ish rows fixed height for alignment
@@ -23703,7 +23702,7 @@ function morph(x,y){
 }
 function buildMorphPad(){
   const wrap=document.createElement("div");
-  wrap.style.cssText="position:relative;width:150px;max-width:100%;aspect-ratio:1;border-radius:8px;cursor:crosshair;touch-action:none;"
+  wrap.style.cssText="position:relative;width:104px;max-width:100%;aspect-ratio:1;border-radius:8px;cursor:crosshair;touch-action:none;"
     +"background:linear-gradient(135deg,rgba(0,230,216,.10),rgba(0,0,0,.25)),"
     +"radial-gradient(circle at 0 0,rgba(0,230,216,.28),transparent 62%),"
     +"radial-gradient(circle at 100% 100%,rgba(255,45,120,.24),transparent 62%);"
@@ -23798,7 +23797,7 @@ function idea(){
   if(h)h.textContent="Perform / Morph";
   pb.appendChild(row(buildMorphPad()));
   pb.appendChild(row(setBtn("A",0), setBtn("B",1), setBtn("C",2), setBtn("D",3)));
-  pb.appendChild(row(btn("IDEA", ()=>idea())));
+  pb.appendChild(row(btn("IDEA", ()=>idea()), btn("RANDOM", ()=>randomize())));
 })();
 document.querySelectorAll(".row,.sw-row,.osc").forEach(r=>{r.style.minHeight="56px";r.style.alignItems="center";});
 
@@ -24054,7 +24053,7 @@ requestAnimationFrame(vu);
 // Fixed aspect locks. The stage scales uniformly to fit, so only the aspect
 // matters — every canvas is 1000 tall so the dense panel always fits (the old
 // short heights, 720/660, clipped the panel under the keyboard).
-const RES=[{n:"Auto · pantalla completa",auto:true},{n:"16:9",w:1778,h:1000},{n:"16:10",w:1600,h:1000},{n:"3:2",w:1500,h:1000}];
+const RES=[{n:"Auto · pantalla completa",auto:true},{n:"21:9",w:1980,h:850},{n:"16:9",w:1512,h:850},{n:"Ancho",w:1658,h:850}];
 let resIdx=0;const stageEl=document.getElementById("stage");
 // Auto mode derives the design-canvas aspect from the actual screen so the
 // (uniformly scaled) stage fills it edge-to-edge — no letterbox, no distortion.
@@ -24062,7 +24061,7 @@ function dims(){
   const r=RES[resIdx];
   if(!r.auto)return {w:r.w,h:r.h};
   const long=Math.max(window.innerWidth,window.innerHeight),short=Math.min(window.innerWidth,window.innerHeight);
-  const A=Math.min(2.5,Math.max(1.55,long/short)),h=1000;
+  const A=Math.min(2.5,Math.max(1.95,long/short)),h=850;
   return {w:Math.round(h*A),h};
 }
 function setScale(){
