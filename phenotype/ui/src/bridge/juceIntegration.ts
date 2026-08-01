@@ -18,7 +18,13 @@ export interface TelemetryFrame {
   activeGrains: number;
 }
 
+export interface ParamsFrame {
+  type: "params";
+  params: Record<string, number>;
+}
+
 export type TelemetryListener = (frame: TelemetryFrame) => void;
+export type ParamsListener = (frame: ParamsFrame) => void;
 
 export interface JuceIntegration {
   readonly hosted: boolean;
@@ -28,6 +34,8 @@ export interface JuceIntegration {
   setParams(params: Record<string, number>): void;
   /** Subscribe to telemetry frames. Returns an unsubscribe function. */
   onTelemetry(listener: TelemetryListener): () => void;
+  /** Subscribe to backend-originated parameter snapshots (host automation). */
+  onParams(listener: ParamsListener): () => void;
 }
 
 //  --- JUCE global surface (injected by the WebView backend) ------------------
@@ -51,15 +59,22 @@ declare global {
 }
 
 const TELEMETRY_EVENT = "phenotypeTelemetry";
+const PARAMS_EVENT = "phenotypeParams";
 const NATIVE_SEND = "phenotypeSend";
 
 function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
   const send = getNativeFunction(NATIVE_SEND) as (payload: string) => Promise<unknown>;
-  const listeners = new Set<TelemetryListener>();
+  const telemetryListeners = new Set<TelemetryListener>();
+  const paramsListeners = new Set<ParamsListener>();
 
   juce.backend.addEventListener(TELEMETRY_EVENT, (payload: unknown) => {
     const frame = normaliseFrame(payload);
-    if (frame) listeners.forEach((l) => l(frame));
+    if (frame) telemetryListeners.forEach((l) => l(frame));
+  });
+
+  juce.backend.addEventListener(PARAMS_EVENT, (payload: unknown) => {
+    const frame = normaliseParams(payload);
+    if (frame) paramsListeners.forEach((l) => l(frame));
   });
 
   return {
@@ -71,8 +86,12 @@ function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
       void send(JSON.stringify({ type: "batch", params }));
     },
     onTelemetry(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
+      telemetryListeners.add(listener);
+      return () => telemetryListeners.delete(listener);
+    },
+    onParams(listener) {
+      paramsListeners.add(listener);
+      return () => paramsListeners.delete(listener);
     },
   };
 }
@@ -120,7 +139,25 @@ function createMockIntegration(): JuceIntegration {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    onParams() {
+      // Mock has no host automation source; nothing to subscribe to.
+      return () => {};
+    },
   };
+}
+
+function normaliseParams(payload: unknown): ParamsFrame | null {
+  if (typeof payload === "object" && payload !== null) {
+    const p = payload as { params?: unknown };
+    if (typeof p.params === "object" && p.params !== null) {
+      const out: Record<string, number> = {};
+      for (const [k, v] of Object.entries(p.params as Record<string, unknown>)) {
+        if (typeof v === "number") out[k] = v;
+      }
+      return { type: "params", params: out };
+    }
+  }
+  return null;
 }
 
 function normaliseFrame(payload: unknown): TelemetryFrame | null {

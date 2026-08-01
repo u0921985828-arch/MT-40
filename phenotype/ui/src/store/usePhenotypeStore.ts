@@ -64,27 +64,57 @@ interface StoreState {
   params: ParamState;
   hosted: boolean;
   activeGrains: number; // coarse HUD mirror, throttled
+  /** Param the user is currently dragging; remote updates skip it. */
+  dragging: ParamId | null;
   setParam: (id: ParamId, value: number) => void;
+  setDragging: (id: ParamId | null) => void;
+  /** Apply a backend-originated snapshot (host automation) without echoing. */
+  applyRemoteParams: (incoming: Partial<ParamState>) => void;
   reset: () => void;
 }
+
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export const usePhenotypeStore = create<StoreState>((set, get) => ({
   params: { ...DEFAULT_PARAMS },
   hosted: juceIntegration.hosted,
   activeGrains: 0,
+  dragging: null,
 
   setParam: (id, value) => {
-    const clamped = value < 0 ? 0 : value > 1 ? 1 : value;
+    const clamped = clamp01(value);
     set((s) => ({ params: { ...s.params, [id]: clamped } }));
     juceIntegration.setParam(id, clamped);
+  },
+
+  setDragging: (id) => set({ dragging: id }),
+
+  applyRemoteParams: (incoming) => {
+    const { dragging, params } = get();
+    const next = { ...params };
+    let changed = false;
+    (Object.keys(incoming) as ParamId[]).forEach((id) => {
+      const v = incoming[id];
+      if (v === undefined || id === dragging) return;
+      const c = clamp01(v);
+      if (next[id] !== c) {
+        next[id] = c;
+        changed = true;
+      }
+    });
+    if (changed) set({ params: next });
   },
 
   reset: () => {
     set({ params: { ...DEFAULT_PARAMS } });
     juceIntegration.setParams({ ...DEFAULT_PARAMS });
-    void get();
   },
 }));
+
+// Mirror host/preset parameter changes into the reactive store.
+juceIntegration.onParams((frame) => {
+  usePhenotypeStore.getState().applyRemoteParams(frame.params as Partial<ParamState>);
+});
 
 // --- Wire the telemetry stream into the transient buffer --------------------
 let hudThrottle = 0;

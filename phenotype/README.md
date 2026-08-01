@@ -63,6 +63,29 @@ cmake --build build --parallel
 Pass `-DJUCE_DIR=/path/to/JUCE` to reuse a local JUCE 8 checkout instead of the
 `FetchContent` download. Formats produced: VST3, AU (macOS), Standalone.
 
+## Parameters & automation
+
+All 12 controls are defined once in `Source/Parameters.h` and exposed through a
+`juce::AudioProcessorValueTreeState`, so the DAW can automate and persist them.
+UI edits are applied via `setValueNotifyingHost` (the host records automation);
+host/preset changes are reflected back to the WebView sliders through the
+`phenotypeParams` event. The audio thread never touches the tree — it reads
+cached `std::atomic<float>*` snapshots synced into the lock-free engine hub once
+per block.
+
+## Tests
+
+The DSP core is JUCE-independent and unit-tested standalone (no network):
+
+```bash
+cmake -B build-tests tests && cmake --build build-tests
+ctest --test-dir build-tests --output-on-failure
+```
+
+Covers `fastExp` accuracy, equal-power energy preservation, the capillary
+fill/saturate/drain cycle, and granular finiteness / bounded output / in-place
+safety — all compiled with `-Wall -Wextra -Werror`.
+
 ## Frontend dev (browser mock)
 
 ```bash

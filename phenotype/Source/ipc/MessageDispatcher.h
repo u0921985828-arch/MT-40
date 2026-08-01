@@ -3,30 +3,30 @@
 //==============================================================================
 //  MessageDispatcher.h
 //
-//  Bidirectional asynchronous IPC between the JUCE WebView UI and the audio
-//  backend, using pure JSON. Two directions:
+//  Bidirectional asynchronous IPC between the JUCE WebView UI and the backend,
+//  using pure JSON. Two directions:
 //
-//    UI  -> DSP : parameter edits & commands, parsed into the atomic hub.
-//    DSP -> UI : telemetry frames (FFT magnitudes, capillary phase, grain
-//                activity) serialised as JSON and emitted to the WebView.
+//    UI  -> HOST : parameter edits applied to the APVTS via setValueNotifyingHost
+//                  so the DAW records automation and the audio thread (which
+//                  reads cached atomics) picks them up on the next block.
+//    HOST -> UI  : telemetry frames (FFT, capillary phase, grain activity) and
+//                  parameter snapshots (for host automation / preset recall).
 //
-//  The dispatcher owns no audio state; it holds a reference to the ParameterHub
-//  and translates messages. All UI-thread only.
+//  UI-thread only; owns no audio state.
 //==============================================================================
 
-#include <juce_core/juce_core.h>
-#include "../dsp/ParameterHub.h"
+#include <juce_audio_processors/juce_audio_processors.h>
+#include "../Parameters.h"
 
 namespace phenotype::ipc
 {
     class MessageDispatcher
     {
     public:
-        explicit MessageDispatcher (dsp::ParameterHub& hubToUse) noexcept
-            : hub (hubToUse) {}
+        explicit MessageDispatcher (juce::AudioProcessorValueTreeState& stateToUse) noexcept
+            : apvts (stateToUse) {}
 
-        //  --- Inbound (UI -> DSP) ---------------------------------------------
-        //  Expected shape:
+        //  --- Inbound (UI -> HOST) --------------------------------------------
         //    { "type": "param", "id": "grainSize", "value": 0.42 }
         //    { "type": "batch", "params": { "grainSize": 0.4, "spray": 0.2 } }
         void handleFromUi (const juce::var& message) noexcept
@@ -38,29 +38,24 @@ namespace phenotype::ipc
 
             if (type == "param")
             {
-                const auto id  = message.getProperty ("id", {}).toString();
-                const auto val = static_cast<float> ((double) message.getProperty ("value", 0.0));
-                hub.set (id.toRawUTF8(), val);
+                applyParam (message.getProperty ("id", {}).toString(),
+                            static_cast<float> ((double) message.getProperty ("value", 0.0)));
             }
             else if (type == "batch")
             {
                 const auto params = message.getProperty ("params", {});
                 if (auto* obj = params.getDynamicObject())
                     for (auto& kv : obj->getProperties())
-                        hub.set (kv.name.toString().toRawUTF8(),
-                                 static_cast<float> ((double) kv.value));
+                        applyParam (kv.name.toString(), static_cast<float> ((double) kv.value));
             }
         }
 
-        //  Convenience for the WebView native-function path (string payload).
         void handleFromUi (const juce::String& jsonText) noexcept
         {
             handleFromUi (juce::JSON::parse (jsonText));
         }
 
-        //  --- Outbound (DSP -> UI) --------------------------------------------
-        //  Builds a telemetry frame. `fft` points at `numBins` normalised
-        //  magnitudes (0..1). Returns a juce::var ready for emitEvent.
+        //  --- Outbound builders (HOST -> UI) ----------------------------------
         static juce::var buildTelemetry (const float* fft, int numBins,
                                          float capillaryLevel, int activeGrains) noexcept
         {
@@ -74,11 +69,30 @@ namespace phenotype::ipc
             for (int i = 0; i < numBins; ++i)
                 bins.add (fft[i]);
             root->setProperty ("fft", bins);
+            return juce::var (root);
+        }
 
+        //  Full parameter snapshot so the UI can mirror host/preset changes.
+        juce::var buildParamSnapshot() const noexcept
+        {
+            auto* params = new juce::DynamicObject();
+            for (const auto& d : params::kDefs)
+                if (auto* raw = apvts.getRawParameterValue (d.id))
+                    params->setProperty (d.id, raw->load (std::memory_order_relaxed));
+
+            auto* root = new juce::DynamicObject();
+            root->setProperty ("type",   "params");
+            root->setProperty ("params", juce::var (params));
             return juce::var (root);
         }
 
     private:
-        dsp::ParameterHub& hub;
+        void applyParam (const juce::String& id, float normalised) noexcept
+        {
+            if (auto* p = apvts.getParameter (id))
+                p->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, normalised));
+        }
+
+        juce::AudioProcessorValueTreeState& apvts;
     };
 }

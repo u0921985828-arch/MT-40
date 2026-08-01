@@ -55,6 +55,16 @@ namespace phenotype::fastmath
         return fastExp (-1.0f / (tau * static_cast<float> (sampleRate)));
     }
 
+    //  Cubic soft clip: transparent below |x|=1, saturating to +/-1 at |x|=1.5.
+    //  Trig-free, branch-light; guards the master bus against grain-overlap
+    //  overshoot without the harsh fold of hard clipping.
+    [[nodiscard]] inline float softClip (float x) noexcept
+    {
+        if (x <= -1.5f) return -1.0f;
+        if (x >=  1.5f) return  1.0f;
+        return x - 0.14814814814f * x * x * x;   // 4/27, maps +/-1.5 -> +/-1
+    }
+
     //  Perceptual (equal-power) crossfade gain pair for a 0..1 blend control.
     //  Uses a polynomial sqrt-free approximation of sin/cos quarter-arc so the
     //  audio thread stays trig-free. gainA falls, gainB rises.

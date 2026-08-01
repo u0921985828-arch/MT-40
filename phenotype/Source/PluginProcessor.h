@@ -7,6 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include "dsp/GranularEngine.h"
+#include "Parameters.h"
 
 namespace phenotype
 {
@@ -47,12 +48,25 @@ namespace phenotype
         //  --- Engine / telemetry access for the editor ------------------------
         dsp::GranularEngine& engine() noexcept { return granular; }
 
+        //  Host-facing parameter tree (automation + persistence + UI binding).
+        juce::AudioProcessorValueTreeState& state() noexcept { return apvts; }
+
         //  Copies the latest normalised FFT frame into `dest` (kNumBins floats).
         //  Thread-safe snapshot for the UI timer.
         void copyFftFrame (float* dest) const noexcept;
 
     private:
         void pushToFft (const float* mono, int numSamples) noexcept;
+
+        //  Copies the current APVTS values into the lock-free engine hub.
+        //  Called once per block on the audio thread (12 atomic loads).
+        void syncParametersToEngine() noexcept;
+
+        juce::AudioProcessorValueTreeState apvts;
+
+        //  Cached raw atomic pointers into the APVTS, resolved once at
+        //  construction so the audio thread never does a string lookup.
+        std::array<std::atomic<float>*, params::kDefs.size()> rawParams {};
 
         dsp::GranularEngine granular;
 

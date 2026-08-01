@@ -148,8 +148,8 @@ namespace phenotype::dsp
             liveGrainCount = live;
 
             const float gain = p.outputGain;
-            if (outL) outL[n] = accL * gain;
-            if (outR) outR[n] = accR * gain;
+            if (outL) outL[n] = fastmath::softClip (accL * gain);
+            if (outR) outR[n] = fastmath::softClip (accR * gain);
         }
     }
 }

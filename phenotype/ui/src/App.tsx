@@ -45,6 +45,7 @@ const RACK: { title: string; controls: ControlDef[] }[] = [
 function Slider({ def }: { def: ControlDef }) {
   const value = usePhenotypeStore((s) => s.params[def.id]);
   const setParam = usePhenotypeStore((s) => s.setParam);
+  const setDragging = usePhenotypeStore((s) => s.setDragging);
   const accent =
     def.chromosome === 0
       ? PALETTE.chlorophyll
@@ -62,6 +63,9 @@ function Slider({ def }: { def: ControlDef }) {
         step={0.001}
         value={value}
         style={{ accentColor: accent }}
+        onPointerDown={() => setDragging(def.id)}
+        onPointerUp={() => setDragging(null)}
+        onPointerCancel={() => setDragging(null)}
         onChange={(e) => setParam(def.id, Number(e.currentTarget.value))}
       />
       <span className="ph-slider__value">{Math.round(value * 100)}</span>

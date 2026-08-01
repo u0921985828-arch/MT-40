@@ -17,7 +17,8 @@
 namespace phenotype
 {
     class PhenotypeWebEditor : public juce::AudioProcessorEditor,
-                               private juce::Timer
+                               private juce::Timer,
+                               private juce::AudioProcessorValueTreeState::Listener
     {
     public:
         explicit PhenotypeWebEditor (PhenotypeAudioProcessor&);
@@ -27,6 +28,13 @@ namespace phenotype
 
     private:
         void timerCallback() override;
+
+        //  APVTS::Listener — may fire on the audio thread during automation, so
+        //  we only raise a flag here and flush to the WebView from the timer.
+        void parameterChanged (const juce::String&, float) override
+        {
+            paramsDirty.store (true, std::memory_order_relaxed);
+        }
 
         //  Serves the embedded SPA. Returns std::nullopt for unknown paths.
         std::optional<juce::WebBrowserComponent::Resource> provide (const juce::String& url);
@@ -44,6 +52,9 @@ namespace phenotype
 
         //  Telemetry staging (UI thread only).
         std::array<float, PhenotypeAudioProcessor::kNumBins> fftFrame {};
+
+        //  Set by parameterChanged (any thread), consumed by the timer.
+        std::atomic<bool> paramsDirty { true };   // true -> push initial snapshot
 
         static constexpr int kTelemetryHz = 30;
 

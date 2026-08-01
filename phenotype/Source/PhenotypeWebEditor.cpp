@@ -41,7 +41,7 @@ namespace phenotype
     PhenotypeWebEditor::PhenotypeWebEditor (PhenotypeAudioProcessor& p)
         : AudioProcessorEditor (p),
           processorRef (p),
-          dispatcher (p.engine().params()),
+          dispatcher (p.state()),
           webView (Options()
               .withNativeIntegrationEnabled()
               .withResourceProvider ([this] (const auto& url) { return provide (url); })
@@ -55,6 +55,10 @@ namespace phenotype
         addAndMakeVisible (webView);
         webView.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
 
+        //  Reflect host automation / preset recall back into the UI.
+        for (const auto& d : params::kDefs)
+            processorRef.state().addParameterListener (d.id, this);
+
         setResizable (true, true);
         setSize (1024, 640);
         startTimerHz (kTelemetryHz);
@@ -63,6 +67,8 @@ namespace phenotype
     PhenotypeWebEditor::~PhenotypeWebEditor()
     {
         stopTimer();
+        for (const auto& d : params::kDefs)
+            processorRef.state().removeParameterListener (d.id, this);
     }
 
     void PhenotypeWebEditor::resized()
@@ -81,6 +87,11 @@ namespace phenotype
 
     void PhenotypeWebEditor::timerCallback()
     {
+        //  Push a parameter snapshot whenever the tree changed (host/preset).
+        if (paramsDirty.exchange (false, std::memory_order_relaxed))
+            webView.emitEventIfBrowserIsVisible ("phenotypeParams",
+                                                 dispatcher.buildParamSnapshot());
+
         processorRef.copyFftFrame (fftFrame.data());
 
         const auto frame = ipc::MessageDispatcher::buildTelemetry (

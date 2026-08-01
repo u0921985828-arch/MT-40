@@ -10,8 +10,19 @@ namespace phenotype
     PhenotypeAudioProcessor::PhenotypeAudioProcessor()
         : AudioProcessor (BusesProperties()
               .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-              .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+              .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+          apvts (*this, nullptr, "PHENOTYPE", params::createLayout())
     {
+        //  Resolve raw atomic pointers once (audio thread reads these directly).
+        for (size_t i = 0; i < params::kDefs.size(); ++i)
+            rawParams[i] = apvts.getRawParameterValue (params::kDefs[i].id);
+    }
+
+    void PhenotypeAudioProcessor::syncParametersToEngine() noexcept
+    {
+        auto& hub = granular.params();
+        for (size_t i = 0; i < params::kDefs.size(); ++i)
+            hub.set (params::kDefs[i].id, rawParams[i]->load (std::memory_order_relaxed));
     }
 
     void PhenotypeAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -42,6 +53,9 @@ namespace phenotype
 
         float* left  = buffer.getWritePointer (0);
         float* right = numCh > 1 ? buffer.getWritePointer (1) : left;
+
+        //  Pull host/UI parameter state into the lock-free engine hub.
+        syncParametersToEngine();
 
         //  Granular cross-synthesis in place (allocation-free).
         granular.process (left, right, left, right, numSamples);
@@ -90,34 +104,16 @@ namespace phenotype
 
     void PhenotypeAudioProcessor::getStateInformation (juce::MemoryBlock& dest)
     {
-        //  Serialise the atomic hub snapshot as JSON for host persistence.
-        const auto snap = granular.params().snapshot();
-        auto* obj = new juce::DynamicObject();
-        obj->setProperty ("caudal",       snap.caudal);
-        obj->setProperty ("soilDensity",  snap.soilDensity);
-        obj->setProperty ("saturation",   snap.saturation);
-        obj->setProperty ("grainDensity", snap.grainDensity);
-        obj->setProperty ("grainSize",    snap.grainSize);
-        obj->setProperty ("position",     snap.position);
-        obj->setProperty ("spray",        snap.spray);
-        obj->setProperty ("pitchA",       snap.pitchA);
-        obj->setProperty ("pitchB",       snap.pitchB);
-        obj->setProperty ("crossBlend",   snap.crossBlend);
-        obj->setProperty ("modDepth",     snap.modDepth);
-        obj->setProperty ("outputGain",   snap.outputGain);
-
-        const auto json = juce::JSON::toString (juce::var (obj));
-        dest.replaceAll (json.toRawUTF8(), json.getNumBytesAsUTF8());
+        //  Persist the full parameter tree (host preset / session recall).
+        if (auto xml = apvts.copyState().createXml())
+            copyXmlToBinary (*xml, dest);
     }
 
     void PhenotypeAudioProcessor::setStateInformation (const void* data, int size)
     {
-        const auto json = juce::String::createStringFromData (data, size);
-        const auto v    = juce::JSON::parse (json);
-        if (auto* obj = v.getDynamicObject())
-            for (auto& kv : obj->getProperties())
-                granular.params().set (kv.name.toString().toRawUTF8(),
-                                       static_cast<float> ((double) kv.value));
+        if (auto xml = getXmlFromBinary (data, size))
+            if (xml->hasTagName (apvts.state.getType()))
+                apvts.replaceState (juce::ValueTree::fromXml (*xml));
     }
 }
 
