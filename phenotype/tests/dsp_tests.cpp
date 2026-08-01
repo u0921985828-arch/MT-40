@@ -319,6 +319,65 @@ static void testArpeggiator()
     check (tail < 1.0e-2f, "arp stops when notes released");
 }
 
+static void testScaleQuantiser()
+{
+    std::printf ("scale quantiser:\n");
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+
+    eng.setScale (0);   // chromatic
+    check (eng.quantize (61) == 61, "chromatic leaves notes untouched");
+
+    eng.setScale (1);   // major (C): no C#(61), no D#(63), no F#(66)
+    const int q61 = eng.quantize (61);
+    const int q66 = eng.quantize (66);
+    std::printf ("  major: 61->%d  66->%d\n", q61, q66);
+    check (q61 == 60 || q61 == 62, "major snaps C# to C or D");
+    check (q66 == 65 || q66 == 67, "major snaps F# to F or G");
+    check (eng.quantize (64) == 64, "major keeps E in scale");
+
+    eng.setScale (3);   // pentatonic major {0,2,4,7,9}
+    const int q65 = eng.quantize (65);  // F -> nearest E(64) or G(67)
+    check (q65 == 64 || q65 == 67, "pentatonic snaps F out of scale");
+}
+
+static void testArpSyncRate()
+{
+    std::printf ("arp tempo sync:\n");
+    //  120 BPM: 1/4 = 2 Hz, 1/8 = 4, 1/16 = 8, 1/32 = 16.
+    const float r4  = GranularEngine::arpSyncedRate (120.0, 0.0f);
+    const float r16 = GranularEngine::arpSyncedRate (120.0, 0.6f);
+    std::printf ("  120bpm 1/4=%.2fHz  1/16=%.2fHz\n", r4, r16);
+    check (std::fabs (r4 - 2.0f) < 0.01f, "1/4 at 120 BPM = 2 Hz");
+    check (std::fabs (r16 - 8.0f) < 0.01f, "1/16 at 120 BPM = 8 Hz");
+    check (GranularEngine::arpSyncedRate (60.0, 0.0f) < r4, "half tempo halves rate");
+}
+
+static void testSampleGenome()
+{
+    std::printf ("sample genome:\n");
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+    eng.setInstrumentMode (true);
+    eng.params().set ("grainDensity", 0.7f);
+    eng.params().set ("outputGain", 0.8f);
+
+    //  A short synthetic sample (two-cycle triangle-ish) as the genome.
+    constexpr int L = 400;
+    std::vector<float> samp ((size_t) L);
+    for (int n = 0; n < L; ++n)
+        samp[(size_t) n] = 2.0f * std::fabs ((float) (n % 200) / 200.0f - 0.5f) - 0.5f;
+    eng.loadGenomeFromSample (samp.data(), L);
+
+    eng.noteOn (60, 1.0f);
+    float peak = 0.0f; bool finite = true;
+    renderBlocks (eng, 40, 512, peak, finite);
+    std::printf ("  sample-genome peak = %.3f\n", peak);
+    check (finite, "sample genome output is finite");
+    check (peak > 1.0e-2f, "sample genome granulates into sound");
+    check (peak <= 1.0f + 1e-4f, "sample genome output bounded");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -330,6 +389,9 @@ int main()
     testMelodicInstrument();
     testPitchAndBend();
     testArpeggiator();
+    testScaleQuantiser();
+    testArpSyncRate();
+    testSampleGenome();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;

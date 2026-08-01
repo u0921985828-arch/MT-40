@@ -22,7 +22,7 @@ namespace phenotype::params
     };
 
     //  Order is stable and mirrors dsp::ParameterSnapshot / the UI ids.
-    inline constexpr std::array<Def, 14> kDefs { {
+    inline constexpr std::array<Def, 17> kDefs { {
         { "caudal",       "Caudal",            0.5f },
         { "soilDensity",  "Densidad Suelo",    0.5f },
         { "saturation",   "Saturacion",        0.9f },
@@ -37,6 +37,9 @@ namespace phenotype::params
         { "outputGain",   "Salida",            0.8f },
         { "arpOn",        "Arpegiador",        0.0f },
         { "arpRate",      "Arp Rate",          0.4f },
+        { "arpMode",      "Arp Modo",          0.0f },
+        { "arpSync",      "Arp Sync",          0.0f },
+        { "scaleType",    "Escala",            0.0f },
     } };
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()

@@ -204,14 +204,64 @@ namespace phenotype::dsp
 
     void GranularEngine::noteOn (int midiNote, float velocity) noexcept
     {
-        if (arpEnabled) { arpAddHeld (midiNote, velocity); return; }
-        triggerVoice (midiNote, velocity);
+        const int q = quantize (midiNote);
+        if (arpEnabled) { arpAddHeld (q, velocity); return; }
+        triggerVoice (q, velocity);
     }
 
     void GranularEngine::noteOff (int midiNote) noexcept
     {
-        if (arpEnabled) { arpRemoveHeld (midiNote); return; }
-        releaseVoice (midiNote);
+        const int q = quantize (midiNote);
+        if (arpEnabled) { arpRemoveHeld (q); return; }
+        releaseVoice (q);
+    }
+
+    //  Nearest-pitch-class quantiser (root C). Chromatic when scale == 0.
+    int GranularEngine::quantize (int midiNote) const noexcept
+    {
+        if (scale <= 0)
+            return midiNote;
+
+        //  Bit masks of allowed semitones within an octave.
+        static constexpr unsigned masks[] = {
+            0x0FFF, // 0 chromatic (unused here)
+            0x0AB5, // 1 major       {0,2,4,5,7,9,11}
+            0x05AD, // 2 minor (nat) {0,2,3,5,7,8,10}
+            0x0295, // 3 pent major  {0,2,4,7,9}
+            0x06AD, // 4 dorian      {0,2,3,5,7,9,10}
+        };
+        const int n = static_cast<int> (sizeof (masks) / sizeof (masks[0]));
+        const unsigned mask = masks[scale >= n ? n - 1 : scale];
+
+        const int pc = ((midiNote % 12) + 12) % 12;
+        for (int d = 0; d < 12; ++d)
+        {
+            if (mask & (1u << ((pc + d) % 12))) return midiNote + d;
+            if (mask & (1u << ((pc - d + 12) % 12))) return midiNote - d;
+        }
+        return midiNote;
+    }
+
+    void GranularEngine::loadGenomeFromSample (const float* mono, int numSamples) noexcept
+    {
+        if (mono == nullptr || numSamples <= 0 || sourceLen <= 0)
+            return;
+
+        float peak = 1.0e-6f;
+        for (int n = 0; n < sourceLen; ++n)
+        {
+            const float s = mono[n % numSamples];   // loop to fill
+            sourceA[(size_t) n] = s;
+            sourceB[(size_t) n] = s;
+            const float a = s < 0.0f ? -s : s;
+            if (a > peak) peak = a;
+        }
+        const float norm = 0.9f / peak;
+        for (int n = 0; n < sourceLen; ++n)
+        {
+            sourceA[(size_t) n] *= norm;
+            sourceB[(size_t) n] *= norm;
+        }
     }
 
     void GranularEngine::allNotesOff() noexcept
@@ -282,13 +332,36 @@ namespace phenotype::dsp
         if (heldCount <= 0)
             return;
 
-        if (arpIndex >= heldCount)
+        if (arpIndex >= heldCount || arpIndex < 0)
             arpIndex = 0;
         const int   note = heldNote[arpIndex];
         const float vel  = heldVel[arpIndex];
         triggerVoice (note, vel);
         arpCurrentNote = note;
-        arpIndex = (arpIndex + 1) % heldCount;
+
+        //  Advance the step cursor per pattern.
+        switch (arpMode)
+        {
+            case 1: // down
+                arpIndex = (arpIndex - 1 + heldCount) % heldCount;
+                break;
+            case 2: // up-down (bounce, no repeated endpoints)
+                if (heldCount == 1) { arpIndex = 0; }
+                else
+                {
+                    arpIndex += arpDir;
+                    if (arpIndex >= heldCount - 1) { arpIndex = heldCount - 1; arpDir = -1; }
+                    else if (arpIndex <= 0)        { arpIndex = 0;             arpDir =  1; }
+                }
+                break;
+            case 3: // random
+                arpIndex = static_cast<int> (nextRandom() * static_cast<float> (heldCount));
+                if (arpIndex >= heldCount) arpIndex = heldCount - 1;
+                break;
+            default: // up
+                arpIndex = (arpIndex + 1) % heldCount;
+                break;
+        }
     }
 
     int GranularEngine::activeVoices() const noexcept
@@ -311,9 +384,14 @@ namespace phenotype::dsp
         modulator.setDensidadSuelo (p.soilDensity);
         modulator.setSaturation    (p.saturation);
 
-        //  Arpeggiator control (rate 0..1 -> 0.5 .. 20 Hz).
+        //  Arpeggiator + scale control.
         if (instrumentMode)
-            setArp (p.arpOn > 0.5f, 0.5f + p.arpRate * 19.5f);
+        {
+            setArp     (p.arpOn > 0.5f, 0.5f + p.arpRate * 19.5f);
+            setArpMode (static_cast<int> (p.arpMode * 3.999f));
+            setArpSync (p.arpSync > 0.5f, p.arpRate);   // arpRate doubles as sync division
+            setScale   (static_cast<int> (p.scaleType * 4.999f));
+        }
 
         //  Grains-per-second from density (2 .. 200 gr/s).
         const float grainsPerSec = 2.0f + p.grainDensity * 198.0f;
@@ -340,7 +418,8 @@ namespace phenotype::dsp
                     if (arpClock <= 0.0f)
                     {
                         arpStep();
-                        arpClock += static_cast<float> (sampleRate) / arpRateHz;
+                        const float rate = arpSync ? arpSyncedRate (hostBpm, arpDiv01) : arpRateHz;
+                        arpClock += static_cast<float> (sampleRate) / (rate < 0.1f ? 0.1f : rate);
                     }
                 }
             }

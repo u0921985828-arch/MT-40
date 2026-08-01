@@ -44,8 +44,14 @@ const RACK: { title: string; controls: ControlDef[] }[] = [
     title: "Arpeggiator",
     controls: [
       { id: "arpOn", label: "Arpegiador" },
-      { id: "arpRate", label: "Velocidad" },
+      { id: "arpRate", label: "Velocidad / División" },
+      { id: "arpMode", label: "Patrón" },
+      { id: "arpSync", label: "Sync Tempo" },
     ],
+  },
+  {
+    title: "Escala",
+    controls: [{ id: "scaleType", label: "Cuantizador" }],
   },
 ];
 

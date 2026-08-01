@@ -4,6 +4,7 @@
 
 #include "PluginProcessor.h"
 #include "PhenotypeWebEditor.h"
+#include "Presets.h"
 
 namespace phenotype
 {
@@ -60,6 +61,12 @@ namespace phenotype
 
         //  Pull host/UI parameter state into the lock-free engine hub.
         syncParametersToEngine();
+
+        //  Feed host tempo to the engine for the tempo-synced arpeggiator.
+        if (auto* ph = getPlayHead())
+            if (const auto pos = ph->getPosition())
+                if (const auto bpm = pos->getBpm())
+                    granular.setHostBpm (*bpm);
 
         //  Sample-accurate MIDI: render the granular cloud in segments split at
         //  each event so note timing is not quantised to the block boundary.
@@ -124,6 +131,64 @@ namespace phenotype
     void PhenotypeAudioProcessor::copyFftFrame (float* dest) const noexcept
     {
         std::copy (magFront.begin(), magFront.end(), dest);
+    }
+
+    //==========================================================================
+    //  Factory presets (program interface)
+    //==========================================================================
+    int PhenotypeAudioProcessor::getNumPrograms()
+    {
+        return static_cast<int> (presets::kFactory.size());
+    }
+
+    const juce::String PhenotypeAudioProcessor::getProgramName (int index)
+    {
+        if (index >= 0 && index < getNumPrograms())
+            return presets::kFactory[(size_t) index].name;
+        return {};
+    }
+
+    void PhenotypeAudioProcessor::setCurrentProgram (int index)
+    {
+        if (index < 0 || index >= getNumPrograms())
+            return;
+        currentProgram = index;
+
+        //  Start from defaults, then apply the preset's overrides.
+        for (const auto& d : params::kDefs)
+            if (auto* p = apvts.getParameter (d.id))
+                p->setValueNotifyingHost (d.defaultValue);
+
+        for (const auto& kv : presets::kFactory[(size_t) index].overrides)
+            if (kv.id != nullptr)
+                if (auto* p = apvts.getParameter (kv.id))
+                    p->setValueNotifyingHost (kv.value);
+    }
+
+    //==========================================================================
+    //  Sample genome loader
+    //==========================================================================
+    bool PhenotypeAudioProcessor::loadSampleFile (const juce::File& file)
+    {
+        juce::AudioFormatManager fmt;
+        fmt.registerBasicFormats();
+        std::unique_ptr<juce::AudioFormatReader> reader (fmt.createReaderFor (file));
+        if (reader == nullptr || reader->lengthInSamples <= 0)
+            return false;
+
+        const int len = static_cast<int> (juce::jmin (reader->lengthInSamples,
+                                                       (juce::int64) (reader->sampleRate * 8.0)));
+        juce::AudioBuffer<float> buf ((int) reader->numChannels, len);
+        reader->read (&buf, 0, len, 0, true, true);
+
+        //  Fold to mono for the genome loader.
+        juce::AudioBuffer<float> mono (1, len);
+        mono.clear();
+        for (int ch = 0; ch < buf.getNumChannels(); ++ch)
+            mono.addFrom (0, 0, buf, ch, 0, len, 1.0f / (float) buf.getNumChannels());
+
+        granular.loadGenomeFromSample (mono.getReadPointer (0), len);
+        return true;
     }
 
     juce::AudioProcessorEditor* PhenotypeAudioProcessor::createEditor()

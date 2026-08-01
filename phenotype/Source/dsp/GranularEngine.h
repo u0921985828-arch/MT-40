@@ -61,9 +61,34 @@ namespace phenotype::dsp
         void allNotesOff() noexcept;
         [[nodiscard]] int activeVoices() const noexcept;
 
-        //  Arpeggiator: when enabled, held notes are sequenced (up) at rateHz
-        //  instead of sounding as a chord.
+        //  Arpeggiator: when enabled, held notes are sequenced at rateHz (free)
+        //  or tempo-synced. Modes: 0 up, 1 down, 2 up-down, 3 random.
         void setArp (bool enabled, float rateHz) noexcept;
+        void setArpMode (int mode) noexcept { arpMode = mode < 0 ? 0 : (mode > 3 ? 3 : mode); }
+        void setArpSync (bool synced, float division01) noexcept
+        {
+            arpSync = synced;
+            arpDiv01 = division01 < 0.0f ? 0.0f : (division01 > 1.0f ? 1.0f : division01);
+        }
+        void setHostBpm (double bpm) noexcept { hostBpm = bpm > 1.0 ? bpm : 120.0; }
+
+        //  Musical scale quantiser. 0 = chromatic (off), 1.. = major, minor,
+        //  pentatonic, dorian. Root is C.
+        void setScale (int scaleIndex) noexcept { scaleIndex = scaleIndex < 0 ? 0 : scaleIndex; scale = scaleIndex; }
+        [[nodiscard]] int quantize (int midiNote) const noexcept;
+
+        //  Replace the internal wavetable genome with a user sample (mono).
+        //  Looped to fill and peak-normalised. Off the audio thread.
+        void loadGenomeFromSample (const float* mono, int numSamples) noexcept;
+
+        //  Tempo-synced arp rate: division01 -> {1/4,1/8,1/16,1/32} steps/beat.
+        [[nodiscard]] static float arpSyncedRate (double bpm, float division01) noexcept
+        {
+            const int steps[4] = { 1, 2, 4, 8 };
+            int idx = static_cast<int> (division01 * 3.999f);
+            idx = idx < 0 ? 0 : (idx > 3 ? 3 : idx);
+            return static_cast<float> (bpm / 60.0) * static_cast<float> (steps[idx]);
+        }
 
         //  Global pitch bend (semitones) and portamento (seconds, 0 = off).
         void setPitchBend (float semitones) noexcept
@@ -141,6 +166,12 @@ namespace phenotype::dsp
         float    arpClock      = 0.0f;
         int      arpIndex      = 0;
         int      arpCurrentNote = -1;
+        int      arpMode       = 0;      // 0 up, 1 down, 2 up-down, 3 random
+        int      arpDir        = 1;      // up-down direction
+        bool     arpSync       = false;
+        float    arpDiv01      = 0.5f;
+        double   hostBpm       = 120.0;
+        int      scale         = 0;      // 0 = chromatic
 
         bool     instrumentMode = false;
         float    attackCoeff  = 0.0f; // one-pole attack pole

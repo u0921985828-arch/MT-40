@@ -36,11 +36,14 @@ namespace phenotype
         bool isMidiEffect() const override { return false; }
         double getTailLengthSeconds() const override { return 0.0; }
 
-        int  getNumPrograms() override { return 1; }
-        int  getCurrentProgram() override { return 0; }
-        void setCurrentProgram (int) override {}
-        const juce::String getProgramName (int) override { return {}; }
+        int  getNumPrograms() override;
+        int  getCurrentProgram() override { return currentProgram; }
+        void setCurrentProgram (int) override;
+        const juce::String getProgramName (int) override;
         void changeProgramName (int, const juce::String&) override {}
+
+        //  Load a user audio file as the granular genome (off the audio thread).
+        bool loadSampleFile (const juce::File&);
 
         void getStateInformation (juce::MemoryBlock&) override;
         void setStateInformation (const void*, int) override;
@@ -63,6 +66,7 @@ namespace phenotype
         void syncParametersToEngine() noexcept;
 
         juce::AudioProcessorValueTreeState apvts;
+        int currentProgram = 0;
 
         //  Cached raw atomic pointers into the APVTS, resolved once at
         //  construction so the audio thread never does a string lookup.

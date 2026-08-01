@@ -74,9 +74,22 @@ keyboard sequences melodies from the granular cloud. MIDI is handled
 sample-accurately (the block is split at each event). The `pitchA`/`pitchB` knobs
 act as per-chromosome detune around the played note.
 
+Melodic features: **pitch bend** (±2 semis via the wheel), **portamento**,
+**velocity** sensitivity, an **arpeggiator** (up / down / up-down / random, free
+0.5–20 Hz or **tempo-synced** to the host at 1/4…1/32), a **scale quantiser**
+(major / minor / pentatonic / dorian, root C), **factory presets** (program
+interface), and a **sample genome loader** (`loadSampleFile`) that replaces the
+internal wavetables with any audio file.
+
 The engine still supports the original **effect** path
 (`setInstrumentMode(false)` → granulate live stereo input); the processor selects
 instrument mode.
+
+> **Build note.** The DSP core compiles and is unit-tested standalone. The full
+> JUCE plugin build additionally requires Linux GUI dev packages for the WebView
+> UI — `libwebkit2gtk-4.0-dev`, `libgtk-3-dev`, `libxrandr-dev`, `libcurl4-…-dev`
+> (and X11/ALSA/Freetype headers) — plus a JUCE 8 checkout or network for
+> FetchContent.
 
 ## Parameters & automation
 

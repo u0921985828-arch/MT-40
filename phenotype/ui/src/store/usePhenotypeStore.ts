@@ -27,6 +27,9 @@ export interface ParamState {
   outputGain: number;
   arpOn: number;
   arpRate: number;
+  arpMode: number;
+  arpSync: number;
+  scaleType: number;
 }
 
 export type ParamId = keyof ParamState;
@@ -46,6 +49,9 @@ const DEFAULT_PARAMS: ParamState = {
   outputGain: 0.8,
   arpOn: 0.0,
   arpRate: 0.4,
+  arpMode: 0.0,
+  arpSync: 0.0,
+  scaleType: 0.0,
 };
 
 // --- Transient telemetry buffer (mutable, non-reactive) ---------------------

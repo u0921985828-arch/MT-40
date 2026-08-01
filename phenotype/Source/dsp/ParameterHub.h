@@ -30,7 +30,10 @@ namespace phenotype::dsp
         float modDepth      = 0.5f;   // capillary -> position/blend depth
         float outputGain    = 0.8f;
         float arpOn         = 0.0f;   // arpeggiator enable (>0.5)
-        float arpRate       = 0.4f;   // arpeggiator rate (normalised)
+        float arpRate       = 0.4f;   // arpeggiator rate / sync division (normalised)
+        float arpMode       = 0.0f;   // 0..1 -> up/down/updown/random
+        float arpSync       = 0.0f;   // tempo sync enable (>0.5)
+        float scaleType     = 0.0f;   // 0..1 -> chromatic/major/minor/pent/dorian
     };
 
     class ParameterHub
@@ -56,6 +59,9 @@ namespace phenotype::dsp
             else if (match (id, "outputGain"))   outputGain.store   (value, rel);
             else if (match (id, "arpOn"))        arpOn.store        (value, rel);
             else if (match (id, "arpRate"))      arpRate.store      (value, rel);
+            else if (match (id, "arpMode"))      arpMode.store      (value, rel);
+            else if (match (id, "arpSync"))      arpSync.store      (value, rel);
+            else if (match (id, "scaleType"))    scaleType.store    (value, rel);
         }
 
         //  --- audio thread reader ---------------------------------------------
@@ -76,6 +82,9 @@ namespace phenotype::dsp
             s.outputGain   = outputGain.load   (acq);
             s.arpOn        = arpOn.load        (acq);
             s.arpRate      = arpRate.load      (acq);
+            s.arpMode      = arpMode.load      (acq);
+            s.arpSync      = arpSync.load      (acq);
+            s.scaleType    = scaleType.load    (acq);
             return s;
         }
 
@@ -103,5 +112,8 @@ namespace phenotype::dsp
         std::atomic<float> outputGain   { 0.8f };
         std::atomic<float> arpOn        { 0.0f };
         std::atomic<float> arpRate      { 0.4f };
+        std::atomic<float> arpMode      { 0.0f };
+        std::atomic<float> arpSync      { 0.0f };
+        std::atomic<float> scaleType    { 0.0f };
     };
 }
