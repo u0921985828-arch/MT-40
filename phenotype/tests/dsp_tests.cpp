@@ -209,6 +209,62 @@ static void testMelodicInstrument()
     check (tailPeak < 1.0e-2f, "output decays to near silence after note off");
 }
 
+//  Estimate output pitch by counting zero crossings over a rendered window.
+static float measureZcr (GranularEngine& eng, int blocks, int N)
+{
+    std::vector<float> outL ((size_t) N), outR ((size_t) N);
+    long crossings = 0, samples = 0;
+    float prev = 0.0f;
+    for (int b = 0; b < blocks; ++b)
+    {
+        eng.process (nullptr, nullptr, outL.data(), outR.data(), N);
+        for (int n = 0; n < N; ++n)
+        {
+            const float s = outL[(size_t) n];
+            if ((prev <= 0.0f && s > 0.0f) || (prev >= 0.0f && s < 0.0f)) ++crossings;
+            prev = s;
+            ++samples;
+        }
+    }
+    return samples > 0 ? static_cast<float> (crossings) / static_cast<float> (samples) : 0.0f;
+}
+
+static void testPitchAndBend()
+{
+    std::printf ("pitch / bend / glide:\n");
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+    eng.setInstrumentMode (true);
+    eng.params().set ("grainDensity", 0.95f);   // dense -> tonal, stable ZCR
+    eng.params().set ("grainSize", 0.5f);
+    eng.params().set ("spray", 0.0f);
+    eng.params().set ("outputGain", 0.8f);
+
+    constexpr int N = 512;
+
+    eng.noteOn (60, 1.0f);
+    const float z60 = measureZcr (eng, 30, N);   // C4
+    eng.allNotesOff();
+    { float p; bool f; renderBlocks (eng, 120, N, p, f); }
+
+    eng.noteOn (72, 1.0f);
+    const float z72 = measureZcr (eng, 30, N);   // C5, one octave up
+    std::printf ("  ZCR C4=%.4f  C5=%.4f  ratio=%.2f\n", z60, z72, z72 / (z60 + 1e-9f));
+    check (z72 > z60 * 1.6f, "octave-up note raises pitch (ZCR ~2x)");
+    eng.allNotesOff();
+    { float p; bool f; renderBlocks (eng, 120, N, p, f); }
+
+    //  Pitch bend up by +12 semis roughly doubles the pitch of C4.
+    eng.noteOn (60, 1.0f);
+    const float zFlat = measureZcr (eng, 20, N);
+    eng.setPitchBend (12.0f);
+    const float zBent = measureZcr (eng, 20, N);
+    std::printf ("  ZCR flat=%.4f  bent+12=%.4f\n", zFlat, zBent);
+    check (zBent > zFlat * 1.4f, "pitch bend up raises pitch");
+    eng.setPitchBend (0.0f);
+    eng.allNotesOff();
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -218,6 +274,7 @@ int main()
     testCapillaryCycle();
     testGranularFiniteAllocFree();
     testMelodicInstrument();
+    testPitchAndBend();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;

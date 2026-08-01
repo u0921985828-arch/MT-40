@@ -78,6 +78,13 @@ namespace phenotype
             else if (m.isNoteOff())      granular.noteOff (m.getNoteNumber());
             else if (m.isAllNotesOff()
                   || m.isAllSoundOff())  granular.allNotesOff();
+            else if (m.isPitchWheel())
+            {
+                //  14-bit wheel (centre 8192) -> +/- kBendSemitones.
+                constexpr float kBendSemitones = 2.0f;
+                const float norm = (m.getPitchWheelValue() - 8192) / 8192.0f;
+                granular.setPitchBend (norm * kBendSemitones);
+            }
         }
         if (pos < numSamples)
             granular.process (left + pos, right + pos, left + pos, right + pos, numSamples - pos);

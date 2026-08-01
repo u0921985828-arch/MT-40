@@ -145,6 +145,9 @@ namespace phenotype::dsp
             const float coeff  = v.gate ? attackCoeff : releaseCoeff;
             v.env = target + (v.env - target) * coeff;
 
+            //  Portamento: glide the current ratio toward the target.
+            v.curRatio = v.ratio + (v.curRatio - v.ratio) * glideCoeff;
+
             if (! v.gate && v.env <= 1.0e-4f)   // fully released -> free the slot
                 v = MelodyVoice{};
         }
@@ -179,10 +182,13 @@ namespace phenotype::dsp
     void GranularEngine::noteOn (int midiNote, float velocity) noexcept
     {
         auto& v = voices[(size_t) allocateVoice (midiNote)];
+        const bool wasFree = (v.note < 0);
         v.note  = midiNote;
         v.vel   = velocity < 0.0f ? 0.0f : (velocity > 1.0f ? 1.0f : velocity);
         v.ratio = fastmath::fastExp (static_cast<float> (midiNote - 60) * 0.0577622650f);
-        v.gate  = true;   // env ramps up from its current level (click-free on steal)
+        if (wasFree)
+            v.curRatio = v.ratio;   // fresh voice starts on-pitch (glide only legato)
+        v.gate  = true;             // env ramps up from its current level (click-free on steal)
     }
 
     void GranularEngine::noteOff (int midiNote) noexcept
@@ -252,7 +258,8 @@ namespace phenotype::dsp
                     if (vi >= 0)
                     {
                         const auto& v = voices[(size_t) vi];
-                        spawnGrain (p, modValue, v.ratio, v.env * v.vel);
+                        const float amp = v.env * (0.15f + 0.85f * v.vel);   // velocity sensitivity
+                        spawnGrain (p, modValue, v.curRatio * bendRatio, amp);
                     }
                 }
                 else

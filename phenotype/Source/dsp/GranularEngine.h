@@ -61,6 +61,16 @@ namespace phenotype::dsp
         void allNotesOff() noexcept;
         [[nodiscard]] int activeVoices() const noexcept;
 
+        //  Global pitch bend (semitones) and portamento (seconds, 0 = off).
+        void setPitchBend (float semitones) noexcept
+        {
+            bendRatio = fastmath::fastExp (semitones * 0.0577622650f);
+        }
+        void setGlideTime (float seconds) noexcept
+        {
+            glideCoeff = seconds <= 0.0f ? 0.0f : fastmath::onePoleCoeff (seconds, sampleRate);
+        }
+
         //  Bridge to the shared atomic parameter store.
         ParameterHub& params() noexcept { return hub; }
 
@@ -73,11 +83,12 @@ namespace phenotype::dsp
         //  genome's root; amplitude follows a gated attack/release envelope.
         struct MelodyVoice
         {
-            int   note  = -1;      // -1 == free
-            float ratio = 1.0f;    // 2^((note-60)/12)
-            float vel   = 0.0f;    // 0..1
-            float env   = 0.0f;    // current envelope level
-            bool  gate  = false;   // key held
+            int   note     = -1;    // -1 == free
+            float ratio    = 1.0f;  // target 2^((note-60)/12)
+            float curRatio = 1.0f;  // glided current ratio
+            float vel      = 0.0f;  // 0..1
+            float env      = 0.0f;  // current envelope level
+            bool  gate     = false; // key held
         };
 
         int   spawnGrain (const ParameterSnapshot& p, float modValue,
@@ -114,6 +125,8 @@ namespace phenotype::dsp
         bool     instrumentMode = false;
         float    attackCoeff  = 0.0f; // one-pole attack pole
         float    releaseCoeff = 0.0f; // one-pole release pole
+        float    bendRatio    = 1.0f; // global pitch-bend multiplier
+        float    glideCoeff   = 0.0f; // portamento pole (0 = instant)
         int      voiceRR      = 0;    // round-robin cursor for grain assignment
 
         float    grainClock   = 0.0f; // fractional samples until next spawn
