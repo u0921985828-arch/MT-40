@@ -10,8 +10,11 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { PALETTE, TRICHOMES } from "./theme";
+import { PALETTE, TRICHOMES, GLOW } from "./theme";
 import { telemetry } from "../store/usePhenotypeStore";
+
+const baseGreen = new THREE.Color(PALETTE.chlorophyll).multiplyScalar(GLOW.trichome);
+const baseMag = new THREE.Color(PALETTE.ledMagenta).multiplyScalar(GLOW.trichome);
 
 export function Trichomes() {
   const pointsRef = useRef<THREE.Points>(null);
@@ -33,11 +36,11 @@ export function Trichomes() {
   const material = useMemo(
     () =>
       new THREE.PointsMaterial({
-        color: new THREE.Color(PALETTE.chlorophyll),
-        size: 0.05,
+        color: baseGreen.clone(),
+        size: 0.07,
         sizeAttenuation: true,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.55,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         toneMapped: false,
@@ -59,10 +62,8 @@ export function Trichomes() {
 
     // Resin density from grain activity (0..~48 grains -> 0..1).
     const density = Math.min(1, telemetry.activeGrains / 48);
-    material.opacity = 0.15 + density * 0.5;
-    material.color
-      .set(PALETTE.chlorophyll)
-      .lerp(new THREE.Color(PALETTE.ledMagenta), 0.5 * telemetry.capillary);
+    material.opacity = 0.3 + density * 0.55;
+    material.color.copy(baseGreen).lerp(baseMag, 0.5 * telemetry.capillary);
   });
 
   return <points ref={pointsRef} geometry={geometry} material={material} />;

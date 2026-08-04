@@ -11,7 +11,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { PALETTE } from "./theme";
+import { PALETTE, GLOW } from "./theme";
 import { telemetry } from "../store/usePhenotypeStore";
 
 function leafletOutline(angle: number, length: number, width: number): THREE.Vector2[] {
@@ -74,9 +74,9 @@ function Leaf({
   const lineMat = useMemo(
     () =>
       new THREE.LineBasicMaterial({
-        color: new THREE.Color(color),
+        color: new THREE.Color(color).multiplyScalar(GLOW.leaf),
         transparent: true,
-        opacity: 0.4,
+        opacity: 0.5,
         toneMapped: false,
       }),
     [color],
@@ -84,8 +84,8 @@ function Leaf({
 
   useFrame(() => {
     const breath = 0.7 + 0.3 * telemetry.capillary;
-    fillMat.opacity = 0.05 + 0.08 * telemetry.capillary;
-    lineMat.opacity = 0.25 + 0.35 * breath * (0.5 + Math.min(1, telemetry.activeGrains / 48) * 0.5);
+    fillMat.opacity = 0.06 + 0.12 * telemetry.capillary;
+    lineMat.opacity = 0.35 + 0.4 * breath * (0.5 + Math.min(1, telemetry.activeGrains / 48) * 0.5);
   });
 
   return (

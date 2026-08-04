@@ -1,15 +1,18 @@
 /* ==========================================================================
-   Phenotype — C40 aesthetic. Flat #F4F4F4 field, ink text, chlorophyll +
-   LED-magenta accents. Monospace/technical, dense, high-contrast.
+   Phenotype — grow-lab dark neon. Near-black field, luminous text, chlorophyll
+   + LED-magenta accents that read as actual emitted light.
    ========================================================================== */
 
 :root {
-  --bg: #f4f4f4;
-  --ink: #222222;
-  --chlorophyll: #00ff00;
-  --magenta: #ff00ff;
-  --hair: #d8d8d8;
-  color-scheme: light;
+  --bg: #07090a;
+  --panel: #0c100e;
+  --panel-line: #1c2a22;
+  --ink: #eaf7ee;
+  --ink-dim: #7f9d8c;
+  --chlorophyll: #00ff6a;
+  --magenta: #ff2bd6;
+  --hair: #16241d;
+  color-scheme: dark;
 }
 
 * {
@@ -21,6 +24,7 @@ body,
 #root {
   margin: 0;
   height: 100%;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
   font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -31,6 +35,10 @@ body,
   display: flex;
   flex-direction: column;
   height: 100%;
+  background:
+    radial-gradient(1200px 600px at 30% 20%, rgba(0, 255, 106, 0.05), transparent 60%),
+    radial-gradient(900px 500px at 80% 80%, rgba(255, 43, 214, 0.05), transparent 60%),
+    var(--bg);
 }
 
 .ph-header {
@@ -38,7 +46,8 @@ body,
   align-items: baseline;
   justify-content: space-between;
   padding: 12px 20px;
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 1px solid var(--panel-line);
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .ph-header h1 {
@@ -46,6 +55,7 @@ body,
   font-size: 20px;
   letter-spacing: 0.35em;
   font-weight: 700;
+  text-shadow: 0 0 18px rgba(0, 255, 106, 0.35);
 }
 
 .ph-status {
@@ -55,7 +65,7 @@ body,
   display: flex;
   align-items: center;
   gap: 8px;
-  opacity: 0.8;
+  color: var(--ink-dim);
 }
 
 .ph-dot {
@@ -63,12 +73,12 @@ body,
   height: 9px;
   border-radius: 50%;
   background: var(--hair);
-  border: 1px solid var(--ink);
+  border: 1px solid var(--panel-line);
 }
 
 .ph-dot--live {
   background: var(--chlorophyll);
-  box-shadow: 0 0 8px var(--chlorophyll);
+  box-shadow: 0 0 12px var(--chlorophyll);
 }
 
 .ph-main {
@@ -81,7 +91,7 @@ body,
 .ph-viewport {
   position: relative;
   min-width: 0;
-  border-right: 2px solid var(--ink);
+  border-right: 1px solid var(--panel-line);
 }
 
 .ph-viewport canvas {
@@ -93,14 +103,16 @@ body,
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .ph-group {
-  border: 1px solid var(--ink);
-  border-radius: 0;
+  border: 1px solid var(--panel-line);
+  border-radius: 3px;
   padding: 12px 12px 14px;
   margin: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
 }
 
 .ph-group legend {
@@ -109,6 +121,8 @@ body,
   text-transform: uppercase;
   padding: 0 6px;
   font-weight: 700;
+  color: var(--chlorophyll);
+  text-shadow: 0 0 10px rgba(0, 255, 106, 0.35);
 }
 
 .ph-slider {
@@ -124,13 +138,14 @@ body,
   font-size: 11px;
   letter-spacing: 0.08em;
   margin-bottom: 4px;
-  opacity: 0.85;
+  color: var(--ink-dim);
 }
 
 .ph-slider input[type="range"] {
   width: 100%;
   height: 3px;
   background: var(--hair);
+  border-radius: 2px;
   cursor: pointer;
 }
 
@@ -139,6 +154,7 @@ body,
   min-width: 26px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 /* Genotype read-out floating over the genome (drei Html) */
@@ -155,6 +171,7 @@ body,
   font-weight: 700;
   letter-spacing: 0.28em;
   color: var(--ink);
+  text-shadow: 0 0 12px rgba(0, 255, 106, 0.4);
 }
 .ph-geno__meta {
   display: flex;
@@ -162,6 +179,6 @@ body,
   justify-content: center;
   font-size: 10px;
   letter-spacing: 0.12em;
-  opacity: 0.8;
+  color: var(--ink-dim);
   margin-top: 3px;
 }

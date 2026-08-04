@@ -48,10 +48,11 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
     >
       <icosahedronGeometry args={[1, 1]} />
       <meshStandardMaterial
-        color={PALETTE.background}
+        color={"#000000"}
         emissive={color}
-        emissiveIntensity={0.4}
-        roughness={0.35}
+        emissiveIntensity={1.6}
+        toneMapped={false}
+        roughness={0.4}
         metalness={0.1}
       />
     </mesh>
