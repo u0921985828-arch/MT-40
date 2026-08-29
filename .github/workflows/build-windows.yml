@@ -27,8 +27,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { cmake_arch: x64,   label: x64, branch: ci-win-x64 }
-          - { cmake_arch: Win32, label: x86, branch: ci-win-x86 }
+          # x64 keeps the WebGL WebView UI (modern 64-bit hosts).
+          - { cmake_arch: x64,   label: x64, branch: ci-win-x64, native: "OFF" }
+          # x86 targets legacy hosts (FL Studio 11) whose browser can't render
+          # the WebView UI -> ship the native generic editor instead.
+          - { cmake_arch: Win32, label: x86, branch: ci-win-x86, native: "ON" }
     steps:
       - uses: actions/checkout@v4
 
@@ -52,6 +55,7 @@ jobs:
         shell: pwsh
         run: >
           cmake -B build -A ${{ matrix.cmake_arch }}
+          -DPHENOTYPE_NATIVE_EDITOR=${{ matrix.native }}
           "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=${{ github.workspace }}/phenotype/nuget"
 
       - name: Build (Release, ${{ matrix.label }})

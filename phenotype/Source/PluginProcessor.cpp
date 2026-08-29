@@ -194,7 +194,15 @@ namespace phenotype
 
     juce::AudioProcessorEditor* PhenotypeAudioProcessor::createEditor()
     {
+       #if PHENOTYPE_NATIVE_EDITOR
+        //  Legacy-host fallback (e.g. FL Studio 11): the embedded WebView can't
+        //  serve the modern WebGL UI on old Trident/WebView2 hosts, so expose a
+        //  native generic editor with a labelled slider per APVTS parameter.
+        //  Fully automatable; works in every host.
+        return new juce::GenericAudioProcessorEditor (*this);
+       #else
         return new PhenotypeWebEditor (*this);
+       #endif
     }
 
     void PhenotypeAudioProcessor::getStateInformation (juce::MemoryBlock& dest)

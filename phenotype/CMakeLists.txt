@@ -71,12 +71,18 @@ target_sources(Phenotype PRIVATE
     Source/PhenotypeWebEditor.cpp
     Source/dsp/GranularEngine.cpp)
 
+# Native generic editor instead of the WebGL WebView UI. Enable for legacy
+# hosts whose embedded browser can't serve the modern frontend (e.g. FL Studio
+# 11): -DPHENOTYPE_NATIVE_EDITOR=ON.
+option(PHENOTYPE_NATIVE_EDITOR "Use a native generic editor instead of the WebView UI" OFF)
+
 target_compile_definitions(Phenotype PUBLIC
     JUCE_WEB_BROWSER=1            # native WebView UI
     JUCE_USE_CURL=0
     JUCE_USE_WIN_WEBVIEW2=1       # Windows backend
     JUCE_VST3_CAN_REPLACE_VST2=0
-    JUCE_DISPLAY_SPLASH_SCREEN=0)
+    JUCE_DISPLAY_SPLASH_SCREEN=0
+    PHENOTYPE_NATIVE_EDITOR=$<BOOL:${PHENOTYPE_NATIVE_EDITOR}>)
 
 target_include_directories(Phenotype PRIVATE Source)
 
