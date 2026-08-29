@@ -98,14 +98,16 @@ function LavaFloor() {
     mat.uniforms.uCross.value = P.crossBlend;
     mat.uniforms.uOpacity.value = (0.26 + telemetry.capillary * 0.3 + P.filterCutoff * 0.28) * breath;
     if (meshRef.current) {
-      const sc = 0.8 + P.reverbSize * 0.7 + P.reverbMix * 0.2;
+      // Keep the pool inside the ~15-unit visible width so its glow fades
+      // within the frame instead of being clipped at the viewport edge.
+      const sc = 0.68 + P.reverbSize * 0.36 + P.reverbMix * 0.12;
       meshRef.current.scale.set(sc, sc, 1);
     }
   });
 
   return (
     <mesh ref={meshRef} position={[0, -0.97, 0]} rotation={[-Math.PI / 2, 0, 0]} material={mat}>
-      <planeGeometry args={[17, 17]} />
+      <planeGeometry args={[12, 12]} />
     </mesh>
   );
 }
@@ -165,7 +167,7 @@ export function IsometricGrid() {
   return (
     <Canvas
       orthographic
-      camera={{ position: [8, 6.6, 8], zoom: 46, near: 0.1, far: 100 }}
+      camera={{ position: [8, 6.6, 8], zoom: 56, near: 0.1, far: 100 }}
       gl={{ antialias: true, alpha: false }}
       onCreated={({ gl, scene, camera }) => {
         gl.setClearColor(new THREE.Color(PALETTE.background), 1);
@@ -185,11 +187,11 @@ export function IsometricGrid() {
       <EffectComposer multisampling={0}>
         {/* Only true HDR highlights bloom — darks stay crisp. */}
         <Bloom
-          intensity={0.95}
-          luminanceThreshold={0.5}
-          luminanceSmoothing={0.72}
+          intensity={0.55}
+          luminanceThreshold={0.62}
+          luminanceSmoothing={0.7}
           mipmapBlur
-          radius={0.78}
+          radius={0.6}
         />
         {/* Faint lab-scope character. */}
         <ChromaticAberration
