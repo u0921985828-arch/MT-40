@@ -62,6 +62,11 @@ namespace phenotype::dsp
         void noteOn  (int midiNote, float velocity) noexcept;
         void noteOff (int midiNote) noexcept;
         void allNotesOff() noexcept;
+
+        //  MIDI expression: sustain pedal (CC64) holds released notes; mod wheel
+        //  (CC1) lifts the filter cutoff.
+        void setSustain  (bool down) noexcept;
+        void setModWheel (float v) noexcept { modWheel = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
         [[nodiscard]] int activeVoices() const noexcept;
 
         //  Arpeggiator: when enabled, held notes are sequenced at rateHz (free)
@@ -124,7 +129,8 @@ namespace phenotype::dsp
             float curRatio = 1.0f;  // glided current ratio
             float vel      = 0.0f;  // 0..1
             float env      = 0.0f;  // current envelope level
-            bool  gate     = false; // key held
+            bool  gate     = false; // sounding (key held OR sustained)
+            bool  sustained = false; // key released but held by the pedal
         };
 
         using MipSet = std::array<std::vector<float>, kNumMips>;
@@ -191,6 +197,8 @@ namespace phenotype::dsp
         float    releaseCoeff = 0.0f; // one-pole release pole
         float    bendRatio    = 1.0f; // global pitch-bend multiplier
         float    glideCoeff   = 0.0f; // portamento pole (0 = instant)
+        bool     sustainPedal = false;
+        float    modWheel     = 0.0f;
         int      voiceRR      = 0;    // round-robin cursor for grain assignment
 
         float    grainClock   = 0.0f; // fractional samples until next spawn

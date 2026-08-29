@@ -94,6 +94,10 @@ namespace phenotype
                 const float norm = (m.getPitchWheelValue() - 8192) / 8192.0f;
                 granular.setPitchBend (norm * kBendSemitones);
             }
+            else if (m.isSustainPedalOn())        granular.setSustain (true);
+            else if (m.isSustainPedalOff())       granular.setSustain (false);
+            else if (m.isController() && m.getControllerNumber() == 1)   // mod wheel
+                granular.setModWheel (m.getControllerValue() * (1.0f / 127.0f));
         }
         if (pos < numSamples)
             granular.process (left + pos, right + pos, left + pos, right + pos, numSamples - pos);

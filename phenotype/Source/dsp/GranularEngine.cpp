@@ -44,6 +44,8 @@ namespace phenotype::dsp
         arpIndex       = 0;
         arpCurrentNote = -1;
         dcX1L = dcY1L = dcX1R = dcY1R = 0.0f;
+        sustainPedal = false;
+        modWheel     = 0.0f;
         svfL.reset();
         svfR.reset();
         modulator.reset();
@@ -143,10 +145,11 @@ namespace phenotype::dsp
 
         const float len = static_cast<float> (sourceLen);
 
-        //  Single-step wrap into [0, len) — O(1), safe for any finite pos.
-        float wrapped = pos - std::floor (pos / len) * len;
+        //  Callers keep readPos wrapped in the advance step, so a branchy guard
+        //  replaces the per-read division (hot path: 2 reads/grain/sample).
+        float wrapped = pos;
         if (wrapped >= len) wrapped -= len;
-        if (wrapped < 0.0f) wrapped += len;
+        else if (wrapped < 0.0f) wrapped += len;
 
         const int   i1 = static_cast<int> (wrapped);
         const float f  = wrapped - static_cast<float> (i1);
@@ -276,13 +279,25 @@ namespace phenotype::dsp
         if (wasFree)
             v.curRatio = v.ratio;   // fresh voice starts on-pitch (glide only legato)
         v.gate  = true;             // env ramps up from its current level (click-free on steal)
+        v.sustained = false;
     }
 
     void GranularEngine::releaseVoice (int midiNote) noexcept
     {
         for (auto& v : voices)
             if (v.note == midiNote)
-                v.gate = false;   // enter release
+            {
+                if (sustainPedal) v.sustained = true;   // pedal holds it
+                else              v.gate      = false;  // enter release
+            }
+    }
+
+    void GranularEngine::setSustain (bool down) noexcept
+    {
+        sustainPedal = down;
+        if (! down)
+            for (auto& v : voices)
+                if (v.sustained) { v.gate = false; v.sustained = false; }   // release on pedal-up
     }
 
     void GranularEngine::noteOn (int midiNote, float velocity) noexcept
@@ -490,6 +505,7 @@ namespace phenotype::dsp
         const float grainLenSec  = grainMs * 0.001f;
         const float overlap      = grainsPerSec * grainLenSec;
         const float overlapGain  = 1.0f / std::sqrt (overlap < 1.0f ? 1.0f : overlap);
+        const float srcLenF      = static_cast<float> (sourceLen);
 
         //  --- Unison stack (per block) ----------------------------------------
         const int   nUnison    = 1 + static_cast<int> (p.unison * 6.0f + 0.5f);   // 1..7
@@ -611,6 +627,8 @@ namespace phenotype::dsp
 
                 g.readPosA += g.incA;
                 g.readPosB += g.incB;
+                if (g.readPosA >= srcLenF) g.readPosA -= srcLenF;   // keep in [0,len)
+                if (g.readPosB >= srcLenF) g.readPosB -= srcLenF;
                 g.phase    += g.phaseInc;
                 if (g.phase >= 1.0f)
                     g.active = false;
@@ -622,8 +640,11 @@ namespace phenotype::dsp
             float tL = fastmath::fastTanh (accL * driveGain) * driveMakeup;
             float tR = fastmath::fastTanh (accR * driveGain) * driveMakeup;
 
-            //  Capillary-modulated cutoff, per sample, shared L/R.
-            const float cutoff = baseCutoff * fastmath::fastExp ((modValue - 0.5f) * modOctaves * (-lnHalf) * 2.0f);
+            //  Capillary-modulated cutoff, per sample, shared L/R; mod wheel
+            //  lifts the cutoff up to +2 octaves (1.386 = 2*ln2).
+            const float cutoff = baseCutoff
+                * fastmath::fastExp ((modValue - 0.5f) * modOctaves * (-lnHalf) * 2.0f)
+                * fastmath::fastExp (modWheel * 1.386294f);
             const float g = SVF::gForCutoff (cutoff, static_cast<float> (sampleRate));
             tL = svfL.process (tL, g, kDamp, fType);
             tR = svfR.process (tR, g, kDamp, fType);

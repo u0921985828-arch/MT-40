@@ -509,6 +509,34 @@ static void testMipAntiAlias()
     check (peak > 0.01f, "very high note audibly present");
 }
 
+static void testSustainPedal()
+{
+    std::printf ("sustain pedal:\n");
+    GranularEngine e;
+    e.prepare (48000.0, 512);
+    e.setInstrumentMode (true);
+    std::vector<float> L (4096), R (4096);
+
+    e.noteOn (60, 1.0f);
+    for (int b = 0; b < 4; ++b) e.process (nullptr, nullptr, L.data(), R.data(), 4096);
+
+    e.setSustain (true);
+    e.noteOff (60);                       // key up, but pedal holds it
+    float held = 0.0f;
+    for (int b = 0; b < 6; ++b)
+    {
+        e.process (nullptr, nullptr, L.data(), R.data(), 4096);
+        for (int i = 0; i < 4096; ++i) held = std::max (held, std::fabs (L[i]));
+    }
+    check (held > 0.02f, "sustain holds the note after note-off");
+
+    e.setSustain (false);                 // pedal up -> release
+    for (int b = 0; b < 22; ++b) e.process (nullptr, nullptr, L.data(), R.data(), 4096);
+    float tail = 0.0f;
+    for (int i = 0; i < 4096; ++i) tail = std::max (tail, std::fabs (L[i]));
+    check (tail < 0.02f, "note releases after pedal up");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -528,6 +556,7 @@ int main()
     testSvfStability();
     testFilteredEngineClean();
     testMipAntiAlias();
+    testSustainPedal();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;
