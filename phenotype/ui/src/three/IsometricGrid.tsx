@@ -62,12 +62,12 @@ export function IsometricGrid() {
   return (
     <Canvas
       orthographic
-      camera={{ position: [8, 6.5, 8], zoom: 44, near: 0.1, far: 100 }}
+      camera={{ position: [8, 6.5, 8], zoom: 47, near: 0.1, far: 100 }}
       gl={{ antialias: true, alpha: false }}
       onCreated={({ gl, scene, camera }) => {
         gl.setClearColor(new THREE.Color(PALETTE.background), 1);
         scene.fog = new THREE.Fog(new THREE.Color(PALETTE.fog).getHex(), 14, 30);
-        camera.lookAt(0, 0.8, 0);
+        camera.lookAt(0, 0.5, 0);
       }}
     >
       <ambientLight intensity={0.18} color={"#20302a"} />
@@ -94,7 +94,7 @@ export function IsometricGrid() {
           radialModulation={false}
           modulationOffset={0}
         />
-        <Vignette eskil={false} offset={0.28} darkness={0.9} />
+        <Vignette eskil={false} offset={0.32} darkness={0.82} />
         <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
         {/* Edge anti-alias — the composer bypasses canvas MSAA. */}
         <SMAA />

@@ -35,9 +35,10 @@ namespace phenotype
     {
         granular.prepare (sampleRate, samplesPerBlock);
         fifo.fill (0.0f);
-        magFront.fill (0.0f);
+        magBuf[0].fill (0.0f);
+        magBuf[1].fill (0.0f);
         fifoIndex = 0;
-        magReady.store (false);
+        magIndex.store (0, std::memory_order_relaxed);
     }
 
     bool PhenotypeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -118,20 +119,24 @@ namespace phenotype
         window.multiplyWithWindowingTable (fftScratch.data(), kFftSize);
         fft.performFrequencyOnlyForwardTransform (fftScratch.data());
 
-        //  Normalise to 0..1 with a soft log scaling for display.
+        //  Write the inactive frame, then publish it (release).
+        const int w = magIndex.load (std::memory_order_relaxed) ^ 1;
+        auto& dst = magBuf[(size_t) w];
         constexpr float norm = 2.0f / kFftSize;
         for (int i = 0; i < kNumBins; ++i)
         {
             const float mag = fftScratch[(size_t) i] * norm;
-            const float dB   = juce::Decibels::gainToDecibels (mag, -100.0f);
-            magFront[(size_t) i] = juce::jlimit (0.0f, 1.0f, (dB + 100.0f) / 100.0f);
+            const float dB  = juce::Decibels::gainToDecibels (mag, -100.0f);
+            dst[(size_t) i] = juce::jlimit (0.0f, 1.0f, (dB + 100.0f) / 100.0f);
         }
-        magReady.store (true, std::memory_order_release);
+        magIndex.store (w, std::memory_order_release);
     }
 
     void PhenotypeAudioProcessor::copyFftFrame (float* dest) const noexcept
     {
-        std::copy (magFront.begin(), magFront.end(), dest);
+        const int r = magIndex.load (std::memory_order_acquire);
+        const auto& src = magBuf[(size_t) r];
+        std::copy (src.begin(), src.end(), dest);
     }
 
     //==========================================================================

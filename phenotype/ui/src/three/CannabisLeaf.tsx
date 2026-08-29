@@ -132,11 +132,14 @@ function Leaf({
     lineMat.opacity = (0.4 + 0.4 * breath * (0.5 + grains * 0.5)) * dim;
   });
 
+  const veinObj = useMemo(() => new THREE.LineSegments(veins, veinMat), [veins, veinMat]);
+  const edgeObj = useMemo(() => new THREE.LineSegments(edges, lineMat), [edges, lineMat]);
+
   return (
     <group position={[offset[0], -0.6, offset[1]]} rotation={[-Math.PI / 2, 0, rotation]} scale={scale}>
       <mesh geometry={geo} material={fillMat} />
-      <primitive object={new THREE.LineSegments(veins, veinMat)} />
-      <primitive object={new THREE.LineSegments(edges, lineMat)} />
+      <primitive object={veinObj} />
+      <primitive object={edgeObj} />
     </group>
   );
 }

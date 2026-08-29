@@ -78,6 +78,8 @@ export function DNAHelix() {
     [pairs],
   );
 
+  const rungSegments = useMemo(() => new THREE.LineSegments(rungGeo, rungMat), [rungGeo, rungMat]);
+
   useFrame((_, delta) => {
     const g = groupRef.current;
     const nuc = nucRef.current;
@@ -119,7 +121,7 @@ export function DNAHelix() {
         <sphereGeometry args={[1, 14, 14]} />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
-      <primitive object={new THREE.LineSegments(rungGeo, rungMat)} />
+      <primitive object={rungSegments} />
       <primitive object={backboneA} />
       <primitive object={backboneB} />
     </group>

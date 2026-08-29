@@ -82,9 +82,10 @@ namespace phenotype
         std::array<float, kFftSize * 2>      fftScratch {};
         int                                  fifoIndex = 0;
 
-        //  Double-buffered magnitude frame published lock-free to the UI.
-        std::array<float, kNumBins>          magFront {};
-        std::atomic<bool>                    magReady { false };
+        //  Lock-free SPSC double buffer: audio writes the inactive frame and
+        //  publishes its index (release); the UI reads the active one (acquire).
+        std::array<std::array<float, kNumBins>, 2> magBuf {};
+        std::atomic<int>                           magIndex { 0 };
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PhenotypeAudioProcessor)
     };

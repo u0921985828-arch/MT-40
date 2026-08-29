@@ -77,8 +77,10 @@ namespace phenotype::dsp
         const int    nyqK   = static_cast<int> ((sampleRate * 0.5) / kGenomeHz) - 1;
         const int    kFull  = nyqK < 1 ? 1 : (nyqK > 64 ? 64 : nyqK);
 
-        //  Directly synthesise every mip with harmonics limited so it stays
-        //  alias-free when played up to 2^m: mip m keeps k <= kFull >> m.
+        //  Synthesise each mip additively with harmonics limited per octave so
+        //  it stays alias-free up to 2^m (mip m keeps k <= kFull >> m). Total
+        //  cost is ~2x mip 0 (the harmonic count halves each octave), and this
+        //  preserves per-mip brightness better than a cascaded low-pass.
         for (int m = 0; m < kNumMips; ++m)
         {
             const int kMax = std::max (1, kFull >> m);
