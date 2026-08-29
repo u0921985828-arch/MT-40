@@ -22,6 +22,9 @@ namespace phenotype::dsp
         attackCoeff  = fastmath::onePoleCoeff (0.008f, newSampleRate);  // ~8 ms attack
         releaseCoeff = fastmath::onePoleCoeff (0.200f, newSampleRate);  // ~200 ms release
 
+        //  DC blocker pole: y[n] = x[n]-x[n-1] + R*y[n-1], R = e^{-2*pi*fc/fs}.
+        dcR = fastmath::fastExp (-2.0f * 3.14159265f * 10.0f / static_cast<float> (newSampleRate));
+
         fillGenome();   // internal band-limited wavetables (instrument mode)
         reset();
     }
@@ -37,6 +40,7 @@ namespace phenotype::dsp
         arpClock       = 0.0f;
         arpIndex       = 0;
         arpCurrentNote = -1;
+        dcX1L = dcY1L = dcX1R = dcY1R = 0.0f;
         modulator.reset();
         for (auto& g : grains)
             g.active = false;
@@ -78,21 +82,39 @@ namespace phenotype::dsp
         }
     }
 
-    //  Linear-interpolated read from a source ring buffer at fractional pos.
+    //  Cubic Hermite (Catmull-Rom) read from a source ring buffer at fractional
+    //  pos. A 4-point cubic rejects far more imaging/aliasing than linear when
+    //  grains are pitched, so pitched material stays smooth instead of gritty.
     float GranularEngine::readSource (const std::vector<float>& buf, float pos) const noexcept
     {
-        if (sourceLen <= 1)
-            return 0.0f;
+        if (sourceLen <= 3)
+            return sourceLen <= 0 ? 0.0f : buf[0];
 
-        //  Wrap into [0, sourceLen).
-        float wrapped = pos;
-        while (wrapped >= static_cast<float> (sourceLen)) wrapped -= static_cast<float> (sourceLen);
-        while (wrapped < 0.0f)                            wrapped += static_cast<float> (sourceLen);
+        const float len = static_cast<float> (sourceLen);
 
-        const int   i0 = static_cast<int> (wrapped);
-        const int   i1 = (i0 + 1 == sourceLen) ? 0 : i0 + 1;
-        const float f  = wrapped - static_cast<float> (i0);
-        return buf[(size_t) i0] + (buf[(size_t) i1] - buf[(size_t) i0]) * f;
+        //  Single-step wrap into [0, len) — O(1), safe for any finite pos.
+        float wrapped = pos - std::floor (pos / len) * len;
+        if (wrapped >= len) wrapped -= len;
+        if (wrapped < 0.0f) wrapped += len;
+
+        const int   i1 = static_cast<int> (wrapped);
+        const float f  = wrapped - static_cast<float> (i1);
+
+        int i0 = i1 - 1; if (i0 < 0)          i0 += sourceLen;
+        int i2 = i1 + 1; if (i2 >= sourceLen) i2 -= sourceLen;
+        int i3 = i1 + 2; if (i3 >= sourceLen) i3 -= sourceLen;
+
+        const float x0 = buf[(size_t) i0];
+        const float x1 = buf[(size_t) i1];
+        const float x2 = buf[(size_t) i2];
+        const float x3 = buf[(size_t) i3];
+
+        //  Catmull-Rom coefficients (tangents = centred differences).
+        const float c0 = x1;
+        const float c1 = 0.5f * (x2 - x0);
+        const float c2 = x0 - 2.5f * x1 + 2.0f * x2 - 0.5f * x3;
+        const float c3 = 0.5f * (x3 - x0) + 1.5f * (x1 - x2);
+        return ((c3 * f + c2) * f + c1) * f + c0;
     }
 
     //  pitchMul / ampMul carry the per-note ratio and envelope in instrument
@@ -397,6 +419,15 @@ namespace phenotype::dsp
         const float grainsPerSec = 2.0f + p.grainDensity * 198.0f;
         const float spawnPeriod  = static_cast<float> (sampleRate) / grainsPerSec;
 
+        //  Overlap normalisation: many concurrent grains sum incoherently, so
+        //  the bus RMS grows ~sqrt(overlap). Scaling each grain by 1/sqrt(overlap)
+        //  keeps loudness constant across density and stops the summed cloud from
+        //  slamming the soft-clipper into distortion.
+        const float grainMs      = kMinGrainMs + p.grainSize * (kMaxGrainMs - kMinGrainMs);
+        const float grainLenSec  = grainMs * 0.001f;
+        const float overlap      = grainsPerSec * grainLenSec;
+        const float overlapGain  = 1.0f / std::sqrt (overlap < 1.0f ? 1.0f : overlap);
+
         for (int n = 0; n < numSamples; ++n)
         {
             //  1) Effect mode captures the incoming genome; instrument mode keeps
@@ -439,13 +470,13 @@ namespace phenotype::dsp
                     if (vi >= 0)
                     {
                         const auto& v = voices[(size_t) vi];
-                        const float amp = v.env * (0.15f + 0.85f * v.vel);   // velocity sensitivity
+                        const float amp = v.env * (0.15f + 0.85f * v.vel) * overlapGain;
                         spawnGrain (p, modValue, v.curRatio * bendRatio, amp);
                     }
                 }
                 else
                 {
-                    spawnGrain (p, modValue, 1.0f, 1.0f);
+                    spawnGrain (p, modValue, 1.0f, overlapGain);
                 }
                 grainClock += spawnPeriod;
             }
@@ -482,8 +513,18 @@ namespace phenotype::dsp
 
             //  Per-sample gain smoothing removes zipper noise on automation.
             smoothedGain = p.outputGain + (smoothedGain - p.outputGain) * gainPole;
-            if (outL) outL[n] = fastmath::softClip (accL * smoothedGain);
-            if (outR) outR[n] = fastmath::softClip (accR * smoothedGain);
+
+            //  DC / subsonic blocker, then gentle soft-clip as a safety ceiling.
+            const float xL = accL * smoothedGain;
+            const float yL = xL - dcX1L + dcR * dcY1L;
+            dcX1L = xL; dcY1L = yL;
+
+            const float xR = accR * smoothedGain;
+            const float yR = xR - dcX1R + dcR * dcY1R;
+            dcX1R = xR; dcY1R = yR;
+
+            if (outL) outL[n] = fastmath::softClip (yL);
+            if (outR) outR[n] = fastmath::softClip (yR);
         }
     }
 }

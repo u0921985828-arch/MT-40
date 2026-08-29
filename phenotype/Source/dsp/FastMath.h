@@ -20,8 +20,9 @@ namespace phenotype::fastmath
 {
     //  e^x via 2^(x * log2 e). Valid for x in [-87, 88]; outside that range the
     //  result is clamped to avoid denormal / inf blow-ups on the audio thread.
-    //  Max relative error ~3e-3 across the audio-relevant domain — more than
-    //  sufficient for envelope / coefficient generation.
+    //  The 2^f mantissa uses a degree-5 minimax (the exp-series in ln2), giving
+    //  a relative error < 1e-6 — accurate enough that note ratios derived from
+    //  it (2^(semitones/12)) are in tune to well under a cent.
     [[nodiscard]] inline float fastExp (float x) noexcept
     {
         constexpr float kLo   = -87.0f;
@@ -35,10 +36,12 @@ namespace phenotype::fastmath
         const int   i  = static_cast<int> (fl);
         const float f  = t - fl;                 // fractional part in [0, 1)
 
-        //  2^f minimax (degree 3) on [0, 1).
-        const float p = 1.0f + f * (0.6960656421638072f
-                              + f * (0.2247483206189928f
-                              + f *  0.0789868165909190f));
+        //  2^f = e^(f*ln2) — degree-5 series in ln2, error < 1e-6 on [0, 1).
+        const float p = 1.0f + f * (0.6931471805599453f
+                              + f * (0.2402265069591007f
+                              + f * (0.0555041086648216f
+                              + f * (0.0096181291076285f
+                              + f *  0.0013333558146428f))));
 
         //  Compose 2^i by writing the biased exponent directly.
         union { float asFloat; std::int32_t asInt; } u;

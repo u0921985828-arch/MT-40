@@ -183,6 +183,12 @@ namespace phenotype::dsp
         float    grainClock   = 0.0f; // fractional samples until next spawn
         float    smoothedGain = 0.0f; // de-zippered master gain
         float    gainPole     = 0.0f; // one-pole coeff (~5 ms)
+
+        //  Output DC / subsonic blocker (one-pole highpass, ~10 Hz).
+        float    dcR    = 0.0f;
+        float    dcX1L  = 0.0f, dcY1L = 0.0f;
+        float    dcX1R  = 0.0f, dcY1R = 0.0f;
+
         uint32_t rngState     = 0x9E3779B9u;
     };
 }
