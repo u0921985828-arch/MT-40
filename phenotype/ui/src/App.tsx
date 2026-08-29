@@ -61,6 +61,17 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
     ],
   },
   {
+    title: "Arpegiador & Escala",
+    tag: "ARP",
+    controls: [
+      { id: "arpOn", label: "Activo", def: 0.0 },
+      { id: "arpRate", label: "Velocidad", def: 0.4 },
+      { id: "arpMode", label: "Patrón", def: 0.0 },
+      { id: "arpSync", label: "Sync", def: 0.0 },
+      { id: "scaleType", label: "Escala", def: 0.0 },
+    ],
+  },
+  {
     title: "FX · Espacio",
     tag: "FX",
     controls: [
@@ -70,17 +81,6 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
       { id: "reverbMix", label: "Reverb", def: 0.0 },
       { id: "reverbSize", label: "Size", def: 0.5 },
       { id: "reverbDamp", label: "Damp", def: 0.4 },
-    ],
-  },
-  {
-    title: "Arpegiador & Escala",
-    tag: "ARP",
-    controls: [
-      { id: "arpOn", label: "Activo", def: 0.0 },
-      { id: "arpRate", label: "Velocidad", def: 0.4 },
-      { id: "arpMode", label: "Patrón", def: 0.0 },
-      { id: "arpSync", label: "Sync", def: 0.0 },
-      { id: "scaleType", label: "Escala", def: 0.0 },
     ],
   },
 ];
@@ -155,22 +155,22 @@ export default function App() {
         <aside className="ph-rack">
           <PresetBar />
           {RACK.map((group) => (
-            <fieldset key={group.title} className="ph-group">
-              <legend>
-                <span className="ph-group__tag">{group.tag}</span>
-                {group.title}
-              </legend>
-              <div
-                className="ph-knobs"
-                style={{ gridTemplateColumns: `repeat(${group.controls.length}, 1fr)` }}
-              >
+            <section
+              key={group.title}
+              className="ph-sec"
+              style={{ ["--n" as string]: group.controls.length }}
+            >
+              <div className="ph-sec__hd">
+                <span className="ph-sec__tag">{group.tag}</span>
+                <span className="ph-sec__name">{group.title}</span>
+              </div>
+              <div className="ph-sec__knobs">
                 {group.controls.map((c) => (
                   <Knob key={c.id} def={c} />
                 ))}
               </div>
-            </fieldset>
+            </section>
           ))}
-          <p className="ph-foot">BOTANICA DSP · v1.0</p>
         </aside>
       </main>
 

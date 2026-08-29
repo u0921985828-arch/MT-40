@@ -121,7 +121,7 @@ html, body, #root {
 .ph-main {
   flex: 1 1 auto;                   /* anchored stage between header and bar */
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1fr 588px; /* viewport | flat console */
   min-height: 0;
 }
 .ph-viewport {
@@ -138,13 +138,58 @@ html, body, #root {
 }
 
 /* ---- Rack --------------------------------------------------------------- */
+/* Flat console: a vertical stack of sections. Each section fills the full
+   console width — its knobs share the row as `repeat(n, 1fr)`, and the dial
+   is size-capped so every knob reads identically whatever the count. Sections
+   are separated by hairline dividers; leftover height breathes between them,
+   never as dead space on the right. */
 .ph-rack {
-  overflow: hidden;                 /* everything fits — no scroll */
-  padding: 9px 10px;
+  overflow: hidden;
+  min-height: 0;
+  padding: 9px 14px 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;   /* distribute breathing room, no trailing air */
+  gap: 4px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.15));
+}
+
+.ph-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--panel-line);
+}
+.ph-sec:first-of-type { border-top: none; padding-top: 2px; }
+.ph-sec__hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 1px;
+}
+.ph-sec__knobs {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+  align-items: start;
+  gap: 3px 6px;
+}
+.ph-sec__tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--bg);
+  background: var(--chlorophyll);
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(0, 255, 106, 0.3);
+}
+.ph-sec__name {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  line-height: 1.1;
 }
 .ph-rack::-webkit-scrollbar { width: 10px; }
 .ph-rack::-webkit-scrollbar-thumb { background: var(--panel-line); border-radius: 6px; }
@@ -152,12 +197,11 @@ html, body, #root {
 
 /* ---- Preset selector (top of the rack) ---------------------------------- */
 .ph-preset {
-  flex: 0 0 auto;
+  grid-column: 1 / -1;             /* spans both rack columns */
   display: grid;
-  grid-template-columns: 34px 1fr 34px;
+  grid-template-columns: 38px 1fr 38px;
   align-items: stretch;
-  gap: 6px;
-  margin-bottom: 2px;
+  gap: 8px;
 }
 .ph-preset__arw {
   border: 1px solid var(--panel-line);
@@ -175,13 +219,13 @@ html, body, #root {
 .ph-preset__arw:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; }
 .ph-preset__disp {
   border: 1px solid var(--panel-line);
-  border-radius: 8px;
+  border-radius: 7px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.22));
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 6px 11px;
+  padding: 3px 11px;
   overflow: hidden;
 }
 .ph-preset__lib {
@@ -213,48 +257,6 @@ html, body, #root {
   font-variant-numeric: tabular-nums;
 }
 
-.ph-group {
-  border: 1px solid var(--panel-line);
-  border-radius: 9px;
-  padding: 4px 10px 6px;
-  margin: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(0, 0, 0, 0.12));
-  flex: 1 1 0;                       /* groups share the rack height evenly */
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.ph-group legend {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 3px;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--ink);
-}
-.ph-group__tag {
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.1em;
-  color: var(--bg);
-  background: var(--chlorophyll);
-  padding: 1.5px 5px;
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(0, 255, 106, 0.3);
-}
-
-/* knob grid — columns set inline to the control count; fills the group height */
-.ph-knobs {
-  display: grid;
-  gap: 2px 3px;
-  margin-top: 4px;
-  flex: 1 1 auto;
-  align-content: center;   /* centre the row(s) in the stretched group */
-}
-
 /* ---- Knob --------------------------------------------------------------- */
 .knob {
   display: flex;
@@ -262,10 +264,13 @@ html, body, #root {
   align-items: center;
   gap: 2px;
   user-select: none;
+  min-width: 0;                     /* let the cell shrink — never overflow/clip */
 }
+.knob__read,
+.knob__label { max-width: 100%; }
 .knob__dial {
   width: 100%;
-  max-width: 46px;
+  max-width: 44px;
   aspect-ratio: 1;
   cursor: ns-resize;
   touch-action: none;
@@ -368,6 +373,8 @@ html, body, #root {
   .ph-bar { grid-template-columns: 1fr auto; }
 }
 @media (max-width: 720px) {
-  .ph-main { grid-template-columns: 1fr; }
-  .ph-viewport { min-height: 42vh; border-right: none; border-bottom: 1px solid var(--panel-line); }
+  .ph-main { grid-template-columns: 1fr; grid-template-rows: minmax(140px, 26vh) 1fr; }
+  .ph-viewport { min-height: 0; border-right: none; border-bottom: 1px solid var(--panel-line); }
+  .ph-rack { min-height: 0; }
+  .ph-group { flex: 0 0 auto; }     /* natural height; the rack scrolls on phones */
 }
