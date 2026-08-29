@@ -98,20 +98,26 @@ export function DNAHelix() {
 
   const rungSegments = useMemo(() => new THREE.LineSegments(rungGeo, rungMat), [rungGeo, rungMat]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const g = groupRef.current;
     const nuc = nucRef.current;
     if (!g || !nuc) return;
 
-    g.rotation.y += delta * HELIX.spin;
-    g.position.y = telemetry.capillary * 0.5 - 0.25;
+    const t = state.clock.elapsedTime;
+    // Organic idle motion so the genome lives even in silence: a breathing rise
+    // and a soft scale/lean on top of the capillary-driven vertical shift.
+    g.rotation.y += delta * (HELIX.spin * (0.85 + 0.15 * Math.sin(t * 0.3)));
+    g.rotation.x = Math.sin(t * 0.22) * 0.03;
+    g.position.y = telemetry.capillary * 0.5 - 0.25 + Math.sin(t * 0.5) * 0.06;
+    g.scale.setScalar(1 + Math.sin(t * 0.37) * 0.02 + 0.03 * telemetry.capillary);
 
     // Preset signature (read live, no re-render): cross-synthesis weights the
-    // two strands green<->magenta, output level sets the genome's overall glow.
+    // two strands green<->magenta (the receding chromosome truly recedes), and
+    // output level sets the genome's overall glow.
     const P = usePhenotypeStore.getState().params;
     const gGain = 0.55 + P.outputGain * 0.95;
-    const aMul = (0.4 + 1.0 * (1 - P.crossBlend)) * gGain; // chromosome A weight
-    const bMul = (0.4 + 1.0 * P.crossBlend) * gGain;       // chromosome B weight
+    const aMul = (0.22 + 1.28 * (1 - P.crossBlend)) * gGain; // chromosome A weight
+    const bMul = (0.22 + 1.28 * P.crossBlend) * gGain;       // chromosome B weight
 
     const fft = telemetry.fft;
     const rungCol = rungGeo.getAttribute("color") as THREE.BufferAttribute;
@@ -143,8 +149,8 @@ export function DNAHelix() {
     rungMat.opacity = 0.5 + telemetry.capillary * 0.45;
 
     // Backbones track the same cross-synth weighting so a strand can recede.
-    (backboneA.material as THREE.MeshBasicMaterial).color.copy(baseColA).multiplyScalar(0.55 + 0.9 * (1 - P.crossBlend) * gGain);
-    (backboneB.material as THREE.MeshBasicMaterial).color.copy(baseColB).multiplyScalar(0.55 + 0.9 * P.crossBlend * gGain);
+    (backboneA.material as THREE.MeshBasicMaterial).color.copy(baseColA).multiplyScalar((0.28 + 1.1 * (1 - P.crossBlend)) * gGain);
+    (backboneB.material as THREE.MeshBasicMaterial).color.copy(baseColB).multiplyScalar((0.28 + 1.1 * P.crossBlend) * gGain);
   });
 
   return (

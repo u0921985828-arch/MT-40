@@ -10,7 +10,7 @@
 //  clutter, the helix.
 //==============================================================================
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE, GLOW } from "./theme";
@@ -93,8 +93,10 @@ function Leaf({
   scale?: number;
   dim?: number;
 }) {
+  const groupRef = useRef<THREE.Group>(null);
   const { geo, veins } = useMemo(buildLeaf, []);
   const glow = useMemo(() => new THREE.Color(color).multiplyScalar(GLOW.leaf), [color]);
+  const phase = useMemo(() => offset[0] * 1.3 + offset[1] * 0.7, [offset]);
 
   const fillMat = useMemo(
     () => new THREE.MeshBasicMaterial({
@@ -114,17 +116,26 @@ function Leaf({
     [glow, dim],
   );
 
-  useFrame(() => {
+  useFrame((state) => {
     const grains = Math.min(1, telemetry.activeGrains / 48);
     const breath = 0.7 + 0.3 * telemetry.capillary;
     fillMat.opacity = (0.08 + 0.14 * telemetry.capillary) * dim;
     veinMat.opacity = (0.15 + 0.28 * breath * (0.5 + grains * 0.5)) * dim;
+
+    // Living plant: a slow wind sway + gentle breath, desynced per leaf.
+    const g = groupRef.current;
+    if (g) {
+      const t = state.clock.elapsedTime;
+      g.rotation.z = rotation + Math.sin(t * 0.5 + phase) * 0.05;
+      const s = scale * (1 + Math.sin(t * 0.6 + phase) * 0.02 + 0.03 * telemetry.capillary);
+      g.scale.setScalar(s);
+    }
   });
 
   const veinObj = useMemo(() => new THREE.LineSegments(veins, veinMat), [veins, veinMat]);
 
   return (
-    <group position={[offset[0], y, offset[1]]} rotation={[-Math.PI / 2, 0, rotation]} scale={scale}>
+    <group ref={groupRef} position={[offset[0], y, offset[1]]} rotation={[-Math.PI / 2, 0, rotation]} scale={scale}>
       <mesh geometry={geo} material={fillMat} />
       <primitive object={veinObj} />
     </group>

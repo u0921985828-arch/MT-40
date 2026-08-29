@@ -56,9 +56,9 @@ function FloorGlow() {
     c.width = c.height = s;
     const ctx = c.getContext("2d")!;
     const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    g.addColorStop(0, "rgba(120,255,190,0.9)");
-    g.addColorStop(0.4, "rgba(70,255,150,0.28)");
-    g.addColorStop(1, "rgba(0,0,0,0)");
+    g.addColorStop(0, "rgba(255,255,255,0.9)");
+    g.addColorStop(0.4, "rgba(255,255,255,0.26)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, s, s);
     const tex = new THREE.CanvasTexture(c);
@@ -67,9 +67,16 @@ function FloorGlow() {
   }, []);
 
   const meshRef = useRef<THREE.Mesh>(null);
-  useFrame(() => {
+  const warm = useMemo(() => new THREE.Color("#ff9a4d"), []);
+  const cool = useMemo(() => new THREE.Color("#78ffc0"), []);
+  useFrame((state) => {
     const P = usePhenotypeStore.getState().params;
-    if (matRef.current) matRef.current.opacity = 0.28 + telemetry.capillary * 0.35 + P.filterCutoff * 0.3;
+    const breath = 0.9 + 0.1 * Math.sin(state.clock.elapsedTime * 0.4);
+    if (matRef.current) {
+      matRef.current.opacity = (0.26 + telemetry.capillary * 0.32 + P.filterCutoff * 0.3) * breath;
+      // Filter cutoff colours the pool: warm/amber when closed, cool green open.
+      matRef.current.color.copy(warm).lerp(cool, P.filterCutoff);
+    }
     // Reverb size swells the pool of light — a bigger space reads as a wider glow.
     if (meshRef.current) {
       const sc = 0.8 + P.reverbSize * 0.7 + P.reverbMix * 0.2;
@@ -128,6 +135,8 @@ function CameraRig() {
 // space; a dry preset opens the stage up.
 function AtmosphereRig() {
   const { scene } = useThree();
+  const warm = useMemo(() => new THREE.Color("#120a06"), []);
+  const cool = useMemo(() => new THREE.Color("#06120e"), []);
   useFrame(() => {
     const fog = scene.fog as THREE.Fog | null;
     if (!fog) return;
@@ -135,6 +144,8 @@ function AtmosphereRig() {
     const wet = Math.min(1, P.reverbMix * 0.7 + P.reverbSize * 0.5);
     fog.near = 16 - wet * 6;
     fog.far = 34 - wet * 12;
+    // Filter cutoff gives the whole room a warm(closed)/cool(open) cast.
+    fog.color.copy(warm).lerp(cool, P.filterCutoff);
   });
   return null;
 }
