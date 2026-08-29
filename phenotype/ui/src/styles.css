@@ -170,9 +170,12 @@ html, body, #root {
 }
 .ph-sec__knobs {
   display: grid;
-  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+  /* uniform column pitch across every section — knob spacing reads the same
+     whether the bank holds 4 or 6, remainder centred rather than stretched */
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 82px));
+  justify-content: center;
   align-items: start;
-  gap: 3px 6px;
+  gap: 3px 16px;
 }
 .ph-sec__tag {
   font-family: var(--mono);
@@ -191,6 +194,28 @@ html, body, #root {
   text-transform: uppercase;
   line-height: 1.1;
 }
+.ph-sec__tog {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--panel-line);
+  background: linear-gradient(180deg, rgba(0, 255, 106, 0.05), rgba(0, 0, 0, 0.2));
+  color: var(--chlorophyll);
+  border-radius: 6px;
+  padding: 1px 8px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.4;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.ph-sec__tog:hover { background: rgba(0, 255, 106, 0.12); box-shadow: 0 0 10px rgba(0, 255, 106, 0.2) inset; }
+.ph-sec__tog:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; }
+.ph-sec__chev { display: inline-block; transition: transform 0.18s ease; transform: rotate(-90deg); }
+.ph-sec__chev[data-open="true"] { transform: rotate(0deg); }
+/* a collapsed FX bank keeps its divider but reads as a slim, tappable strip */
+.ph-sec--coll { padding-bottom: 1px; }
 .ph-rack::-webkit-scrollbar { width: 10px; }
 .ph-rack::-webkit-scrollbar-thumb { background: var(--panel-line); border-radius: 6px; }
 .ph-rack::-webkit-scrollbar-track { background: transparent; }
@@ -270,7 +295,7 @@ html, body, #root {
 .knob__label { max-width: 100%; }
 .knob__dial {
   width: 100%;
-  max-width: 44px;
+  max-width: 48px;
   aspect-ratio: 1;
   cursor: ns-resize;
   touch-action: none;

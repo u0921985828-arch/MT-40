@@ -9,7 +9,7 @@ import { Knob, type KnobDef } from "./Knob";
 import { PALETTE } from "./three/theme";
 import { juceIntegration, type ProgramInfo } from "./bridge/juceIntegration";
 
-const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
+const RACK: { title: string; tag: string; controls: KnobDef[]; collapsible?: boolean }[] = [
   {
     title: "Capillary Modulator",
     tag: "MOD",
@@ -74,6 +74,7 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
   {
     title: "FX · Espacio",
     tag: "FX",
+    collapsible: true,
     controls: [
       { id: "delayMix", label: "Delay", def: 0.0 },
       { id: "delayTime", label: "Time", def: 0.35 },
@@ -84,6 +85,38 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
     ],
   },
 ];
+
+function RackSection({ group }: { group: (typeof RACK)[number] }) {
+  const [open, setOpen] = useState(!group.collapsible);
+  return (
+    <section
+      className={"ph-sec" + (group.collapsible ? " ph-sec--coll" : "")}
+      style={{ ["--n" as string]: group.controls.length }}
+    >
+      <div className="ph-sec__hd">
+        <span className="ph-sec__tag">{group.tag}</span>
+        <span className="ph-sec__name">{group.title}</span>
+        {group.collapsible && (
+          <button
+            className="ph-sec__tog"
+            aria-expanded={open}
+            aria-label={open ? "Colapsar FX" : "Expandir FX"}
+            onClick={() => setOpen((o) => !o)}
+          >
+            <span className="ph-sec__chev" data-open={open}>▾</span>
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="ph-sec__knobs">
+          {group.controls.map((c) => (
+            <Knob key={c.id} def={c} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function PresetBar() {
   const [info, setInfo] = useState<ProgramInfo>({ index: 0, name: "—", count: 0 });
@@ -155,21 +188,7 @@ export default function App() {
         <aside className="ph-rack">
           <PresetBar />
           {RACK.map((group) => (
-            <section
-              key={group.title}
-              className="ph-sec"
-              style={{ ["--n" as string]: group.controls.length }}
-            >
-              <div className="ph-sec__hd">
-                <span className="ph-sec__tag">{group.tag}</span>
-                <span className="ph-sec__name">{group.title}</span>
-              </div>
-              <div className="ph-sec__knobs">
-                {group.controls.map((c) => (
-                  <Knob key={c.id} def={c} />
-                ))}
-              </div>
-            </section>
+            <RackSection key={group.title} group={group} />
           ))}
         </aside>
       </main>
