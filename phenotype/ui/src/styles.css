@@ -121,7 +121,7 @@ html, body, #root {
 .ph-main {
   flex: 1 1 auto;                   /* anchored stage between header and bar */
   display: grid;
-  grid-template-columns: 1fr 588px; /* viewport | flat console */
+  grid-template-columns: 1fr 500px; /* viewport | flat console */
   min-height: 0;
 }
 .ph-viewport {
@@ -172,10 +172,10 @@ html, body, #root {
   display: grid;
   /* uniform column pitch across every section — knob spacing reads the same
      whether the bank holds 4 or 6, remainder centred rather than stretched */
-  grid-template-columns: repeat(var(--n, 4), minmax(0, 82px));
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 70px));
   justify-content: center;
   align-items: start;
-  gap: 3px 16px;
+  gap: 3px 10px;
 }
 .ph-sec__tag {
   font-family: var(--mono);
