@@ -34,6 +34,14 @@ namespace phenotype::dsp
         float arpMode       = 0.0f;   // 0..1 -> up/down/updown/random
         float arpSync       = 0.0f;   // tempo sync enable (>0.5)
         float scaleType     = 0.0f;   // 0..1 -> chromatic/major/minor/pent/dorian
+        float filterCutoff  = 1.0f;   // SVF cutoff (0..1 -> ~20 Hz .. ~20 kHz log)
+        float filterReso    = 0.12f;  // SVF resonance (0..1 -> Q)
+        float filterType    = 0.0f;   // 0..1 -> LP .. BP .. HP
+        float filterMod     = 0.0f;   // capillary -> cutoff amount (octaves)
+        float drive         = 0.1f;   // analog-style saturation amount
+        float unison        = 0.0f;   // 0..1 -> 1..7 stacked detuned grains
+        float unisonDetune  = 0.25f;  // unison spread (cents)
+        float stereoWidth   = 0.5f;   // 0..1 -> 0 (mono) .. 1 (2x wide)
     };
 
     class ParameterHub
@@ -62,6 +70,14 @@ namespace phenotype::dsp
             else if (match (id, "arpMode"))      arpMode.store      (value, rel);
             else if (match (id, "arpSync"))      arpSync.store      (value, rel);
             else if (match (id, "scaleType"))    scaleType.store    (value, rel);
+            else if (match (id, "filterCutoff")) filterCutoff.store (value, rel);
+            else if (match (id, "filterReso"))   filterReso.store   (value, rel);
+            else if (match (id, "filterType"))   filterType.store   (value, rel);
+            else if (match (id, "filterMod"))    filterMod.store    (value, rel);
+            else if (match (id, "drive"))        drive.store        (value, rel);
+            else if (match (id, "unison"))       unison.store       (value, rel);
+            else if (match (id, "unisonDetune")) unisonDetune.store (value, rel);
+            else if (match (id, "stereoWidth"))  stereoWidth.store  (value, rel);
         }
 
         //  --- audio thread reader ---------------------------------------------
@@ -85,6 +101,14 @@ namespace phenotype::dsp
             s.arpMode      = arpMode.load      (acq);
             s.arpSync      = arpSync.load      (acq);
             s.scaleType    = scaleType.load    (acq);
+            s.filterCutoff = filterCutoff.load (acq);
+            s.filterReso   = filterReso.load   (acq);
+            s.filterType   = filterType.load   (acq);
+            s.filterMod    = filterMod.load    (acq);
+            s.drive        = drive.load        (acq);
+            s.unison       = unison.load       (acq);
+            s.unisonDetune = unisonDetune.load (acq);
+            s.stereoWidth  = stereoWidth.load  (acq);
             return s;
         }
 
@@ -115,5 +139,13 @@ namespace phenotype::dsp
         std::atomic<float> arpMode      { 0.0f };
         std::atomic<float> arpSync      { 0.0f };
         std::atomic<float> scaleType    { 0.0f };
+        std::atomic<float> filterCutoff { 1.0f };
+        std::atomic<float> filterReso   { 0.12f };
+        std::atomic<float> filterType   { 0.0f };
+        std::atomic<float> filterMod    { 0.0f };
+        std::atomic<float> drive        { 0.1f };
+        std::atomic<float> unison       { 0.0f };
+        std::atomic<float> unisonDetune { 0.25f };
+        std::atomic<float> stereoWidth  { 0.5f };
     };
 }

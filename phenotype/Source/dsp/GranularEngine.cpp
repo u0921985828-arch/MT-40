@@ -41,6 +41,8 @@ namespace phenotype::dsp
         arpIndex       = 0;
         arpCurrentNote = -1;
         dcX1L = dcY1L = dcX1R = dcY1R = 0.0f;
+        svfL.reset();
+        svfR.reset();
         modulator.reset();
         for (auto& g : grains)
             g.active = false;
@@ -120,7 +122,7 @@ namespace phenotype::dsp
     //  pitchMul / ampMul carry the per-note ratio and envelope in instrument
     //  mode; both are 1.0 in effect mode.
     int GranularEngine::spawnGrain (const ParameterSnapshot& p, float modValue,
-                                    float pitchMul, float ampMul) noexcept
+                                    float pitchMul, float ampMul, float panPos) noexcept
     {
         //  Find a free slot (linear scan over a fixed pool — bounded, lock-free).
         for (int i = 0; i < kMaxGrains; ++i)
@@ -149,8 +151,13 @@ namespace phenotype::dsp
                 float ab = p.crossBlend + (modValue - 0.5f) * p.modDepth * 0.5f;
                 ab = ab < 0.0f ? 0.0f : (ab > 1.0f ? 1.0f : ab);
 
+                //  Grain stereo position: diploid lean (A left, B right) plus the
+                //  caller's unison spread, clamped into [0,1].
+                float pan = panPos + (ab - 0.5f) * 0.4f;
+                pan = pan < 0.0f ? 0.0f : (pan > 1.0f ? 1.0f : pan);
+
                 grains[i].trigger (startSample, startSample, incA, incB,
-                                   lenSamp, 0.6f * ampMul, ab);
+                                   lenSamp, 0.6f * ampMul, ab, pan);
                 return i;
             }
         }
@@ -428,6 +435,23 @@ namespace phenotype::dsp
         const float overlap      = grainsPerSec * grainLenSec;
         const float overlapGain  = 1.0f / std::sqrt (overlap < 1.0f ? 1.0f : overlap);
 
+        //  --- Unison stack (per block) ----------------------------------------
+        const int   nUnison    = 1 + static_cast<int> (p.unison * 6.0f + 0.5f);   // 1..7
+        const float unisonGain = 1.0f / std::sqrt (static_cast<float> (nUnison));
+        const float detuneCents = p.unisonDetune * 50.0f;                          // spread
+
+        //  --- Tone stage (per block) ------------------------------------------
+        //  Cutoff: log map ~20 Hz .. ~20 kHz. Resonance -> Q -> damping k = 1/Q.
+        const float baseCutoff = 20.0f * fastmath::fastExp (p.filterCutoff * 6.9077f);
+        const float filterQ    = 0.5f + p.filterReso * 9.5f;
+        const float kDamp      = 1.0f / filterQ;
+        const float fType      = p.filterType;
+        const float modOctaves = p.filterMod * 3.0f;             // capillary -> cutoff (±oct)
+        const float driveGain  = 1.0f + p.drive * 7.0f;
+        const float driveMakeup= 1.0f / fastmath::fastTanh (driveGain);
+        const float width      = p.stereoWidth * 2.0f;           // 0 (mono) .. 2 (wide)
+        const float lnHalf     = -0.6931471806f;                 // ln(1/2) for octave scaling
+
         for (int n = 0; n < numSamples; ++n)
         {
             //  1) Effect mode captures the incoming genome; instrument mode keeps
@@ -464,19 +488,41 @@ namespace phenotype::dsp
             grainClock -= 1.0f;
             if (grainClock <= 0.0f)
             {
+                float pitchMul = 1.0f;
+                float baseAmp  = 0.0f;
+                bool  doSpawn  = false;
+
                 if (instrumentMode)
                 {
                     const int vi = pickVoice();
                     if (vi >= 0)
                     {
                         const auto& v = voices[(size_t) vi];
-                        const float amp = v.env * (0.15f + 0.85f * v.vel) * overlapGain;
-                        spawnGrain (p, modValue, v.curRatio * bendRatio, amp);
+                        pitchMul = v.curRatio * bendRatio;
+                        baseAmp  = v.env * (0.15f + 0.85f * v.vel);
+                        doSpawn  = true;
                     }
                 }
                 else
                 {
-                    spawnGrain (p, modValue, 1.0f, overlapGain);
+                    pitchMul = 1.0f;
+                    baseAmp  = 1.0f;
+                    doSpawn  = true;
+                }
+
+                if (doSpawn)
+                {
+                    //  Stack nUnison detuned, stereo-spread grains per trigger.
+                    for (int u = 0; u < nUnison; ++u)
+                    {
+                        const float t      = (nUnison > 1)
+                                           ? (static_cast<float> (u) / static_cast<float> (nUnison - 1) - 0.5f)
+                                           : 0.0f;
+                        const float detune = fastmath::fastExp (t * 2.0f * detuneCents * 0.0005776226f);
+                        const float pan    = 0.5f + t * 0.8f;
+                        spawnGrain (p, modValue, pitchMul * detune,
+                                    baseAmp * overlapGain * unisonGain, pan);
+                    }
                 }
                 grainClock += spawnPeriod;
             }
@@ -499,9 +545,12 @@ namespace phenotype::dsp
                 fastmath::equalPowerPair (g.blend, gA, gB);
                 const float s = (a * gA + b * gB) * w * g.amp;
 
-                //  Diploid spatialisation: A leans left, B leans right.
-                accL += s * (0.5f + 0.5f * gA);
-                accR += s * (0.5f + 0.5f * gB);
+                //  Constant-power stereo placement from the grain's pan (which
+                //  already folds in the diploid lean + unison spread).
+                float pl, pr;
+                fastmath::equalPowerPair (g.pan, pl, pr);
+                accL += s * pl;
+                accR += s * pr;
 
                 g.readPosA += g.incA;
                 g.readPosB += g.incB;
@@ -511,15 +560,32 @@ namespace phenotype::dsp
             }
             liveGrainCount = live;
 
+            //  --- Tone stage: drive -> ZDF filter -> stereo width -------------
+            //  Analog-style saturation (odd-harmonic warmth, level-normalised).
+            float tL = fastmath::fastTanh (accL * driveGain) * driveMakeup;
+            float tR = fastmath::fastTanh (accR * driveGain) * driveMakeup;
+
+            //  Capillary-modulated cutoff, per sample, shared L/R.
+            const float cutoff = baseCutoff * fastmath::fastExp ((modValue - 0.5f) * modOctaves * (-lnHalf) * 2.0f);
+            const float g = SVF::gForCutoff (cutoff, static_cast<float> (sampleRate));
+            tL = svfL.process (tL, g, kDamp, fType);
+            tR = svfR.process (tR, g, kDamp, fType);
+
+            //  Mid/side stereo width.
+            const float mid  = (tL + tR) * 0.5f;
+            const float side = (tL - tR) * 0.5f * width;
+            const float sL   = mid + side;
+            const float sR   = mid - side;
+
             //  Per-sample gain smoothing removes zipper noise on automation.
             smoothedGain = p.outputGain + (smoothedGain - p.outputGain) * gainPole;
 
             //  DC / subsonic blocker, then gentle soft-clip as a safety ceiling.
-            const float xL = accL * smoothedGain;
+            const float xL = sL * smoothedGain;
             const float yL = xL - dcX1L + dcR * dcY1L;
             dcX1L = xL; dcY1L = yL;
 
-            const float xR = accR * smoothedGain;
+            const float xR = sR * smoothedGain;
             const float yR = xR - dcX1R + dcR * dcY1R;
             dcX1R = xR; dcY1R = yR;
 

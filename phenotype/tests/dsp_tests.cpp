@@ -8,6 +8,8 @@
 
 #include "CapillaryModulator.h"
 #include "GranularEngine.h"
+#include "SVF.h"
+#include "FastMath.h"
 
 #include <cmath>
 #include <cstdio>
@@ -378,6 +380,103 @@ static void testSampleGenome()
     check (peak <= 1.0f + 1e-4f, "sample genome output bounded");
 }
 
+//  --- New tone-stage primitives -------------------------------------------
+static void testFastTanh()
+{
+    std::printf ("fastTanh:\n");
+    double maxErr = 0.0;
+    for (double x = -3.0; x <= 3.0; x += 0.01)
+    {
+        const double approx = fastmath::fastTanh (static_cast<float> (x));
+        maxErr = std::max (maxErr, std::fabs (approx - std::tanh (x)));
+    }
+    check (maxErr < 0.02, "fastTanh within 0.02 of std::tanh on [-3,3]");
+    check (fastmath::fastTanh (10.0f) <= 1.0f && fastmath::fastTanh (10.0f) >= 0.99f, "fastTanh saturates to +1");
+    check (fastmath::fastTanh (-10.0f) >= -1.0f && fastmath::fastTanh (-10.0f) <= -0.99f, "fastTanh saturates to -1");
+    //  Monotonic (odd, increasing).
+    bool mono = true;
+    float prev = -2.0f;
+    for (double x = -3.0; x <= 3.0; x += 0.01)
+    {
+        const float v = fastmath::fastTanh (static_cast<float> (x));
+        if (v < prev) mono = false;
+        prev = v;
+    }
+    check (mono, "fastTanh monotonic increasing");
+}
+
+static void testFastTan()
+{
+    std::printf ("fastTan:\n");
+    double maxRel = 0.0;
+    for (double x = 0.0; x <= 1.40; x += 0.005)
+    {
+        const double a = fastmath::fastTan (static_cast<float> (x));
+        const double t = std::tan (x);
+        if (t > 1e-3) maxRel = std::max (maxRel, std::fabs (a - t) / t);
+    }
+    check (maxRel < 0.01, "fastTan within 1% of std::tan on [0,1.40]");
+}
+
+static void testSvfStability()
+{
+    std::printf ("SVF:\n");
+    const float fs = 48000.0f;
+    for (float type : { 0.0f, 0.5f, 1.0f })
+    {
+        SVF f;
+        const float g = SVF::gForCutoff (2000.0f, fs);
+        const float k = 1.0f / 8.0f;           // Q = 8, high resonance
+        float peak = 0.0f;
+        bool  finite = true;
+        for (int n = 0; n < 96000; ++n)
+        {
+            const float in = (n == 0) ? 1.0f : 0.0f;   // impulse
+            const float o  = f.process (in, g, k, type);
+            if (! std::isfinite (o)) finite = false;
+            peak = std::max (peak, std::fabs (o));
+        }
+        check (finite, "SVF impulse response finite (high Q)");
+        check (peak < 20.0f, "SVF impulse response bounded (high Q)");
+        //  Tail must have decayed (stable).
+        float tail = 0.0f;
+        for (int n = 0; n < 100; ++n) tail = std::max (tail, std::fabs (f.process (0.0f, g, k, type)));
+        check (tail < 1e-3f, "SVF settles to rest (stable)");
+    }
+}
+
+static void testFilteredEngineClean()
+{
+    std::printf ("engine (filter+drive+unison):\n");
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+    eng.setInstrumentMode (true);
+    auto& hub = eng.params();
+    hub.set ("unison", 1.0f);          // 7 voices
+    hub.set ("unisonDetune", 0.5f);
+    hub.set ("drive", 0.6f);
+    hub.set ("filterCutoff", 0.5f);    // ~ mid
+    hub.set ("filterReso", 0.7f);
+    hub.set ("stereoWidth", 1.0f);
+    eng.noteOn (60, 1.0f);
+
+    std::vector<float> L (2048), R (2048);
+    float peak = 0.0f;
+    bool finite = true;
+    for (int block = 0; block < 20; ++block)
+    {
+        eng.process (nullptr, nullptr, L.data(), R.data(), 2048);
+        for (int i = 0; i < 2048; ++i)
+        {
+            if (! std::isfinite (L[i]) || ! std::isfinite (R[i])) finite = false;
+            peak = std::max (peak, std::max (std::fabs (L[i]), std::fabs (R[i])));
+        }
+    }
+    check (finite, "filtered/driven/unison output finite");
+    check (peak <= 1.0f + 1e-4f, "filtered/driven/unison output within clip ceiling");
+    check (peak > 0.02f, "filtered/driven/unison output audibly present");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -392,6 +491,10 @@ int main()
     testScaleQuantiser();
     testArpSyncRate();
     testSampleGenome();
+    testFastTanh();
+    testFastTan();
+    testSvfStability();
+    testFilteredEngineClean();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;

@@ -41,6 +41,24 @@ const RACK: { title: string; controls: ControlDef[] }[] = [
     ],
   },
   {
+    title: "Filtro",
+    controls: [
+      { id: "filterType", label: "Tipo · LP › BP › HP" },
+      { id: "filterCutoff", label: "Cutoff" },
+      { id: "filterReso", label: "Resonancia" },
+      { id: "filterMod", label: "Capilar → Cutoff" },
+    ],
+  },
+  {
+    title: "Textura & Espacio",
+    controls: [
+      { id: "drive", label: "Drive" },
+      { id: "unison", label: "Unison" },
+      { id: "unisonDetune", label: "Detune" },
+      { id: "stereoWidth", label: "Anchura Estéreo" },
+    ],
+  },
+  {
     title: "Arpeggiator",
     controls: [
       { id: "arpOn", label: "Arpegiador" },

@@ -24,10 +24,12 @@ namespace phenotype::dsp
         float phaseInc = 0.0f;   // 1 / grainLengthSamples
         float amp      = 1.0f;   // grain gain
         float blend    = 0.5f;   // A/B mix (0 = all A, 1 = all B)
+        float pan      = 0.5f;   // stereo position (0 = left, 1 = right)
 
         void trigger (float startA, float startB,
                       float pitchA, float pitchB,
-                      float lengthSamples, float gain, float ab) noexcept
+                      float lengthSamples, float gain, float ab,
+                      float panPos) noexcept
         {
             active   = true;
             readPosA = startA;
@@ -38,6 +40,7 @@ namespace phenotype::dsp
             phaseInc = lengthSamples > 1.0f ? 1.0f / lengthSamples : 1.0f;
             amp      = gain;
             blend    = ab;
+            pan      = panPos;
         }
 
         //  Raised-cosine window approximated with a trig-free parabola-squared

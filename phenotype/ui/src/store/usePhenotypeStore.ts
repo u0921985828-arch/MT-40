@@ -30,6 +30,14 @@ export interface ParamState {
   arpMode: number;
   arpSync: number;
   scaleType: number;
+  filterCutoff: number;
+  filterReso: number;
+  filterType: number;
+  filterMod: number;
+  drive: number;
+  unison: number;
+  unisonDetune: number;
+  stereoWidth: number;
 }
 
 export type ParamId = keyof ParamState;
@@ -52,6 +60,14 @@ const DEFAULT_PARAMS: ParamState = {
   arpMode: 0.0,
   arpSync: 0.0,
   scaleType: 0.0,
+  filterCutoff: 1.0,
+  filterReso: 0.12,
+  filterType: 0.0,
+  filterMod: 0.0,
+  drive: 0.1,
+  unison: 0.0,
+  unisonDetune: 0.25,
+  stereoWidth: 0.5,
 };
 
 // --- Transient telemetry buffer (mutable, non-reactive) ---------------------

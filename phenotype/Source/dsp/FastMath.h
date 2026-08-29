@@ -68,6 +68,31 @@ namespace phenotype::fastmath
         return x - 0.14814814814f * x * x * x;   // 4/27, maps +/-1.5 -> +/-1
     }
 
+    //  Accurate, bounded, monotonic tanh for a drive / warmth stage. Built from
+    //  the (now high-accuracy) fastExp:  tanh(x) = (1 - e^{-2x}) / (1 + e^{-2x}).
+    //  Odd-symmetric, |output| < 1, error tracks fastExp (< 1e-5). Trig-free.
+    [[nodiscard]] inline float fastTanh (float x) noexcept
+    {
+        if (x >  15.0f) return  1.0f;
+        if (x < -15.0f) return -1.0f;
+        const float e = fastExp (-2.0f * x);
+        return (1.0f - e) / (1.0f + e);
+    }
+
+    //  tan(x) via Lambert's continued fraction (3 levels). Accurate to ~1e-3 up
+    //  to x ~ 1.5 (just below pi/2), which is exactly the range a ZDF filter's
+    //  pre-warp g = tan(pi * fc / fs) needs. Trig-free. Caller must keep
+    //  x in [0, ~1.5]; we clamp for safety so the denominator can't reach zero.
+    [[nodiscard]] inline float fastTan (float x) noexcept
+    {
+        x = x < 0.0f ? 0.0f : (x > 1.50f ? 1.50f : x);
+        const float x2 = x * x;
+        float t = 5.0f - x2 * (1.0f / 7.0f);
+        t = 3.0f - x2 / t;
+        t = 1.0f - x2 / t;
+        return x / t;
+    }
+
     //  Perceptual (equal-power) crossfade gain pair for a 0..1 blend control.
     //  Uses a polynomial sqrt-free approximation of sin/cos quarter-arc so the
     //  audio thread stays trig-free. gainA falls, gainB rises.

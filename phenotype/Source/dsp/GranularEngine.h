@@ -19,6 +19,7 @@
 #include "Grain.h"
 #include "CapillaryModulator.h"
 #include "ParameterHub.h"
+#include "SVF.h"
 #include <vector>
 #include <cstdint>
 
@@ -121,7 +122,7 @@ namespace phenotype::dsp
         };
 
         int   spawnGrain (const ParameterSnapshot& p, float modValue,
-                          float pitchMul, float ampMul) noexcept;
+                          float pitchMul, float ampMul, float panPos) noexcept;
         float readSource (const std::vector<float>& buf, float pos) const noexcept;
         void  fillGenome() noexcept;                 // band-limited wavetables -> source A/B
         void  advanceVoices() noexcept;              // per-sample envelope integration
@@ -183,6 +184,9 @@ namespace phenotype::dsp
         float    grainClock   = 0.0f; // fractional samples until next spawn
         float    smoothedGain = 0.0f; // de-zippered master gain
         float    gainPole     = 0.0f; // one-pole coeff (~5 ms)
+
+        //  Post-granular tone stage: analog-style drive -> stereo SVF -> width.
+        SVF      svfL, svfR;
 
         //  Output DC / subsonic blocker (one-pole highpass, ~10 Hz).
         float    dcR    = 0.0f;
