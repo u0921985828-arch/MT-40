@@ -17,6 +17,11 @@ import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 const RING_RADIUS = 4.15;
 const RING_Y = 0.05;
 
+// Shared filter-cutoff room temperature (warm closed -> cool open).
+const warmTint = new THREE.Color("#ffcf9a");
+const coolTint = new THREE.Color("#bfffe0");
+const nodeTint = new THREE.Color();
+
 interface NodeDef {
   position: THREE.Vector3;
   band: number;
@@ -47,6 +52,8 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
     mesh.scale.setScalar(s);
     const mat = mesh.material as THREE.MeshStandardMaterial;
     mat.emissiveIntensity = (0.4 + energy * 2.6) * pulse;
+    nodeTint.copy(warmTint).lerp(coolTint, P.filterCutoff);
+    mat.emissive.copy(color).multiply(nodeTint);
   });
 
   return (
@@ -77,15 +84,16 @@ function RingHalo({ nodes }: { nodes: NodeDef[] }) {
     return new THREE.TubeGeometry(curve, nodes.length * 12, 0.018, 8, true);
   }, [nodes]);
 
+  const baseCol = useMemo(() => new THREE.Color(PALETTE.chlorophyll).multiplyScalar(1.1), []);
   const mat = useMemo(
     () => new THREE.MeshBasicMaterial({
-      color: new THREE.Color(PALETTE.chlorophyll).multiplyScalar(1.1),
+      color: baseCol.clone(),
       transparent: true,
       opacity: 0.5,
       toneMapped: false,
       blending: THREE.AdditiveBlending,
     }),
-    [],
+    [baseCol],
   );
 
   useFrame((state) => {
@@ -95,7 +103,10 @@ function RingHalo({ nodes }: { nodes: NodeDef[] }) {
     const pulse = P.arpOn > 0.5
       ? 0.6 + 0.4 * Math.sin(state.clock.elapsedTime * (0.5 + P.arpRate * 7) * Math.PI * 2)
       : 1;
-    (m.material as THREE.MeshBasicMaterial).opacity = (0.32 + telemetry.capillary * 0.5) * pulse;
+    const mm = m.material as THREE.MeshBasicMaterial;
+    mm.opacity = (0.32 + telemetry.capillary * 0.5) * pulse;
+    nodeTint.copy(warmTint).lerp(coolTint, P.filterCutoff);
+    mm.color.copy(baseCol).multiply(nodeTint);
   });
 
   return <mesh ref={meshRef} geometry={geo} material={mat} />;

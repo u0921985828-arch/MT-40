@@ -14,7 +14,13 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE, GLOW } from "./theme";
-import { telemetry } from "../store/usePhenotypeStore";
+import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
+
+// Filter-cutoff room temperature — shared with the helix, floor and fog so the
+// whole plant shifts warm(closed)->cool(open) together.
+const warmTint = new THREE.Color("#ffcf9a");
+const coolTint = new THREE.Color("#bfffe0");
+const leafTint = new THREE.Color();
 
 const LEAFLETS = [-72, -46, -22, 0, 22, 46, 72].map((d) => (d * Math.PI) / 180 + Math.PI / 2);
 const LENGTHS = [0.44, 0.68, 0.9, 1.0, 0.9, 0.68, 0.44];
@@ -95,6 +101,7 @@ function Leaf({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const { geo, veins } = useMemo(buildLeaf, []);
+  const baseFill = useMemo(() => new THREE.Color(color), [color]);
   const glow = useMemo(() => new THREE.Color(color).multiplyScalar(GLOW.leaf), [color]);
   const phase = useMemo(() => offset[0] * 1.3 + offset[1] * 0.7, [offset]);
 
@@ -121,6 +128,11 @@ function Leaf({
     const breath = 0.7 + 0.3 * telemetry.capillary;
     fillMat.opacity = (0.08 + 0.14 * telemetry.capillary) * dim;
     veinMat.opacity = (0.15 + 0.28 * breath * (0.5 + grains * 0.5)) * dim;
+
+    // Take the room's filter temperature like the rest of the plant.
+    leafTint.copy(warmTint).lerp(coolTint, usePhenotypeStore.getState().params.filterCutoff);
+    fillMat.color.copy(baseFill).multiply(leafTint);
+    veinMat.color.copy(glow).multiply(leafTint);
 
     // Living plant: a slow wind sway + gentle breath, desynced per leaf.
     const g = groupRef.current;
