@@ -189,11 +189,11 @@ export function IsometricGrid() {
       <EffectComposer multisampling={0}>
         {/* Only true HDR highlights bloom — darks stay crisp. */}
         <Bloom
-          intensity={0.55}
-          luminanceThreshold={0.62}
-          luminanceSmoothing={0.7}
+          intensity={0.72}
+          luminanceThreshold={0.5}
+          luminanceSmoothing={0.88}
           mipmapBlur
-          radius={0.6}
+          radius={0.92}
         />
         {/* Faint lab-scope character. */}
         <ChromaticAberration
