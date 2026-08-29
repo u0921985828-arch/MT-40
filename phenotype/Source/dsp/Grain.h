@@ -25,11 +25,13 @@ namespace phenotype::dsp
         float amp      = 1.0f;   // grain gain
         float blend    = 0.5f;   // A/B mix (0 = all A, 1 = all B)
         float pan      = 0.5f;   // stereo position (0 = left, 1 = right)
+        int   mipA     = 0;      // band-limited genome mip for A (anti-alias)
+        int   mipB     = 0;      // band-limited genome mip for B
 
         void trigger (float startA, float startB,
                       float pitchA, float pitchB,
                       float lengthSamples, float gain, float ab,
-                      float panPos) noexcept
+                      float panPos, int mipIdxA, int mipIdxB) noexcept
         {
             active   = true;
             readPosA = startA;
@@ -41,6 +43,8 @@ namespace phenotype::dsp
             amp      = gain;
             blend    = ab;
             pan      = panPos;
+            mipA     = mipIdxA;
+            mipB     = mipIdxB;
         }
 
         //  Raised-cosine window approximated with a trig-free parabola-squared

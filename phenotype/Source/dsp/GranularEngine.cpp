@@ -13,9 +13,12 @@ namespace phenotype::dsp
         sampleRate = newSampleRate;
         sourceLen  = static_cast<int> (kSourceSeconds * newSampleRate);
 
-        //  Off-thread allocation only.
-        sourceA.assign (static_cast<size_t> (sourceLen), 0.0f);
-        sourceB.assign (static_cast<size_t> (sourceLen), 0.0f);
+        //  Off-thread allocation only. One buffer per band-limited mip.
+        for (int m = 0; m < kNumMips; ++m)
+        {
+            sourceA[(size_t) m].assign (static_cast<size_t> (sourceLen), 0.0f);
+            sourceB[(size_t) m].assign (static_cast<size_t> (sourceLen), 0.0f);
+        }
 
         modulator.prepare (newSampleRate);
         gainPole     = fastmath::onePoleCoeff (0.005f, newSampleRate);  // ~5 ms de-zip
@@ -54,41 +57,85 @@ namespace phenotype::dsp
     //  genome root (C4). Additive synthesis with std::sin here is fine — this is
     //  off the audio thread. A = sawtooth (all harmonics), B = square (odd only),
     //  giving the diploid cross-synthesis two distinct genotypes to blend.
+    //  Mip index for a given playback increment: mip m is alias-free up to
+    //  inc = 2^m, so pick m = ceil(log2(inc)) (0 for inc <= 1), clamped.
+    int GranularEngine::mipForInc (float inc) noexcept
+    {
+        int   m = 0;
+        float t = 1.0f;
+        while (m < kNumMips - 1 && inc > t) { ++m; t *= 2.0f; }
+        return m;
+    }
+
     void GranularEngine::fillGenome() noexcept
     {
         if (sourceLen <= 0)
             return;
 
         constexpr double kPi = 3.14159265358979323846;
-        const double w0   = 2.0 * kPi * kGenomeHz / sampleRate;
-        const int    nyq  = static_cast<int> ((sampleRate * 0.5) / kGenomeHz) - 1;
-        const int    kMax = nyq < 1 ? 1 : (nyq > 64 ? 64 : nyq);
+        const double w0     = 2.0 * kPi * kGenomeHz / sampleRate;
+        const int    nyqK   = static_cast<int> ((sampleRate * 0.5) / kGenomeHz) - 1;
+        const int    kFull  = nyqK < 1 ? 1 : (nyqK > 64 ? 64 : nyqK);
 
-        float peakA = 1.0e-6f, peakB = 1.0e-6f;
-        for (int n = 0; n < sourceLen; ++n)
+        //  Directly synthesise every mip with harmonics limited so it stays
+        //  alias-free when played up to 2^m: mip m keeps k <= kFull >> m.
+        for (int m = 0; m < kNumMips; ++m)
         {
-            const double ph = w0 * n;
-            double sa = 0.0, sb = 0.0;
-            for (int k = 1; k <= kMax; ++k)      sa += std::sin (ph * k) / k;   // saw
-            for (int k = 1; k <= kMax; k += 2)   sb += std::sin (ph * k) / k;   // square
-            sourceA[(size_t) n] = static_cast<float> (sa);
-            sourceB[(size_t) n] = static_cast<float> (sb);
-            peakA = std::max (peakA, std::fabs (sourceA[(size_t) n]));
-            peakB = std::max (peakB, std::fabs (sourceB[(size_t) n]));
+            const int kMax = std::max (1, kFull >> m);
+            float peakA = 1.0e-6f, peakB = 1.0e-6f;
+            auto& aBuf = sourceA[(size_t) m];
+            auto& bBuf = sourceB[(size_t) m];
+            for (int n = 0; n < sourceLen; ++n)
+            {
+                const double ph = w0 * n;
+                double sa = 0.0, sb = 0.0;
+                for (int k = 1; k <= kMax; ++k)      sa += std::sin (ph * k) / k;   // saw
+                for (int k = 1; k <= kMax; k += 2)   sb += std::sin (ph * k) / k;   // square
+                aBuf[(size_t) n] = static_cast<float> (sa);
+                bBuf[(size_t) n] = static_cast<float> (sb);
+                peakA = std::max (peakA, std::fabs (aBuf[(size_t) n]));
+                peakB = std::max (peakB, std::fabs (bBuf[(size_t) n]));
+            }
+            const float na = 0.9f / peakA, nb = 0.9f / peakB;
+            for (int n = 0; n < sourceLen; ++n) { aBuf[(size_t) n] *= na; bBuf[(size_t) n] *= nb; }
         }
-        const float na = 0.9f / peakA, nb = 0.9f / peakB;
-        for (int n = 0; n < sourceLen; ++n)
+    }
+
+    //  Derive octave mips 1.. from mip 0 by repeated band-limiting. Each step
+    //  halves the pass-band with a zero-phase (forward+reverse) one-pole cascade,
+    //  which is enough to tame imaging on arbitrary loaded samples. Off-thread.
+    void GranularEngine::buildMips (MipSet& mips) noexcept
+    {
+        if (sourceLen <= 1)
+            return;
+
+        for (int m = 1; m < kNumMips; ++m)
         {
-            sourceA[(size_t) n] *= na;
-            sourceB[(size_t) n] *= nb;
+            //  Start from the previous (already band-limited) mip and lowpass it
+            //  another octave. Cutoff halves each step; 4 zero-phase passes give
+            //  a steep, phase-neutral roll-off.
+            auto& dst = mips[(size_t) m];
+            dst = mips[(size_t) (m - 1)];
+            const float fc    = 0.5f * static_cast<float> (sampleRate) / static_cast<float> (1 << m);
+            const float coeff = fastmath::onePoleCoeff (1.0f / (2.0f * 3.14159265f * std::max (20.0f, fc)),
+                                                        sampleRate);
+            for (int pass = 0; pass < 4; ++pass)
+            {
+                float z = dst[0];
+                for (int n = 0; n < sourceLen; ++n) { z = dst[(size_t) n] + (z - dst[(size_t) n]) * coeff; dst[(size_t) n] = z; }
+                z = dst[(size_t) (sourceLen - 1)];
+                for (int n = sourceLen - 1; n >= 0; --n) { z = dst[(size_t) n] + (z - dst[(size_t) n]) * coeff; dst[(size_t) n] = z; }
+            }
         }
     }
 
     //  Cubic Hermite (Catmull-Rom) read from a source ring buffer at fractional
     //  pos. A 4-point cubic rejects far more imaging/aliasing than linear when
     //  grains are pitched, so pitched material stays smooth instead of gritty.
-    float GranularEngine::readSource (const std::vector<float>& buf, float pos) const noexcept
+    float GranularEngine::readSource (const MipSet& mips, float pos, int mip) const noexcept
     {
+        const int mi = mip < 0 ? 0 : (mip >= kNumMips ? kNumMips - 1 : mip);
+        const std::vector<float>& buf = mips[(size_t) mi];
         if (sourceLen <= 3)
             return sourceLen <= 0 ? 0.0f : buf[0];
 
@@ -156,8 +203,13 @@ namespace phenotype::dsp
                 float pan = panPos + (ab - 0.5f) * 0.4f;
                 pan = pan < 0.0f ? 0.0f : (pan > 1.0f ? 1.0f : pan);
 
+                //  Anti-alias: choose the band-limited mip for each read rate.
+                //  Effect mode captures live audio only into mip 0, so read it.
+                const int mipA = instrumentMode ? mipForInc (incA) : 0;
+                const int mipB = instrumentMode ? mipForInc (incB) : 0;
+
                 grains[i].trigger (startSample, startSample, incA, incB,
-                                   lenSamp, 0.6f * ampMul, ab, pan);
+                                   lenSamp, 0.6f * ampMul, ab, pan, mipA, mipB);
                 return i;
             }
         }
@@ -277,20 +329,22 @@ namespace phenotype::dsp
             return;
 
         float peak = 1.0e-6f;
+        auto& a0 = sourceA[0];
+        auto& b0 = sourceB[0];
         for (int n = 0; n < sourceLen; ++n)
         {
             const float s = mono[n % numSamples];   // loop to fill
-            sourceA[(size_t) n] = s;
-            sourceB[(size_t) n] = s;
+            a0[(size_t) n] = s;
+            b0[(size_t) n] = s;
             const float a = s < 0.0f ? -s : s;
             if (a > peak) peak = a;
         }
         const float norm = 0.9f / peak;
-        for (int n = 0; n < sourceLen; ++n)
-        {
-            sourceA[(size_t) n] *= norm;
-            sourceB[(size_t) n] *= norm;
-        }
+        for (int n = 0; n < sourceLen; ++n) { a0[(size_t) n] *= norm; b0[(size_t) n] *= norm; }
+
+        //  Band-limit the higher mips off the loaded waveform (anti-alias).
+        buildMips (sourceA);
+        buildMips (sourceB);
     }
 
     void GranularEngine::allNotesOff() noexcept
@@ -458,8 +512,9 @@ namespace phenotype::dsp
             //     the internal wavetable genome and advances the note envelopes.
             if (! instrumentMode)
             {
-                sourceA[(size_t) writeHead] = inL ? inL[n] : 0.0f;
-                sourceB[(size_t) writeHead] = inR ? inR[n] : (inL ? inL[n] : 0.0f);
+                //  Live capture goes to mip 0; effect-mode grains read mip 0.
+                sourceA[0][(size_t) writeHead] = inL ? inL[n] : 0.0f;
+                sourceB[0][(size_t) writeHead] = inR ? inR[n] : (inL ? inL[n] : 0.0f);
                 if (++writeHead >= sourceLen) writeHead = 0;
             }
             else
@@ -538,8 +593,8 @@ namespace phenotype::dsp
                 ++live;
                 const float w = Grain::window (g.phase);
 
-                const float a = readSource (sourceA, g.readPosA);
-                const float b = readSource (sourceB, g.readPosB);
+                const float a = readSource (sourceA, g.readPosA, g.mipA);
+                const float b = readSource (sourceB, g.readPosB, g.mipB);
 
                 float gA, gB;
                 fastmath::equalPowerPair (g.blend, gA, gB);

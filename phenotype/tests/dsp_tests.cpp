@@ -477,6 +477,38 @@ static void testFilteredEngineClean()
     check (peak > 0.02f, "filtered/driven/unison output audibly present");
 }
 
+static void testMipAntiAlias()
+{
+    std::printf ("mip anti-alias:\n");
+    check (GranularEngine::mipForInc (1.0f) == 0, "mip(1.0) == 0 (unison uses full band)");
+    check (GranularEngine::mipForInc (1.5f) == 1, "mip(1.5) == 1");
+    check (GranularEngine::mipForInc (2.0f) == 1, "mip(2.0) == 1");
+    check (GranularEngine::mipForInc (2.1f) == 2, "mip(2.1) == 2");
+    check (GranularEngine::mipForInc (0.5f) == 0, "mip(0.5) == 0 (down-pitch safe)");
+    check (GranularEngine::mipForInc (1000.0f) == GranularEngine::kNumMips - 1, "mip clamps at top");
+
+    //  A very high note (ratio ~16) must stay finite and bounded — the mip
+    //  selection prevents the read from blowing up with aliased energy.
+    GranularEngine eng;
+    eng.prepare (48000.0, 512);
+    eng.setInstrumentMode (true);
+    eng.noteOn (108, 1.0f);                 // 4 octaves above middle C
+    std::vector<float> L (2048), R (2048);
+    float peak = 0.0f; bool finite = true;
+    for (int b = 0; b < 16; ++b)
+    {
+        eng.process (nullptr, nullptr, L.data(), R.data(), 2048);
+        for (int i = 0; i < 2048; ++i)
+        {
+            if (! std::isfinite (L[i])) finite = false;
+            peak = std::max (peak, std::fabs (L[i]));
+        }
+    }
+    check (finite, "very high note output finite");
+    check (peak <= 1.0f + 1e-4f, "very high note output bounded");
+    check (peak > 0.01f, "very high note audibly present");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -495,6 +527,7 @@ int main()
     testFastTan();
     testSvfStability();
     testFilteredEngineClean();
+    testMipAntiAlias();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;

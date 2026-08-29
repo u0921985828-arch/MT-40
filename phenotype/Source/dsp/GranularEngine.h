@@ -21,6 +21,7 @@
 #include "ParameterHub.h"
 #include "SVF.h"
 #include <vector>
+#include <array>
 #include <cstdint>
 
 namespace phenotype::dsp
@@ -30,6 +31,7 @@ namespace phenotype::dsp
     public:
         static constexpr int   kMaxGrains        = 128;
         static constexpr int   kMaxVoices        = 16;
+        static constexpr int   kNumMips          = 8;    // band-limited octaves
         static constexpr float kSourceSeconds    = 4.0f;   // capture / genome window
         static constexpr float kMinGrainMs       = 8.0f;
         static constexpr float kMaxGrainMs       = 400.0f;
@@ -82,6 +84,10 @@ namespace phenotype::dsp
         //  Looped to fill and peak-normalised. Off the audio thread.
         void loadGenomeFromSample (const float* mono, int numSamples) noexcept;
 
+        //  Band-limited mip index for a playback increment (anti-alias): mip m
+        //  is alias-free up to inc = 2^m. Exposed for tests.
+        [[nodiscard]] static int mipForInc (float inc) noexcept;
+
         //  Tempo-synced arp rate: division01 -> {1/4,1/8,1/16,1/32} steps/beat.
         [[nodiscard]] static float arpSyncedRate (double bpm, float division01) noexcept
         {
@@ -121,10 +127,13 @@ namespace phenotype::dsp
             bool  gate     = false; // key held
         };
 
+        using MipSet = std::array<std::vector<float>, kNumMips>;
+
         int   spawnGrain (const ParameterSnapshot& p, float modValue,
                           float pitchMul, float ampMul, float panPos) noexcept;
-        float readSource (const std::vector<float>& buf, float pos) const noexcept;
+        float readSource (const MipSet& mips, float pos, int mip) const noexcept;
         void  fillGenome() noexcept;                 // band-limited wavetables -> source A/B
+        void  buildMips (MipSet& mips) noexcept;     // derive octave mips from mip 0
         void  advanceVoices() noexcept;              // per-sample envelope integration
         int   pickVoice() noexcept;                  // round-robin over sounding voices
         int   allocateVoice (int note) noexcept;     // free slot, else steal
@@ -147,8 +156,11 @@ namespace phenotype::dsp
         int    sourceLen   = 0;
         int    writeHead   = 0;
 
-        std::vector<float> sourceA;   // chromosome A ring
-        std::vector<float> sourceB;   // chromosome B ring
+        //  Chromosome A/B genomes, each as kNumMips band-limited octave copies
+        //  (mip 0 = full band; mip m band-limited an octave lower). Grains pick a
+        //  mip from their playback increment so pitched-up notes never alias.
+        MipSet sourceA;
+        MipSet sourceB;
 
         Grain  grains[kMaxGrains];
         int    liveGrainCount = 0;
