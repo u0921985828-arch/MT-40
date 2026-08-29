@@ -39,12 +39,25 @@ else()
     FetchContent_MakeAvailable(JUCE)
 endif()
 
+# --- Optional VST2 (legacy hosts, e.g. FL Studio 11) ------------------------
+# VST2 requires the user to supply Steinberg's withdrawn VST 2.4 SDK. If its
+# headers are present under sdk/vstsdk2.4, enable the VST2 target; otherwise the
+# plugin builds VST3/AU/Standalone only, so a checkout without the SDK still
+# configures cleanly.
+set(PHENOTYPE_FORMATS VST3 AU Standalone)
+set(PHENOTYPE_VST2_SDK "${CMAKE_CURRENT_SOURCE_DIR}/sdk/vstsdk2.4")
+if(EXISTS "${PHENOTYPE_VST2_SDK}/pluginterfaces/vst2.x/aeffect.h")
+    message(STATUS "Phenotype: VST2 SDK found — enabling VST2 target")
+    juce_set_vst2_sdk_path("${PHENOTYPE_VST2_SDK}")
+    list(APPEND PHENOTYPE_FORMATS VST)   # JUCE's format token for VST2 is "VST"
+endif()
+
 # --- Plugin target ----------------------------------------------------------
 juce_add_plugin(Phenotype
     COMPANY_NAME              "Botanica DSP"
     PLUGIN_MANUFACTURER_CODE  Btnc
     PLUGIN_CODE               Phnt
-    FORMATS                   VST3 AU Standalone
+    FORMATS                   ${PHENOTYPE_FORMATS}
     PRODUCT_NAME              "Phenotype"
     IS_SYNTH                  TRUE
     NEEDS_MIDI_INPUT          TRUE

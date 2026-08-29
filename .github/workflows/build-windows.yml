@@ -1,9 +1,13 @@
-name: Build Windows VST3
+name: Build Windows VST
 
-# Builds the Phenotype plugin (in phenotype/) on a real Windows runner, since
-# the WebView2 UI backend needs MSVC + the Windows SDK and cannot be produced
-# from Linux. Publishes the packaged .vst3 both as a normal workflow artifact
-# and onto an orphan branch (ci-windows-build) for programmatic retrieval.
+# Builds the Phenotype plugin (in phenotype/) on real Windows runners, for both
+# x64 and x86 (32-bit). Produces VST2 (.dll, for legacy hosts like FL Studio 11)
+# and VST3, and publishes each arch's package onto an orphan branch
+# (ci-win-x64 / ci-win-x86) for programmatic retrieval. Artifact upload is a
+# best-effort extra (storage quota may reject it).
+#
+# VST2 requires Steinberg's withdrawn VST 2.4 SDK, supplied by the repo owner
+# under phenotype/sdk/vstsdk2.4. Without it, only VST3 is emitted.
 
 on:
   workflow_dispatch:
@@ -19,6 +23,12 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { cmake_arch: x64,   label: x64, branch: ci-win-x64 }
+          - { cmake_arch: Win32, label: x86, branch: ci-win-x86 }
     steps:
       - uses: actions/checkout@v4
 
@@ -35,46 +45,51 @@ jobs:
       - name: Install WebView2 SDK (NuGet)
         working-directory: phenotype
         shell: pwsh
-        run: |
-          nuget install Microsoft.Web.WebView2 -Version 1.0.1901.177 -OutputDirectory nuget -ExcludeVersion
-          Get-ChildItem nuget/Microsoft.Web.WebView2/build/native/include | Select-Object -First 3
+        run: nuget install Microsoft.Web.WebView2 -Version 1.0.1901.177 -OutputDirectory nuget -ExcludeVersion
 
-      - name: Configure (CMake)
+      - name: Configure (CMake, ${{ matrix.label }})
         working-directory: phenotype
         shell: pwsh
         run: >
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -A ${{ matrix.cmake_arch }}
           "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=${{ github.workspace }}/phenotype/nuget"
 
-      - name: Build VST3 (Release)
-        working-directory: phenotype
-        run: cmake --build build --config Release --parallel --target Phenotype_VST3
-
-      - name: Package .vst3
+      - name: Build (Release, ${{ matrix.label }})
         working-directory: phenotype
         shell: pwsh
         run: |
-          $bundle = Get-ChildItem -Path build -Recurse -Directory -Filter 'Phenotype.vst3' | Select-Object -First 1
-          if (-not $bundle) { throw 'Phenotype.vst3 bundle not found' }
-          Write-Host "Bundle: $($bundle.FullName)"
-          Compress-Archive -Path $bundle.FullName -DestinationPath Phenotype-vst3-windows-x64.zip -Force
-          Get-ChildItem Phenotype-vst3-windows-x64.zip
+          cmake --build build --config Release --parallel --target Phenotype_VST3
+          cmake --build build --config Release --parallel --target Phenotype_VST
+
+      - name: Package (${{ matrix.label }})
+        working-directory: phenotype
+        shell: pwsh
+        run: |
+          $out = "pkg"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $dll = Get-ChildItem -Path build -Recurse -File -Filter 'Phenotype.dll' | Select-Object -First 1
+          if ($dll) { Copy-Item $dll.FullName (Join-Path $out 'Phenotype.dll') ; Write-Host "VST2: $($dll.FullName)" }
+          else { Write-Warning 'VST2 .dll not found' }
+          $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter 'Phenotype.vst3' | Select-Object -First 1
+          if ($vst3) { Copy-Item $vst3.FullName (Join-Path $out 'Phenotype.vst3') -Recurse ; Write-Host "VST3: $($vst3.FullName)" }
+          Compress-Archive -Path "$out/*" -DestinationPath "Phenotype-windows-${{ matrix.label }}.zip" -Force
+          Get-ChildItem "Phenotype-windows-${{ matrix.label }}.zip"
 
       - name: Publish to retrieval branch
         shell: bash
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan ci-windows-build
+          git checkout --orphan ${{ matrix.branch }}
           git rm -r --cached . >/dev/null 2>&1 || true
-          git add -f phenotype/Phenotype-vst3-windows-x64.zip
-          git commit -m "CI: Windows VST3 build artifact ($GITHUB_SHA)"
-          git push -f origin ci-windows-build
+          git add -f phenotype/Phenotype-windows-${{ matrix.label }}.zip
+          git commit -m "CI: Windows ${{ matrix.label }} VST build ($GITHUB_SHA)"
+          git push -f origin ${{ matrix.branch }}
 
       - uses: actions/upload-artifact@v4
         if: always()
         continue-on-error: true
         with:
-          name: Phenotype-vst3-windows-x64
-          path: phenotype/Phenotype-vst3-windows-x64.zip
+          name: Phenotype-windows-${{ matrix.label }}
+          path: phenotype/Phenotype-windows-${{ matrix.label }}.zip
           if-no-files-found: warn
