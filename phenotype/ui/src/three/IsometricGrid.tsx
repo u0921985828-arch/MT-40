@@ -53,37 +53,69 @@ function IsoFloor() {
   return <primitive ref={gridRef} object={grid} />;
 }
 
-// Soft pool of light on the grow floor beneath the genome — grounds the scene.
-function FloorGlow() {
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+// Lava-lamp emulsion pool on the grow floor: green (A) and magenta (B) metaballs
+// drift, merge and split. Cross-synth sets each phase's mass — the dominant
+// chromosome is the continuous medium, the recessive one floats as blobs.
+const LAVA_FRAG = /* glsl */ `
+  precision highp float;
+  uniform float uTime, uCross, uOpacity;
+  uniform vec3 uColA, uColB;
+  varying vec2 vUv;
+  void main() {
+    vec2 p = vUv * 2.0 - 1.0;
+    float ga = 0.0, gb = 0.0;
+    for (int i = 0; i < 7; i++) {
+      float fi = float(i);
+      vec2 c = vec2(
+        sin(uTime * 0.16 + fi * 1.7) * 0.62 + sin(uTime * 0.07 + fi) * 0.2,
+        cos(uTime * 0.13 + fi * 2.3) * 0.62 + cos(uTime * 0.05 + fi * 1.3) * 0.2
+      );
+      float d2 = dot(p - c, p - c) + 0.015;
+      float field = 0.10 / d2;
+      if (mod(fi, 2.0) < 0.5) ga += field * (0.3 + 1.5 * (1.0 - uCross));
+      else                    gb += field * (0.3 + 1.5 * uCross);
+    }
+    float tot = ga + gb;
+    vec3 col = (uColA * ga + uColB * gb) / max(tot, 0.001);
+    float body = smoothstep(0.55, 1.7, tot);
+    float edge = smoothstep(1.15, 0.1, length(p)); // fade well before the corners
+    float a = body * edge * uOpacity;
+    gl_FragColor = vec4(col * (0.6 + 0.9 * body), a);
+  }`;
 
-  const texture = useMemo(() => {
-    const s = 256;
-    const c = document.createElement("canvas");
-    c.width = c.height = s;
-    const ctx = c.getContext("2d")!;
-    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    g.addColorStop(0, "rgba(255,255,255,0.9)");
-    g.addColorStop(0.4, "rgba(255,255,255,0.26)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-    const tex = new THREE.CanvasTexture(c);
-    tex.needsUpdate = true;
-    return tex;
-  }, []);
+const LAVA_VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }`;
 
+function LavaFloor() {
   const meshRef = useRef<THREE.Mesh>(null);
+  const mat = useMemo(
+    () => new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uCross: { value: 0.5 },
+        uOpacity: { value: 0.5 },
+        uColA: { value: new THREE.Color(PALETTE.chlorophyll) },
+        uColB: { value: new THREE.Color(PALETTE.ledMagenta) },
+      },
+      vertexShader: LAVA_VERT,
+      fragmentShader: LAVA_FRAG,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+    [],
+  );
+
   useFrame((state) => {
     const P = usePhenotypeStore.getState().params;
     const breath = 0.9 + 0.1 * Math.sin(state.clock.elapsedTime * 0.4);
-    if (matRef.current) {
-      // Filter cutoff sets brightness/openness (not hue); the pool's colour is
-      // the cross-synth emulsion so the room light matches the genome.
-      matRef.current.opacity = (0.24 + telemetry.capillary * 0.3 + P.filterCutoff * 0.28) * breath;
-      matRef.current.color.copy(chlA).lerp(chlB, P.crossBlend);
-    }
-    // Reverb size swells the pool of light — a bigger space reads as a wider glow.
+    mat.uniforms.uTime.value = state.clock.elapsedTime;
+    mat.uniforms.uCross.value = P.crossBlend;
+    mat.uniforms.uOpacity.value = (0.26 + telemetry.capillary * 0.3 + P.filterCutoff * 0.28) * breath;
     if (meshRef.current) {
       const sc = 0.8 + P.reverbSize * 0.7 + P.reverbMix * 0.2;
       meshRef.current.scale.set(sc, sc, 1);
@@ -91,17 +123,8 @@ function FloorGlow() {
   });
 
   return (
-    <mesh ref={meshRef} position={[0, -0.97, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[16, 16]} />
-      <meshBasicMaterial
-        ref={matRef}
-        map={texture}
-        transparent
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        toneMapped={false}
-        opacity={0.5}
-      />
+    <mesh ref={meshRef} position={[0, -0.97, 0]} rotation={[-Math.PI / 2, 0, 0]} material={mat}>
+      <planeGeometry args={[17, 17]} />
     </mesh>
   );
 }
@@ -171,7 +194,7 @@ export function IsometricGrid() {
     >
       <ambientLight intensity={0.18} color={"#20302a"} />
       <CapillaryLight />
-      <FloorGlow />
+      <LavaFloor />
       <IsoFloor />
       <CannabisLeaves />
       <DNAHelix />
