@@ -10,7 +10,15 @@
 import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  SMAA,
+  Noise,
+  ChromaticAberration,
+} from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { NodeGraph } from "./NodeGraph";
 import { DNAHelix } from "./DNAHelix";
@@ -88,15 +96,26 @@ export function IsometricGrid() {
       <NodeGraph />
       <GenotypeTag />
 
-      <EffectComposer>
+      <EffectComposer multisampling={0}>
+        {/* Only true HDR highlights bloom now — darks stay crisp. */}
         <Bloom
-          intensity={1.15}
-          luminanceThreshold={0.18}
-          luminanceSmoothing={0.9}
+          intensity={0.85}
+          luminanceThreshold={0.55}
+          luminanceSmoothing={0.7}
           mipmapBlur
-          radius={0.85}
+          radius={0.72}
         />
-        <Vignette eskil={false} offset={0.25} darkness={0.85} />
+        {/* Faint lab-scope character. */}
+        <ChromaticAberration
+          blendFunction={BlendFunction.NORMAL}
+          offset={new THREE.Vector2(0.0006, 0.0009)}
+          radialModulation={false}
+          modulationOffset={0}
+        />
+        <Vignette eskil={false} offset={0.28} darkness={0.9} />
+        <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
+        {/* Edge anti-alias — the composer bypasses canvas MSAA. */}
+        <SMAA />
       </EffectComposer>
     </Canvas>
   );

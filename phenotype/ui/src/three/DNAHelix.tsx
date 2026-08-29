@@ -144,14 +144,14 @@ function place(
   mesh.setColorAt(index, placeColor);
 }
 
-function makeStrand(points: THREE.Vector3[], color: string): THREE.Line {
+function makeStrand(points: THREE.Vector3[], color: string): THREE.Mesh {
+  // Volumetric sugar-phosphate strand: a smooth tube instead of a 1px line, so
+  // the backbone reads as a solid glowing ribbon and the bloom wraps it.
   const curve = new THREE.CatmullRomCurve3(points);
-  const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(points.length * 4));
-  const mat = new THREE.LineBasicMaterial({
-    color: new THREE.Color(color).multiplyScalar(GLOW.rung),
-    transparent: true,
-    opacity: 0.95,
+  const geo = new THREE.TubeGeometry(curve, points.length * 6, 0.05, 8, false);
+  const mat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(color).multiplyScalar(GLOW.rung * 0.8),
     toneMapped: false,
   });
-  return new THREE.Line(geo, mat);
+  return new THREE.Mesh(geo, mat);
 }
