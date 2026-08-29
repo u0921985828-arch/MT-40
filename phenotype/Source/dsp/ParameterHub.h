@@ -42,6 +42,12 @@ namespace phenotype::dsp
         float unison        = 0.0f;   // 0..1 -> 1..7 stacked detuned grains
         float unisonDetune  = 0.25f;  // unison spread (cents)
         float stereoWidth   = 0.5f;   // 0..1 -> 0 (mono) .. 1 (2x wide)
+        float delayMix      = 0.0f;   // ping-pong delay wet
+        float delayTime     = 0.35f;  // 20..750 ms
+        float delayFb       = 0.35f;  // feedback
+        float reverbMix     = 0.0f;   // reverb wet
+        float reverbSize    = 0.5f;   // room size
+        float reverbDamp    = 0.4f;   // hf damping
     };
 
     class ParameterHub
@@ -78,6 +84,12 @@ namespace phenotype::dsp
             else if (match (id, "unison"))       unison.store       (value, rel);
             else if (match (id, "unisonDetune")) unisonDetune.store (value, rel);
             else if (match (id, "stereoWidth"))  stereoWidth.store  (value, rel);
+            else if (match (id, "delayMix"))     delayMix.store     (value, rel);
+            else if (match (id, "delayTime"))    delayTime.store    (value, rel);
+            else if (match (id, "delayFb"))      delayFb.store      (value, rel);
+            else if (match (id, "reverbMix"))    reverbMix.store    (value, rel);
+            else if (match (id, "reverbSize"))   reverbSize.store   (value, rel);
+            else if (match (id, "reverbDamp"))   reverbDamp.store   (value, rel);
         }
 
         //  --- audio thread reader ---------------------------------------------
@@ -109,6 +121,12 @@ namespace phenotype::dsp
             s.unison       = unison.load       (acq);
             s.unisonDetune = unisonDetune.load (acq);
             s.stereoWidth  = stereoWidth.load  (acq);
+            s.delayMix     = delayMix.load     (acq);
+            s.delayTime    = delayTime.load    (acq);
+            s.delayFb      = delayFb.load      (acq);
+            s.reverbMix    = reverbMix.load    (acq);
+            s.reverbSize   = reverbSize.load   (acq);
+            s.reverbDamp   = reverbDamp.load   (acq);
             return s;
         }
 
@@ -147,5 +165,11 @@ namespace phenotype::dsp
         std::atomic<float> unison       { 0.0f };
         std::atomic<float> unisonDetune { 0.25f };
         std::atomic<float> stereoWidth  { 0.5f };
+        std::atomic<float> delayMix     { 0.0f };
+        std::atomic<float> delayTime    { 0.35f };
+        std::atomic<float> delayFb      { 0.35f };
+        std::atomic<float> reverbMix    { 0.0f };
+        std::atomic<float> reverbSize   { 0.5f };
+        std::atomic<float> reverbDamp   { 0.4f };
     };
 }

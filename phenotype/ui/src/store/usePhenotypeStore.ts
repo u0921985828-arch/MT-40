@@ -38,6 +38,12 @@ export interface ParamState {
   unison: number;
   unisonDetune: number;
   stereoWidth: number;
+  delayMix: number;
+  delayTime: number;
+  delayFb: number;
+  reverbMix: number;
+  reverbSize: number;
+  reverbDamp: number;
 }
 
 export type ParamId = keyof ParamState;
@@ -68,6 +74,12 @@ const DEFAULT_PARAMS: ParamState = {
   unison: 0.0,
   unisonDetune: 0.25,
   stereoWidth: 0.5,
+  delayMix: 0.0,
+  delayTime: 0.35,
+  delayFb: 0.35,
+  reverbMix: 0.0,
+  reverbSize: 0.5,
+  reverbDamp: 0.4,
 };
 
 // --- Transient telemetry buffer (mutable, non-reactive) ---------------------

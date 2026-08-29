@@ -61,6 +61,18 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
     ],
   },
   {
+    title: "FX · Espacio",
+    tag: "FX",
+    controls: [
+      { id: "delayMix", label: "Delay", def: 0.0 },
+      { id: "delayTime", label: "Time", def: 0.35 },
+      { id: "delayFb", label: "Feedback", def: 0.35 },
+      { id: "reverbMix", label: "Reverb", def: 0.0 },
+      { id: "reverbSize", label: "Size", def: 0.5 },
+      { id: "reverbDamp", label: "Damp", def: 0.4 },
+    ],
+  },
+  {
     title: "Arpegiador & Escala",
     tag: "ARP",
     controls: [

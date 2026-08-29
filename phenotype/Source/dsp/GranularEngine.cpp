@@ -28,6 +28,8 @@ namespace phenotype::dsp
         //  DC blocker pole: y[n] = x[n]-x[n-1] + R*y[n-1], R = e^{-2*pi*fc/fs}.
         dcR = fastmath::fastExp (-2.0f * 3.14159265f * 10.0f / static_cast<float> (newSampleRate));
 
+        fx.prepare (newSampleRate);
+
         fillGenome();   // internal band-limited wavetables (instrument mode)
         reset();
     }
@@ -48,6 +50,7 @@ namespace phenotype::dsp
         modWheel     = 0.0f;
         driveX1L = driveX1R = 0.0f;
         smCutoff = 20000.0f; smK = 0.61f; smType = 0.0f; smDrive = 1.7f; smWidth = 1.0f;
+        fx.reset();
         svfL.reset();
         svfR.reset();
         modulator.reset();
@@ -524,6 +527,9 @@ namespace phenotype::dsp
         const float modOctaves  = p.filterMod * 3.0f;            // capillary -> cutoff (±oct)
         const float lnHalf      = -0.6931471806f;                // ln(1/2) for octave scaling
 
+        //  FX rack controls (per block).
+        fx.setParams (p.delayMix, p.delayTime, p.delayFb, p.reverbMix, p.reverbSize, p.reverbDamp);
+
         for (int n = 0; n < numSamples; ++n)
         {
             //  1) Effect mode captures the incoming genome; instrument mode keeps
@@ -675,8 +681,11 @@ namespace phenotype::dsp
             //  Mid/side stereo width.
             const float mid  = (tL + tR) * 0.5f;
             const float side = (tL - tR) * 0.5f * smWidth;
-            const float sL   = mid + side;
-            const float sR   = mid - side;
+            float sL = mid + side;
+            float sR = mid - side;
+
+            //  FX rack: ping-pong delay + reverb (mixes wet in place).
+            fx.process (sL, sR);
 
             //  Per-sample gain smoothing removes zipper noise on automation.
             smoothedGain = p.outputGain + (smoothedGain - p.outputGain) * gainPole;

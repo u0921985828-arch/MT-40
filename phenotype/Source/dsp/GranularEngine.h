@@ -20,6 +20,7 @@
 #include "CapillaryModulator.h"
 #include "ParameterHub.h"
 #include "SVF.h"
+#include "FX.h"
 #include <vector>
 #include <array>
 #include <cstdint>
@@ -207,6 +208,7 @@ namespace phenotype::dsp
 
         //  Post-granular tone stage: analog-style drive -> stereo SVF -> width.
         SVF      svfL, svfR;
+        StereoFX fx;                                 // ping-pong delay + reverb
         float    driveX1L = 0.0f, driveX1R = 0.0f;   // ADAA drive state (prev input)
 
         //  De-zippered tone-stage controls (one-pole toward each block target).

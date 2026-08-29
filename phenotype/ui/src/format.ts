@@ -47,6 +47,8 @@ export function formatParam(id: ParamId, v: number): { value: string; unit: stri
       return { value: `±${Math.round(v * 50)}`, unit: "cent" };
     case "stereoWidth":
       return { value: `${Math.round(v * 200)}`, unit: "%" };
+    case "delayTime":
+      return { value: `${Math.round(20 + v * 730)}`, unit: "ms" };
     case "arpOn":
     case "arpSync":
       return { value: v > 0.5 ? "On" : "Off", unit: "" };

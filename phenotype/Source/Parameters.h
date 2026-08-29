@@ -22,7 +22,7 @@ namespace phenotype::params
     };
 
     //  Order is stable and mirrors dsp::ParameterSnapshot / the UI ids.
-    inline constexpr std::array<Def, 25> kDefs { {
+    inline constexpr std::array<Def, 31> kDefs { {
         { "caudal",       "Caudal",            0.5f },
         { "soilDensity",  "Densidad Suelo",    0.5f },
         { "saturation",   "Saturacion",        0.9f },
@@ -49,6 +49,13 @@ namespace phenotype::params
         { "unison",       "Unison",            0.0f  },
         { "unisonDetune", "Unison Detune",     0.25f },
         { "stereoWidth",  "Anchura Estereo",   0.5f  },
+        //  --- FX rack: ping-pong delay + reverb -----------------------------
+        { "delayMix",     "Delay Mix",         0.0f  },
+        { "delayTime",    "Delay Time",        0.35f },
+        { "delayFb",      "Delay Feedback",    0.35f },
+        { "reverbMix",    "Reverb Mix",        0.0f  },
+        { "reverbSize",   "Reverb Size",       0.5f  },
+        { "reverbDamp",   "Reverb Damp",       0.4f  },
     } };
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()

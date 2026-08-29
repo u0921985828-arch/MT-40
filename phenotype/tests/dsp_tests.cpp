@@ -9,6 +9,7 @@
 #include "CapillaryModulator.h"
 #include "GranularEngine.h"
 #include "SVF.h"
+#include "FX.h"
 #include "FastMath.h"
 
 #include <cmath>
@@ -570,6 +571,27 @@ static void testSustainPedal()
     check (tail < 0.02f, "note releases after pedal up");
 }
 
+static void testFX()
+{
+    std::printf ("fx rack (delay + reverb):\n");
+    StereoFX fx;
+    fx.prepare (48000.0);
+    fx.setParams (0.5f, 0.4f, 0.5f, 0.6f, 0.6f, 0.4f);
+    float peak = 0.0f; bool finite = true;
+    for (int n = 0; n < 96000; ++n)
+    {
+        float l = (n == 0) ? 1.0f : 0.0f, r = l;
+        fx.process (l, r);
+        if (! std::isfinite (l) || ! std::isfinite (r)) finite = false;
+        peak = std::max (peak, std::max (std::fabs (l), std::fabs (r)));
+    }
+    check (finite, "FX impulse response finite");
+    check (peak < 8.0f, "FX impulse response bounded");
+    float tail = 0.0f;
+    for (int n = 0; n < 400; ++n) { float l = 0, r = 0; fx.process (l, r); tail = std::max (tail, std::max (std::fabs (l), std::fabs (r))); }
+    check (tail < 0.5f, "FX tail decays");
+}
+
 int main()
 {
     std::printf ("== Phenotype DSP tests ==\n");
@@ -591,6 +613,7 @@ int main()
     testMipAntiAlias();
     testFastLog();
     testSustainPedal();
+    testFX();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
     return failures == 0 ? 0 : 1;
