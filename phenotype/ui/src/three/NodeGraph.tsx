@@ -1,17 +1,21 @@
 //==============================================================================
 //  NodeGraph.tsx
 //
-//  The interactive isometric node ring. Each node is a genotype locus; its
-//  scale/emissive pulse maps an FFT band, and splines connect adjacent nodes
-//  alternating chromosome A/B. Clicking a node scrubs the granular `position`.
+//  The expression-loci halo: a clean, closed orbital ring around the genome.
+//  Nodes sit at a single height (a real ring, not scattered blobs) and pulse
+//  their FFT band; a continuous smooth tube threads all of them into one glowing
+//  circlet that breathes with the capillary phase. Clicking a node scrubs the
+//  granular `position`.
 //==============================================================================
 
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { SplineLink } from "./SplineLink";
 import { PALETTE, NODE_COUNT } from "./theme";
 import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
+
+const RING_RADIUS = 4.15;
+const RING_Y = 0.05;
 
 interface NodeDef {
   position: THREE.Vector3;
@@ -34,10 +38,10 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
     const energy = fft[bin] ?? 0;
     const mesh = meshRef.current;
     if (!mesh) return;
-    const s = 0.18 + energy * 0.4;
+    const s = 0.13 + energy * 0.32;
     mesh.scale.setScalar(s);
     const mat = mesh.material as THREE.MeshStandardMaterial;
-    mat.emissiveIntensity = 0.3 + energy * 2.5;
+    mat.emissiveIntensity = 0.4 + energy * 2.6;
   });
 
   return (
@@ -59,14 +63,41 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
   );
 }
 
+// A closed, smooth ring tube through all nodes — one quiet glowing circlet.
+function RingHalo({ nodes }: { nodes: NodeDef[] }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  const geo = useMemo(() => {
+    const curve = new THREE.CatmullRomCurve3(nodes.map((n) => n.position.clone()), true, "catmullrom", 0.5);
+    return new THREE.TubeGeometry(curve, nodes.length * 12, 0.018, 8, true);
+  }, [nodes]);
+
+  const mat = useMemo(
+    () => new THREE.MeshBasicMaterial({
+      color: new THREE.Color(PALETTE.chlorophyll).multiplyScalar(1.1),
+      transparent: true,
+      opacity: 0.5,
+      toneMapped: false,
+      blending: THREE.AdditiveBlending,
+    }),
+    [],
+  );
+
+  useFrame(() => {
+    const m = meshRef.current;
+    if (m) (m.material as THREE.MeshBasicMaterial).opacity = 0.32 + telemetry.capillary * 0.5;
+  });
+
+  return <mesh ref={meshRef} geometry={geo} material={mat} />;
+}
+
 export function NodeGraph() {
   const nodes = useMemo<NodeDef[]>(() => {
     const out: NodeDef[] = [];
-    const radius = 4.3;
     for (let i = 0; i < NODE_COUNT; i++) {
       const a = (i / NODE_COUNT) * Math.PI * 2;
       out.push({
-        position: new THREE.Vector3(Math.cos(a) * radius, 0.1, Math.sin(a) * radius),
+        position: new THREE.Vector3(Math.cos(a) * RING_RADIUS, RING_Y, Math.sin(a) * RING_RADIUS),
         band: i / NODE_COUNT,
         chromosome: (i % 2) as 0 | 1,
       });
@@ -74,24 +105,9 @@ export function NodeGraph() {
     return out;
   }, []);
 
-  const links = useMemo(() => {
-    const out: { from: THREE.Vector3; to: THREE.Vector3; band: number; chromosome: 0 | 1 }[] = [];
-    // Only the outer orbital ring — adjacent loci. The diagonal cross-links
-    // were removed so they no longer web across the helix (composition: the
-    // genome is the hero, the ring is quiet ambient structure).
-    for (let i = 0; i < nodes.length; i++) {
-      const a = nodes[i]!;
-      const b = nodes[(i + 1) % nodes.length]!;
-      out.push({ from: a.position, to: b.position, band: a.band, chromosome: a.chromosome });
-    }
-    return out;
-  }, [nodes]);
-
   return (
     <group>
-      {links.map((l, i) => (
-        <SplineLink key={`l${i}`} from={l.from} to={l.to} band={l.band} chromosome={l.chromosome} />
-      ))}
+      <RingHalo nodes={nodes} />
       {nodes.map((n, i) => (
         <Node key={`n${i}`} node={n} index={i} />
       ))}
