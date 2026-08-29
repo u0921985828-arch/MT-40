@@ -36,7 +36,9 @@ namespace phenotype
         bool acceptsMidi()  const override { return true; }
         bool producesMidi() const override { return false; }
         bool isMidiEffect() const override { return false; }
-        double getTailLengthSeconds() const override { return 0.0; }
+        //  Note release (~1.4 s to silence on the AR pole) + grains up to 0.4 s
+        //  + filter ring; report a realistic tail so hosts don't cut it offline.
+        double getTailLengthSeconds() const override { return 1.5; }
 
         int  getNumPrograms() override;
         int  getCurrentProgram() override { return currentProgram; }

@@ -47,6 +47,7 @@ namespace phenotype::dsp
         sustainPedal = false;
         modWheel     = 0.0f;
         driveX1L = driveX1R = 0.0f;
+        smCutoff = 20000.0f; smK = 0.61f; smType = 0.0f; smDrive = 1.7f; smWidth = 1.0f;
         svfL.reset();
         svfR.reset();
         modulator.reset();
@@ -513,17 +514,15 @@ namespace phenotype::dsp
         const float unisonGain = 1.0f / std::sqrt (static_cast<float> (nUnison));
         const float detuneCents = p.unisonDetune * 50.0f;                          // spread
 
-        //  --- Tone stage (per block) ------------------------------------------
+        //  --- Tone stage targets (per block; smoothed per sample below) -------
         //  Cutoff: log map ~20 Hz .. ~20 kHz. Resonance -> Q -> damping k = 1/Q.
-        const float baseCutoff = 20.0f * fastmath::fastExp (p.filterCutoff * 6.9077f);
-        const float filterQ    = 0.5f + p.filterReso * 9.5f;
-        const float kDamp      = 1.0f / filterQ;
-        const float fType      = p.filterType;
-        const float modOctaves = p.filterMod * 3.0f;             // capillary -> cutoff (±oct)
-        const float driveGain  = 1.0f + p.drive * 7.0f;
-        const float driveMakeup= 1.0f / fastmath::fastTanh (driveGain);
-        const float width      = p.stereoWidth * 2.0f;           // 0 (mono) .. 2 (wide)
-        const float lnHalf     = -0.6931471806f;                 // ln(1/2) for octave scaling
+        const float baseCutoffT = 20.0f * fastmath::fastExp (p.filterCutoff * 6.9077f);
+        const float kDampT      = 1.0f / (0.5f + p.filterReso * 9.5f);
+        const float fTypeT      = p.filterType;
+        const float driveGainT  = 1.0f + p.drive * 7.0f;
+        const float widthT      = p.stereoWidth * 2.0f;          // 0 (mono) .. 2 (wide)
+        const float modOctaves  = p.filterMod * 3.0f;            // capillary -> cutoff (±oct)
+        const float lnHalf      = -0.6931471806f;                // ln(1/2) for octave scaling
 
         for (int n = 0; n < numSamples; ++n)
         {
@@ -636,11 +635,20 @@ namespace phenotype::dsp
             }
             liveGrainCount = live;
 
+            //  De-zipper the tone controls toward their block targets (~5 ms).
+            smCutoff += (baseCutoffT - smCutoff) * gainPole;
+            smK      += (kDampT      - smK)      * gainPole;
+            smType   += (fTypeT      - smType)   * gainPole;
+            smDrive  += (driveGainT  - smDrive)  * gainPole;
+            smWidth  += (widthT      - smWidth)  * gainPole;
+
             //  --- Tone stage: drive -> ZDF filter -> stereo width -------------
             //  Anti-aliased tanh drive via 1st-order antiderivative (ADAA):
             //  y = (G(x)-G(x1))/(x-x1), G(x)=ln(cosh(k x))/k. Cuts the odd-
             //  harmonic aliasing a plain waveshaper folds back, no oversampling.
-            const float invDrive = 1.0f / driveGain;
+            const float driveGain   = smDrive;
+            const float driveMakeup = 1.0f / fastmath::fastTanh (driveGain);
+            const float invDrive    = 1.0f / driveGain;
             const float dL = accL - driveX1L;
             float tL = (dL > 1.0e-4f || dL < -1.0e-4f)
                 ? (fastmath::fastLnCosh (driveGain * accL) - fastmath::fastLnCosh (driveGain * driveX1L)) * invDrive / dL
@@ -657,16 +665,16 @@ namespace phenotype::dsp
 
             //  Capillary-modulated cutoff, per sample, shared L/R; mod wheel
             //  lifts the cutoff up to +2 octaves (1.386 = 2*ln2).
-            const float cutoff = baseCutoff
+            const float cutoff = smCutoff
                 * fastmath::fastExp ((modValue - 0.5f) * modOctaves * (-lnHalf) * 2.0f)
                 * fastmath::fastExp (modWheel * 1.386294f);
             const float g = SVF::gForCutoff (cutoff, static_cast<float> (sampleRate));
-            tL = svfL.process (tL, g, kDamp, fType);
-            tR = svfR.process (tR, g, kDamp, fType);
+            tL = svfL.process (tL, g, smK, smType);
+            tR = svfR.process (tR, g, smK, smType);
 
             //  Mid/side stereo width.
             const float mid  = (tL + tR) * 0.5f;
-            const float side = (tL - tR) * 0.5f * width;
+            const float side = (tL - tR) * 0.5f * smWidth;
             const float sL   = mid + side;
             const float sR   = mid - side;
 

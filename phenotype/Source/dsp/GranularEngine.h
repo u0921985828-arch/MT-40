@@ -209,6 +209,10 @@ namespace phenotype::dsp
         SVF      svfL, svfR;
         float    driveX1L = 0.0f, driveX1R = 0.0f;   // ADAA drive state (prev input)
 
+        //  De-zippered tone-stage controls (one-pole toward each block target).
+        float    smCutoff = 20000.0f, smK = 0.61f, smType = 0.0f,
+                 smDrive  = 1.7f,      smWidth = 1.0f;
+
         //  Output DC / subsonic blocker (one-pole highpass, ~10 Hz).
         float    dcR    = 0.0f;
         float    dcX1L  = 0.0f, dcY1L = 0.0f;
