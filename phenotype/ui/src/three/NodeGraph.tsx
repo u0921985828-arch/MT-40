@@ -76,17 +76,13 @@ export function NodeGraph() {
 
   const links = useMemo(() => {
     const out: { from: THREE.Vector3; to: THREE.Vector3; band: number; chromosome: 0 | 1 }[] = [];
+    // Only the outer orbital ring — adjacent loci. The diagonal cross-links
+    // were removed so they no longer web across the helix (composition: the
+    // genome is the hero, the ring is quiet ambient structure).
     for (let i = 0; i < nodes.length; i++) {
       const a = nodes[i]!;
       const b = nodes[(i + 1) % nodes.length]!;
       out.push({ from: a.position, to: b.position, band: a.band, chromosome: a.chromosome });
-    }
-    // Diploid cross links (A locus <-> opposite B locus).
-    const half = Math.floor(nodes.length / 2);
-    for (let i = 0; i < half; i++) {
-      const a = nodes[i]!;
-      const b = nodes[i + half]!;
-      out.push({ from: a.position, to: b.position, band: (a.band + b.band) * 0.5, chromosome: 1 });
     }
     return out;
   }, [nodes]);

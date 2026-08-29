@@ -255,6 +255,53 @@ html, body, #root {
 .ph-geno__id { display: block; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.28em; color: var(--ink); text-shadow: 0 0 12px rgba(0, 255, 106, 0.4); }
 .ph-geno__meta { display: flex; gap: 8px; justify-content: center; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--ink-dim); margin-top: 3px; }
 
+/* ---- Bottom status bar -------------------------------------------------- */
+.ph-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 22px;
+  border-top: 1px solid var(--panel-line);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.ph-bar__geno { display: flex; align-items: center; gap: 10px; }
+.ph-bar__label {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  font-size: 10px;
+}
+.ph-chip {
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.ph-chip--a { color: var(--chlorophyll); border-color: rgba(0, 255, 106, 0.35); box-shadow: 0 0 10px rgba(0, 255, 106, 0.15) inset; }
+.ph-chip--b { color: var(--magenta); border-color: rgba(255, 43, 214, 0.35); box-shadow: 0 0 10px rgba(255, 43, 214, 0.15) inset; }
+.ph-bar__x { color: var(--ink-faint); }
+.ph-bar__mid {
+  justify-self: center;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ph-bar__stat { justify-self: end; display: flex; align-items: center; gap: 12px; color: var(--ink-dim); }
+.ph-bar__grains b { color: var(--ink); font-weight: 600; }
+.ph-bar__sep { width: 1px; height: 14px; background: var(--panel-line); }
+
+@media (max-width: 860px) {
+  .ph-bar__mid { display: none; }
+  .ph-bar { grid-template-columns: 1fr auto; }
+}
 @media (max-width: 720px) {
   .ph-main { grid-template-columns: 1fr; }
   .ph-viewport { min-height: 42vh; border-right: none; border-bottom: 1px solid var(--panel-line); }

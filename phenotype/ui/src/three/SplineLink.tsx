@@ -60,7 +60,7 @@ export function SplineLink({ from, to, band, chromosome }: SplineLinkProps) {
     const mat = material;
     // Brightness tracks band energy; the ink base keeps low signal readable.
     const lift = 0.25 + energy * 0.75;
-    mat.opacity = 0.2 + energy * 0.8;
+    mat.opacity = 0.08 + energy * 0.5;   // quieter — ambient ring, not wiring
     mat.color.copy(baseColor).lerp(new THREE.Color(PALETTE.ink), 1 - lift);
 
     // Capillary phase adds a slow global shimmer synced to the drain/fill.

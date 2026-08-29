@@ -9,7 +9,6 @@
 
 import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
 import {
   EffectComposer,
   Bloom,
@@ -25,7 +24,7 @@ import { DNAHelix } from "./DNAHelix";
 import { Trichomes } from "./Trichomes";
 import { CannabisLeaves } from "./CannabisLeaf";
 import { PALETTE, GRID_HALF } from "./theme";
-import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
+import { telemetry } from "../store/usePhenotypeStore";
 
 function IsoFloor() {
   const gridRef = useRef<THREE.GridHelper>(null);
@@ -59,22 +58,6 @@ function CapillaryLight() {
   );
 }
 
-function GenotypeTag() {
-  const grains = usePhenotypeStore((s) => s.activeGrains);
-  return (
-    <Html position={[0, 5.4, 0]} center distanceFactor={11} zIndexRange={[10, 0]}>
-      <div className="ph-geno">
-        <span className="ph-geno__id">GENOTYPE · A×B</span>
-        <span className="ph-geno__meta">
-          <span style={{ color: PALETTE.chlorophyll }}>◆A</span>
-          <span style={{ color: PALETTE.ledMagenta }}>◆B</span>
-          expr {grains}
-        </span>
-      </div>
-    </Html>
-  );
-}
-
 export function IsometricGrid() {
   return (
     <Canvas
@@ -94,7 +77,6 @@ export function IsometricGrid() {
       <DNAHelix />
       <Trichomes />
       <NodeGraph />
-      <GenotypeTag />
 
       <EffectComposer multisampling={0}>
         {/* Only true HDR highlights bloom now — darks stay crisp. */}

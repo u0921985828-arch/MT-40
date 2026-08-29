@@ -95,9 +95,6 @@ export default function App() {
           </div>
         </div>
         <div className="ph-status">
-          <span className="ph-meter">
-            <b>{activeGrains}</b> granos
-          </span>
           <span className={hosted ? "ph-dot ph-dot--live" : "ph-dot"} />
           <span className="ph-conn">{hosted ? "JUCE BACKEND" : "BROWSER MOCK"}</span>
         </div>
@@ -126,6 +123,23 @@ export default function App() {
           <p className="ph-foot">BOTANICA DSP · v1.0</p>
         </aside>
       </main>
+
+      <footer className="ph-bar">
+        <div className="ph-bar__geno">
+          <span className="ph-bar__label">Genotipo</span>
+          <span className="ph-chip ph-chip--a">◆ A</span>
+          <span className="ph-bar__x">×</span>
+          <span className="ph-chip ph-chip--b">◆ B</span>
+        </div>
+        <div className="ph-bar__mid">granular cross-synthesis · capillary modulation</div>
+        <div className="ph-bar__stat">
+          <span className="ph-bar__grains">
+            <b>{activeGrains}</b> granos activos
+          </span>
+          <span className="ph-bar__sep" />
+          <span className={hosted ? "ph-dot ph-dot--live" : "ph-dot"} />
+        </div>
+      </footer>
     </div>
   );
 }
