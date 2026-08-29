@@ -44,7 +44,7 @@ jobs:
         shell: pwsh
         run: >
           cmake -B build -DCMAKE_BUILD_TYPE=Release
-          "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=${{ github.workspace }}/phenotype/nuget/Microsoft.Web.WebView2"
+          "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=${{ github.workspace }}/phenotype/nuget"
 
       - name: Build VST3 (Release)
         working-directory: phenotype
