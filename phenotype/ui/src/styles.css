@@ -1,33 +1,35 @@
 /* ==========================================================================
-   Phenotype — grow-lab dark neon. Near-black field, luminous text, chlorophyll
-   + LED-magenta accents that read as actual emitted light.
+   Phenotype — grow-lab instrument. Near-black field, luminous chlorophyll +
+   LED-magenta accents reading as emitted light. Genome viewport left, a rack of
+   rotary controls right. Everything painted explicitly so it holds anywhere.
    ========================================================================== */
 
 :root {
-  --bg: #07090a;
-  --panel: #0c100e;
-  --panel-line: #1c2a22;
-  --ink: #eaf7ee;
+  --bg: #06090a;
+  --bg2: #080c0b;
+  --panel: #0b100e;
+  --panel2: #0e1512;
+  --panel-line: #182620;
+  --hair: #14211b;
+  --ink: #e9f6ef;
   --ink-dim: #7f9d8c;
+  --ink-faint: #56705f;
   --chlorophyll: #00ff6a;
   --magenta: #ff2bd6;
-  --hair: #16241d;
   color-scheme: dark;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body,
-#root {
+html, body, #root {
   margin: 0;
   height: 100%;
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
-  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -36,149 +38,224 @@ body,
   flex-direction: column;
   height: 100%;
   background:
-    radial-gradient(1200px 600px at 30% 20%, rgba(0, 255, 106, 0.05), transparent 60%),
-    radial-gradient(900px 500px at 80% 80%, rgba(255, 43, 214, 0.05), transparent 60%),
+    radial-gradient(1200px 600px at 26% 8%, rgba(0, 255, 106, 0.06), transparent 60%),
+    radial-gradient(900px 520px at 84% 92%, rgba(255, 43, 214, 0.055), transparent 62%),
     var(--bg);
 }
 
+/* ---- Header ------------------------------------------------------------- */
 .ph-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 14px 22px;
   border-bottom: 1px solid var(--panel-line);
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
 }
+.ph-brand { display: flex; align-items: center; gap: 14px; }
 
-.ph-header h1 {
+/* double-helix mark: two counter-rotating gradient bars */
+.ph-mark {
+  position: relative;
+  width: 26px;
+  height: 30px;
+  flex: none;
+}
+.ph-mark span {
+  position: absolute;
+  inset: 0;
+  border-radius: 40% / 50%;
+  border: 2px solid transparent;
+}
+.ph-mark__a {
+  border-top-color: var(--chlorophyll);
+  border-bottom-color: var(--chlorophyll);
+  transform: rotate(24deg);
+  box-shadow: 0 0 12px rgba(0, 255, 106, 0.4);
+}
+.ph-mark__b {
+  border-top-color: var(--magenta);
+  border-bottom-color: var(--magenta);
+  transform: rotate(-24deg);
+  box-shadow: 0 0 12px rgba(255, 43, 214, 0.35);
+}
+.ph-title h1 {
   margin: 0;
-  font-size: 20px;
-  letter-spacing: 0.35em;
-  font-weight: 700;
-  text-shadow: 0 0 18px rgba(0, 255, 106, 0.35);
+  font-family: var(--mono);
+  font-size: 19px;
+  letter-spacing: 0.34em;
+  font-weight: 600;
+  text-shadow: 0 0 18px rgba(0, 255, 106, 0.3);
 }
-
-.ph-status {
+.ph-tag {
+  margin: 2px 0 0;
   font-size: 11px;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
   text-transform: uppercase;
+}
+.ph-status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
   color: var(--ink-dim);
+  text-transform: uppercase;
 }
-
+.ph-meter b { color: var(--ink); font-weight: 600; }
+.ph-conn { color: var(--ink-faint); }
 .ph-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--hair);
-  border: 1px solid var(--panel-line);
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--hair); border: 1px solid var(--panel-line);
 }
+.ph-dot--live { background: var(--chlorophyll); box-shadow: 0 0 12px var(--chlorophyll); border-color: transparent; }
 
-.ph-dot--live {
-  background: var(--chlorophyll);
-  box-shadow: 0 0 12px var(--chlorophyll);
-}
-
+/* ---- Main split --------------------------------------------------------- */
 .ph-main {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 372px;
   min-height: 0;
 }
-
 .ph-viewport {
   position: relative;
   min-width: 0;
   border-right: 1px solid var(--panel-line);
 }
-
-.ph-viewport canvas {
-  display: block;
+.ph-viewport canvas { display: block; }
+.ph-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 160px 20px rgba(0, 0, 0, 0.55);
 }
 
+/* ---- Rack --------------------------------------------------------------- */
 .ph-rack {
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px 16px 8px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  background: rgba(0, 0, 0, 0.25);
+  gap: 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.15));
 }
+.ph-rack::-webkit-scrollbar { width: 10px; }
+.ph-rack::-webkit-scrollbar-thumb { background: var(--panel-line); border-radius: 6px; }
+.ph-rack::-webkit-scrollbar-track { background: transparent; }
 
 .ph-group {
   border: 1px solid var(--panel-line);
-  border-radius: 3px;
-  padding: 12px 12px 14px;
+  border-radius: 10px;
+  padding: 6px 12px 14px;
   margin: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(0, 0, 0, 0.12));
 }
-
 .ph-group legend {
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  padding: 0 6px;
-  font-weight: 700;
-  color: var(--chlorophyll);
-  text-shadow: 0 0 10px rgba(0, 255, 106, 0.35);
-}
-
-.ph-slider {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
   align-items: center;
-  column-gap: 8px;
-  margin: 10px 0;
-}
-
-.ph-slider__label {
-  grid-column: 1 / -1;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
-  color: var(--ink-dim);
-}
-
-.ph-slider input[type="range"] {
-  width: 100%;
-  height: 3px;
-  background: var(--hair);
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-.ph-slider__value {
-  font-size: 11px;
-  min-width: 26px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  gap: 9px;
+  padding: 0 4px;
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
   color: var(--ink);
+}
+.ph-group__tag {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--bg);
+  background: var(--chlorophyll);
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 255, 106, 0.35);
+}
+
+/* knob grid */
+.ph-knobs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 4px;
+  margin-top: 8px;
+}
+.ph-knobs--1 { grid-template-columns: repeat(2, 1fr); max-width: 50%; }
+
+/* ---- Knob --------------------------------------------------------------- */
+.knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  user-select: none;
+}
+.knob__dial {
+  width: 100%;
+  max-width: 68px;
+  aspect-ratio: 1;
+  cursor: ns-resize;
+  touch-action: none;
+  outline: none;
+}
+.knob__dial:focus-visible .knob__well { stroke: var(--chlorophyll); stroke-width: 1.2; }
+.knob__well {
+  fill: radial-gradient(#000, #000);
+  fill: #070b09;
+  stroke: var(--panel-line);
+  stroke-width: 1;
+}
+.knob__track {
+  fill: none;
+  stroke: var(--hair);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.knob__value {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.knob__ind { stroke-width: 2.6; stroke-linecap: round; opacity: 0.95; }
+.knob__tip { filter: drop-shadow(0 0 4px currentColor); }
+.knob__read {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.knob__unit { font-size: 9px; font-weight: 500; opacity: 0.72; }
+.knob__label {
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--ink-dim);
+  text-align: center;
+  text-transform: uppercase;
+  line-height: 1.15;
+}
+
+.ph-foot {
+  margin: 2px 0 8px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--ink-faint);
 }
 
 /* Genotype read-out floating over the genome (drei Html) */
-.ph-geno {
-  user-select: none;
-  pointer-events: none;
-  text-align: center;
-  white-space: nowrap;
-  transform: translateY(-50%);
-}
-.ph-geno__id {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  color: var(--ink);
-  text-shadow: 0 0 12px rgba(0, 255, 106, 0.4);
-}
-.ph-geno__meta {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--ink-dim);
-  margin-top: 3px;
+.ph-geno { user-select: none; pointer-events: none; text-align: center; white-space: nowrap; transform: translateY(-50%); }
+.ph-geno__id { display: block; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.28em; color: var(--ink); text-shadow: 0 0 12px rgba(0, 255, 106, 0.4); }
+.ph-geno__meta { display: flex; gap: 8px; justify-content: center; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--ink-dim); margin-top: 3px; }
+
+@media (max-width: 720px) {
+  .ph-main { grid-template-columns: 1fr; }
+  .ph-viewport { min-height: 42vh; border-right: none; border-bottom: 1px solid var(--panel-line); }
 }

@@ -1,108 +1,79 @@
 //==============================================================================
-//  App.tsx — Phenotype shell: isometric viewport + genotype control rack.
+//  App.tsx — Phenotype shell: living genome viewport + instrument control rack.
 //==============================================================================
 
 import { IsometricGrid } from "./three/IsometricGrid";
-import { usePhenotypeStore, type ParamId } from "./store/usePhenotypeStore";
+import { usePhenotypeStore } from "./store/usePhenotypeStore";
+import { Knob, type KnobDef } from "./Knob";
 import { PALETTE } from "./three/theme";
 
-interface ControlDef {
-  id: ParamId;
-  label: string;
-  chromosome?: 0 | 1;
-}
-
-const RACK: { title: string; controls: ControlDef[] }[] = [
+const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
   {
     title: "Capillary Modulator",
+    tag: "MOD",
     controls: [
-      { id: "caudal", label: "Caudal" },
-      { id: "soilDensity", label: "Densidad del Suelo" },
-      { id: "saturation", label: "Saturación" },
-      { id: "modDepth", label: "Profundidad Mod" },
+      { id: "caudal", label: "Caudal", def: 0.5 },
+      { id: "soilDensity", label: "Densidad Suelo", def: 0.5 },
+      { id: "saturation", label: "Saturación", def: 0.9 },
+      { id: "modDepth", label: "Profundidad", def: 0.5 },
     ],
   },
   {
     title: "Granular Cloud",
+    tag: "GRAIN",
     controls: [
-      { id: "grainDensity", label: "Densidad" },
-      { id: "grainSize", label: "Tamaño" },
-      { id: "position", label: "Posición" },
-      { id: "spray", label: "Dispersión" },
+      { id: "grainDensity", label: "Densidad", def: 0.4 },
+      { id: "grainSize", label: "Tamaño", def: 0.3 },
+      { id: "position", label: "Posición", def: 0.5 },
+      { id: "spray", label: "Dispersión", def: 0.2 },
     ],
   },
   {
     title: "Diploid Genome",
+    tag: "A×B",
     controls: [
-      { id: "pitchA", label: "Cromosoma A", chromosome: 0 },
-      { id: "pitchB", label: "Cromosoma B", chromosome: 1 },
-      { id: "crossBlend", label: "Cross-Synthesis" },
-      { id: "outputGain", label: "Salida" },
+      { id: "pitchA", label: "Cromosoma A", chromosome: 0, def: 0.5 },
+      { id: "pitchB", label: "Cromosoma B", chromosome: 1, def: 0.5 },
+      { id: "crossBlend", label: "Cross-Synth", def: 0.5 },
+      { id: "outputGain", label: "Salida", def: 0.8 },
     ],
   },
   {
     title: "Filtro",
+    tag: "SVF",
     controls: [
-      { id: "filterType", label: "Tipo · LP › BP › HP" },
-      { id: "filterCutoff", label: "Cutoff" },
-      { id: "filterReso", label: "Resonancia" },
-      { id: "filterMod", label: "Capilar → Cutoff" },
+      { id: "filterType", label: "Tipo", def: 0.0 },
+      { id: "filterCutoff", label: "Cutoff", def: 1.0 },
+      { id: "filterReso", label: "Resonancia", def: 0.12 },
+      { id: "filterMod", label: "Capilar→Cut", def: 0.0 },
     ],
   },
   {
     title: "Textura & Espacio",
+    tag: "TONE",
     controls: [
-      { id: "drive", label: "Drive" },
-      { id: "unison", label: "Unison" },
-      { id: "unisonDetune", label: "Detune" },
-      { id: "stereoWidth", label: "Anchura Estéreo" },
+      { id: "drive", label: "Drive", def: 0.1 },
+      { id: "unison", label: "Unison", def: 0.0 },
+      { id: "unisonDetune", label: "Detune", def: 0.25 },
+      { id: "stereoWidth", label: "Anchura", def: 0.5 },
     ],
   },
   {
-    title: "Arpeggiator",
+    title: "Arpegiador",
+    tag: "ARP",
     controls: [
-      { id: "arpOn", label: "Arpegiador" },
-      { id: "arpRate", label: "Velocidad / División" },
-      { id: "arpMode", label: "Patrón" },
-      { id: "arpSync", label: "Sync Tempo" },
+      { id: "arpOn", label: "Activo", def: 0.0 },
+      { id: "arpRate", label: "Velocidad", def: 0.4 },
+      { id: "arpMode", label: "Patrón", def: 0.0 },
+      { id: "arpSync", label: "Sync", def: 0.0 },
     ],
   },
   {
     title: "Escala",
-    controls: [{ id: "scaleType", label: "Cuantizador" }],
+    tag: "KEY",
+    controls: [{ id: "scaleType", label: "Cuantizador", def: 0.0 }],
   },
 ];
-
-function Slider({ def }: { def: ControlDef }) {
-  const value = usePhenotypeStore((s) => s.params[def.id]);
-  const setParam = usePhenotypeStore((s) => s.setParam);
-  const setDragging = usePhenotypeStore((s) => s.setDragging);
-  const accent =
-    def.chromosome === 0
-      ? PALETTE.chlorophyll
-      : def.chromosome === 1
-        ? PALETTE.ledMagenta
-        : PALETTE.ink;
-
-  return (
-    <label className="ph-slider">
-      <span className="ph-slider__label">{def.label}</span>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.001}
-        value={value}
-        style={{ accentColor: accent }}
-        onPointerDown={() => setDragging(def.id)}
-        onPointerUp={() => setDragging(null)}
-        onPointerCancel={() => setDragging(null)}
-        onChange={(e) => setParam(def.id, Number(e.currentTarget.value))}
-      />
-      <span className="ph-slider__value">{Math.round(value * 100)}</span>
-    </label>
-  );
-}
 
 export default function App() {
   const hosted = usePhenotypeStore((s) => s.hosted);
@@ -111,29 +82,48 @@ export default function App() {
   return (
     <div className="ph-root">
       <header className="ph-header">
-        <h1>
-          PHENO<span style={{ color: PALETTE.chlorophyll }}>TYPE</span>
-        </h1>
+        <div className="ph-brand">
+          <div className="ph-mark" aria-hidden="true">
+            <span className="ph-mark__a" />
+            <span className="ph-mark__b" />
+          </div>
+          <div className="ph-title">
+            <h1>
+              PHENO<span style={{ color: PALETTE.chlorophyll }}>TYPE</span>
+            </h1>
+            <p className="ph-tag">granular diploide · cross-synthesis</p>
+          </div>
+        </div>
         <div className="ph-status">
+          <span className="ph-meter">
+            <b>{activeGrains}</b> granos
+          </span>
           <span className={hosted ? "ph-dot ph-dot--live" : "ph-dot"} />
-          {hosted ? "JUCE BACKEND" : "BROWSER MOCK"} · grains {activeGrains}
+          <span className="ph-conn">{hosted ? "JUCE BACKEND" : "BROWSER MOCK"}</span>
         </div>
       </header>
 
       <main className="ph-main">
         <section className="ph-viewport">
           <IsometricGrid />
+          <div className="ph-vignette" aria-hidden="true" />
         </section>
 
         <aside className="ph-rack">
           {RACK.map((group) => (
             <fieldset key={group.title} className="ph-group">
-              <legend>{group.title}</legend>
-              {group.controls.map((c) => (
-                <Slider key={c.id} def={c} />
-              ))}
+              <legend>
+                <span className="ph-group__tag">{group.tag}</span>
+                {group.title}
+              </legend>
+              <div className={`ph-knobs ph-knobs--${group.controls.length}`}>
+                {group.controls.map((c) => (
+                  <Knob key={c.id} def={c} />
+                ))}
+              </div>
             </fieldset>
           ))}
+          <p className="ph-foot">BOTANICA DSP · v1.0</p>
         </aside>
       </main>
     </div>
