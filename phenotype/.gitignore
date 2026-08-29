@@ -1,0 +1,11 @@
+# Local build trees (regenerable)
+build/
+build-*/
+cmake-build-*/
+
+# Windows CI local deps
+nuget/
+
+# Frontend build output & deps (dist is embedded at CI build time)
+ui/node_modules/
+ui/dist/
