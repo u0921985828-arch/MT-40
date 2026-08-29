@@ -11,7 +11,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE, TRICHOMES, GLOW } from "./theme";
-import { telemetry } from "../store/usePhenotypeStore";
+import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
 const baseGreen = new THREE.Color(PALETTE.chlorophyll).multiplyScalar(GLOW.trichome);
 const baseMag = new THREE.Color(PALETTE.ledMagenta).multiplyScalar(GLOW.trichome);
@@ -87,10 +87,18 @@ export function Trichomes() {
     }
     attr.needsUpdate = true;
 
-    // Resin density from grain activity (0..~48 grains -> 0..1).
-    const density = Math.min(1, telemetry.activeGrains / 48);
-    material.opacity = 0.3 + density * 0.55;
-    material.color.copy(baseGreen).lerp(baseMag, 0.5 * telemetry.capillary);
+    // Preset signature: grain density/size set a resin floor so a dense preset
+    // frosts up even in silence; stereo width spreads the cloud; cross-synth
+    // and the capillary phase tint it green<->magenta.
+    const P = usePhenotypeStore.getState().params;
+    const live = Math.min(1, telemetry.activeGrains / 48);
+    const density = Math.max(live, P.grainDensity * 0.8);
+    material.opacity = 0.22 + density * 0.55;
+    material.size = 0.16 * (0.55 + P.grainSize * 1.3);
+    material.color.copy(baseGreen).lerp(baseMag, Math.min(1, 0.15 + 0.6 * P.crossBlend + 0.25 * telemetry.capillary));
+
+    const spread = 0.7 + P.stereoWidth * 1.0;
+    if (pts) pts.scale.set(spread, 1, spread);
   });
 
   return <points ref={pointsRef} geometry={geometry} material={material} />;

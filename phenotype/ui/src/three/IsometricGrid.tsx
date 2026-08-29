@@ -26,7 +26,7 @@ import { DNAHelix } from "./DNAHelix";
 import { Trichomes } from "./Trichomes";
 import { CannabisLeaves } from "./CannabisLeaf";
 import { PALETTE, GRID_HALF } from "./theme";
-import { telemetry } from "../store/usePhenotypeStore";
+import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
 function IsoFloor() {
   const gridRef = useRef<THREE.GridHelper>(null);
@@ -35,9 +35,11 @@ function IsoFloor() {
   ).current;
 
   useFrame(() => {
+    const P = usePhenotypeStore.getState().params;
     const mat = grid.material as THREE.Material & { opacity: number; transparent: boolean };
     mat.transparent = true;
-    mat.opacity = 0.06 + telemetry.capillary * 0.16;
+    // Filter cutoff opens the floor up: a bright preset lights the grid.
+    mat.opacity = 0.05 + telemetry.capillary * 0.14 + P.filterCutoff * 0.1;
     if (gridRef.current) gridRef.current.position.y = -0.98 + telemetry.capillary * 0.06;
   });
 
@@ -64,12 +66,19 @@ function FloorGlow() {
     return tex;
   }, []);
 
+  const meshRef = useRef<THREE.Mesh>(null);
   useFrame(() => {
-    if (matRef.current) matRef.current.opacity = 0.4 + telemetry.capillary * 0.4;
+    const P = usePhenotypeStore.getState().params;
+    if (matRef.current) matRef.current.opacity = 0.28 + telemetry.capillary * 0.35 + P.filterCutoff * 0.3;
+    // Reverb size swells the pool of light — a bigger space reads as a wider glow.
+    if (meshRef.current) {
+      const sc = 0.8 + P.reverbSize * 0.7 + P.reverbMix * 0.2;
+      meshRef.current.scale.set(sc, sc, 1);
+    }
   });
 
   return (
-    <mesh position={[0, -0.97, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={meshRef} position={[0, -0.97, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[16, 16]} />
       <meshBasicMaterial
         ref={matRef}
@@ -115,6 +124,21 @@ function CameraRig() {
   return null;
 }
 
+// Reverb sets the room: more wet/size pulls the fog in for a hazier, deeper
+// space; a dry preset opens the stage up.
+function AtmosphereRig() {
+  const { scene } = useThree();
+  useFrame(() => {
+    const fog = scene.fog as THREE.Fog | null;
+    if (!fog) return;
+    const P = usePhenotypeStore.getState().params;
+    const wet = Math.min(1, P.reverbMix * 0.7 + P.reverbSize * 0.5);
+    fog.near = 16 - wet * 6;
+    fog.far = 34 - wet * 12;
+  });
+  return null;
+}
+
 export function IsometricGrid() {
   return (
     <Canvas
@@ -136,6 +160,7 @@ export function IsometricGrid() {
       <Trichomes />
       <NodeGraph />
       <CameraRig />
+      <AtmosphereRig />
 
       <EffectComposer multisampling={0}>
         {/* Only true HDR highlights bloom — darks stay crisp. */}

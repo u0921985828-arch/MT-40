@@ -32,16 +32,21 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
     [node.chromosome],
   );
 
-  useFrame(() => {
+  useFrame((state) => {
     const { fft } = telemetry;
     const bin = Math.min(fft.length - 1, Math.floor(node.band * fft.length));
     const energy = fft[bin] ?? 0;
     const mesh = meshRef.current;
     if (!mesh) return;
-    const s = 0.13 + energy * 0.32;
+    // Arp signature: when the arpeggiator is on, the ring pulses at its rate.
+    const P = usePhenotypeStore.getState().params;
+    const pulse = P.arpOn > 0.5
+      ? 0.6 + 0.4 * Math.sin(state.clock.elapsedTime * (0.5 + P.arpRate * 7) * Math.PI * 2)
+      : 1;
+    const s = (0.13 + energy * 0.32) * (0.75 + 0.25 * pulse);
     mesh.scale.setScalar(s);
     const mat = mesh.material as THREE.MeshStandardMaterial;
-    mat.emissiveIntensity = 0.4 + energy * 2.6;
+    mat.emissiveIntensity = (0.4 + energy * 2.6) * pulse;
   });
 
   return (
@@ -83,9 +88,14 @@ function RingHalo({ nodes }: { nodes: NodeDef[] }) {
     [],
   );
 
-  useFrame(() => {
+  useFrame((state) => {
     const m = meshRef.current;
-    if (m) (m.material as THREE.MeshBasicMaterial).opacity = 0.32 + telemetry.capillary * 0.5;
+    if (!m) return;
+    const P = usePhenotypeStore.getState().params;
+    const pulse = P.arpOn > 0.5
+      ? 0.6 + 0.4 * Math.sin(state.clock.elapsedTime * (0.5 + P.arpRate * 7) * Math.PI * 2)
+      : 1;
+    (m.material as THREE.MeshBasicMaterial).opacity = (0.32 + telemetry.capillary * 0.5) * pulse;
   });
 
   return <mesh ref={meshRef} geometry={geo} material={mat} />;

@@ -14,7 +14,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE, HELIX, GLOW } from "./theme";
-import { telemetry } from "../store/usePhenotypeStore";
+import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
 interface PairGeom {
   a: THREE.Vector3;
@@ -92,6 +92,10 @@ export function DNAHelix() {
     [pairs],
   );
 
+  // Backbone base glow colours (the frame loop rescales these by cross-synth).
+  const baseColA = useMemo(() => new THREE.Color(PALETTE.chlorophyll).multiplyScalar(GLOW.rung * 0.8), []);
+  const baseColB = useMemo(() => new THREE.Color(PALETTE.ledMagenta).multiplyScalar(GLOW.rung * 0.8), []);
+
   const rungSegments = useMemo(() => new THREE.LineSegments(rungGeo, rungMat), [rungGeo, rungMat]);
 
   useFrame((_, delta) => {
@@ -101,6 +105,13 @@ export function DNAHelix() {
 
     g.rotation.y += delta * HELIX.spin;
     g.position.y = telemetry.capillary * 0.5 - 0.25;
+
+    // Preset signature (read live, no re-render): cross-synthesis weights the
+    // two strands green<->magenta, output level sets the genome's overall glow.
+    const P = usePhenotypeStore.getState().params;
+    const gGain = 0.55 + P.outputGain * 0.95;
+    const aMul = (0.4 + 1.0 * (1 - P.crossBlend)) * gGain; // chromosome A weight
+    const bMul = (0.4 + 1.0 * P.crossBlend) * gGain;       // chromosome B weight
 
     const fft = telemetry.fft;
     const rungCol = rungGeo.getAttribute("color") as THREE.BufferAttribute;
@@ -114,15 +125,15 @@ export function DNAHelix() {
       // beads bloom; energy drives size/brightness, the end-fade dissolves the
       // tips so the strands emerge from nothing instead of stopping dead.
       const s = (0.11 + e * 0.2) * (0.35 + 0.65 * fade);
-      place(nuc, 2 * i, pairs[i]!.a, s, colA, GLOW.nucleusA * (0.55 + e * 1.2) * fade);
-      place(nuc, 2 * i + 1, pairs[i]!.b, s, colB, GLOW.nucleusB * (0.55 + e * 1.2) * fade);
+      place(nuc, 2 * i, pairs[i]!.a, s, colA, GLOW.nucleusA * (0.55 + e * 1.2) * fade * aMul);
+      place(nuc, 2 * i + 1, pairs[i]!.b, s, colB, GLOW.nucleusB * (0.55 + e * 1.2) * fade * bMul);
 
       // Rung colour: green->magenta gradient, brightened (HDR) by band energy,
-      // faded to black at the tips.
+      // faded to black at the tips, biased by the cross-synth balance.
       tmpColor
         .copy(colA)
-        .lerp(colB, pairs[i]!.band)
-        .multiplyScalar(GLOW.rung * (0.4 + e * 1.6) * fade);
+        .lerp(colB, THREE.MathUtils.clamp(pairs[i]!.band * 0.5 + P.crossBlend * 0.5, 0, 1))
+        .multiplyScalar(GLOW.rung * (0.4 + e * 1.6) * fade * gGain);
       rungCol.setXYZ(2 * i, tmpColor.r, tmpColor.g, tmpColor.b);
       rungCol.setXYZ(2 * i + 1, tmpColor.r, tmpColor.g, tmpColor.b);
     }
@@ -130,6 +141,10 @@ export function DNAHelix() {
     if (nuc.instanceColor) nuc.instanceColor.needsUpdate = true;
     rungCol.needsUpdate = true;
     rungMat.opacity = 0.5 + telemetry.capillary * 0.45;
+
+    // Backbones track the same cross-synth weighting so a strand can recede.
+    (backboneA.material as THREE.MeshBasicMaterial).color.copy(baseColA).multiplyScalar(0.55 + 0.9 * (1 - P.crossBlend) * gGain);
+    (backboneB.material as THREE.MeshBasicMaterial).color.copy(baseColB).multiplyScalar(0.55 + 0.9 * P.crossBlend * gGain);
   });
 
   return (
