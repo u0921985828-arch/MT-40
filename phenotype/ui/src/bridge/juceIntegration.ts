@@ -26,6 +26,13 @@ export interface ParamsFrame {
 export type TelemetryListener = (frame: TelemetryFrame) => void;
 export type ParamsListener = (frame: ParamsFrame) => void;
 
+export interface ProgramInfo {
+  index: number;
+  name: string;
+  count: number;
+}
+export type ProgramAction = "next" | "prev" | "set" | "get";
+
 export interface JuceIntegration {
   readonly hosted: boolean;
   /** Push a single parameter edit to the backend (async, non-blocking). */
@@ -36,6 +43,19 @@ export interface JuceIntegration {
   onTelemetry(listener: TelemetryListener): () => void;
   /** Subscribe to backend-originated parameter snapshots (host automation). */
   onParams(listener: ParamsListener): () => void;
+  /** Change / query the current factory program (preset). */
+  program(action: ProgramAction, index?: number): Promise<ProgramInfo>;
+}
+
+const NATIVE_PROGRAM = "phenotypeProgram";
+
+function normaliseProgram(r: unknown): ProgramInfo {
+  const o = (typeof r === "object" && r !== null ? r : {}) as Partial<ProgramInfo>;
+  return {
+    index: typeof o.index === "number" ? o.index : 0,
+    name: typeof o.name === "string" ? o.name : "—",
+    count: typeof o.count === "number" ? o.count : 0,
+  };
 }
 
 //  --- JUCE global surface (injected by the WebView backend) ------------------
@@ -64,6 +84,7 @@ const NATIVE_SEND = "phenotypeSend";
 
 function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
   const send = getNativeFunction(NATIVE_SEND) as (payload: string) => Promise<unknown>;
+  const programFn = getNativeFunction(NATIVE_PROGRAM) as (payload: string) => Promise<unknown>;
   const telemetryListeners = new Set<TelemetryListener>();
   const paramsListeners = new Set<ParamsListener>();
 
@@ -92,6 +113,9 @@ function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
     onParams(listener) {
       paramsListeners.add(listener);
       return () => paramsListeners.delete(listener);
+    },
+    program(action, index) {
+      return programFn(JSON.stringify({ action, index })).then(normaliseProgram);
     },
   };
 }
@@ -143,8 +167,18 @@ function createMockIntegration(): JuceIntegration {
       // Mock has no host automation source; nothing to subscribe to.
       return () => {};
     },
+    program(action, index) {
+      const count = 300;
+      if (action === "next") mockProgram = (mockProgram + 1) % count;
+      else if (action === "prev") mockProgram = (mockProgram - 1 + count) % count;
+      else if (action === "set" && index !== undefined)
+        mockProgram = Math.max(0, Math.min(count - 1, index));
+      return Promise.resolve({ index: mockProgram, name: `Preset ${mockProgram + 1}`, count });
+    },
   };
 }
+
+let mockProgram = 0;
 
 function normaliseParams(payload: unknown): ParamsFrame | null {
   if (typeof payload === "object" && payload !== null) {

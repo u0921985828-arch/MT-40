@@ -43,6 +43,10 @@ namespace phenotype
         void onMessageFromUi (const juce::Array<juce::var>& args,
                               juce::WebBrowserComponent::NativeFunctionCompletion completion);
 
+        //  Factory-program (preset) navigation from the UI's preset arrows.
+        void onProgramFromUi (const juce::Array<juce::var>& args,
+                              juce::WebBrowserComponent::NativeFunctionCompletion completion);
+
         static const char* mimeForExtension (const juce::String& ext) noexcept;
 
         PhenotypeAudioProcessor& processorRef;

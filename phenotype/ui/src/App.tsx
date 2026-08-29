@@ -2,10 +2,12 @@
 //  App.tsx — Phenotype shell: living genome viewport + instrument control rack.
 //==============================================================================
 
+import { useCallback, useEffect, useState } from "react";
 import { IsometricGrid } from "./three/IsometricGrid";
 import { usePhenotypeStore } from "./store/usePhenotypeStore";
 import { Knob, type KnobDef } from "./Knob";
 import { PALETTE } from "./three/theme";
+import { juceIntegration, type ProgramInfo } from "./bridge/juceIntegration";
 
 const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
   {
@@ -71,6 +73,42 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
   },
 ];
 
+function PresetBar() {
+  const [info, setInfo] = useState<ProgramInfo>({ index: 0, name: "—", count: 0 });
+  useEffect(() => {
+    let live = true;
+    juceIntegration.program("get").then((p) => live && setInfo(p));
+    return () => {
+      live = false;
+    };
+  }, []);
+  const step = useCallback((dir: "prev" | "next") => {
+    juceIntegration.program(dir).then(setInfo);
+  }, []);
+
+  const [lib, rest] = info.name.includes(" > ")
+    ? [info.name.split(" > ")[0]!, info.name.split(" > ").slice(1).join(" > ")]
+    : ["PRESET", info.name];
+
+  return (
+    <div className="ph-preset">
+      <button className="ph-preset__arw" aria-label="Preset anterior" onClick={() => step("prev")}>
+        ◀
+      </button>
+      <div className="ph-preset__disp">
+        <span className="ph-preset__lib">{lib}</span>
+        <span className="ph-preset__name">{rest}</span>
+        <span className="ph-preset__idx">
+          {info.count > 0 ? `${info.index + 1} / ${info.count}` : ""}
+        </span>
+      </div>
+      <button className="ph-preset__arw" aria-label="Preset siguiente" onClick={() => step("next")}>
+        ▶
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
   const hosted = usePhenotypeStore((s) => s.hosted);
   const activeGrains = usePhenotypeStore((s) => s.activeGrains);
@@ -103,6 +141,7 @@ export default function App() {
         </section>
 
         <aside className="ph-rack">
+          <PresetBar />
           {RACK.map((group) => (
             <fieldset key={group.title} className="ph-group">
               <legend>

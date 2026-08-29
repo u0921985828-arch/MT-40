@@ -50,6 +50,12 @@ namespace phenotype
                            juce::WebBrowserComponent::NativeFunctionCompletion completion)
                    {
                        onMessageFromUi (args, std::move (completion));
+                   })
+              .withNativeFunction ("phenotypeProgram",
+                   [this] (const juce::Array<juce::var>& args,
+                           juce::WebBrowserComponent::NativeFunctionCompletion completion)
+                   {
+                       onProgramFromUi (args, std::move (completion));
                    }))
     {
         addAndMakeVisible (webView);
@@ -83,6 +89,32 @@ namespace phenotype
             dispatcher.handleFromUi (args[0].isString() ? juce::JSON::parse (args[0].toString())
                                                         : args[0]);
         completion (juce::var (true));
+    }
+
+    void PhenotypeWebEditor::onProgramFromUi (const juce::Array<juce::var>& args,
+                                              juce::WebBrowserComponent::NativeFunctionCompletion completion)
+    {
+        //  {action:"next"|"prev"|"set"|"get", index?} -> {index,name,count}
+        juce::var payload;
+        if (args.size() > 0)
+            payload = args[0].isString() ? juce::JSON::parse (args[0].toString()) : args[0];
+
+        const juce::String action = payload.getProperty ("action", "get").toString();
+        const int n   = juce::jmax (1, processorRef.getNumPrograms());
+        const int cur = processorRef.getCurrentProgram();
+        int idx = cur;
+        if      (action == "next") idx = (cur + 1) % n;
+        else if (action == "prev") idx = (cur - 1 + n) % n;
+        else if (action == "set")  idx = juce::jlimit (0, n - 1, (int) payload.getProperty ("index", cur));
+
+        if (action != "get" && idx != cur)
+            processorRef.setCurrentProgram (idx);
+
+        auto* obj = new juce::DynamicObject();
+        obj->setProperty ("index", idx);
+        obj->setProperty ("count", n);
+        obj->setProperty ("name",  processorRef.getProgramName (idx));
+        completion (juce::var (obj));
     }
 
     void PhenotypeWebEditor::timerCallback()

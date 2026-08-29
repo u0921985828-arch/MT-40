@@ -146,6 +146,69 @@ html, body, #root {
 .ph-rack::-webkit-scrollbar-thumb { background: var(--panel-line); border-radius: 6px; }
 .ph-rack::-webkit-scrollbar-track { background: transparent; }
 
+/* ---- Preset selector (top of the rack) ---------------------------------- */
+.ph-preset {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.ph-preset__arw {
+  border: 1px solid var(--panel-line);
+  background: linear-gradient(180deg, rgba(0, 255, 106, 0.06), rgba(0, 0, 0, 0.2));
+  color: var(--chlorophyll);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.ph-preset__arw:hover {
+  background: rgba(0, 255, 106, 0.14);
+  box-shadow: 0 0 12px rgba(0, 255, 106, 0.25) inset;
+}
+.ph-preset__arw:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; }
+.ph-preset__disp {
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.22));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 11px;
+  overflow: hidden;
+}
+.ph-preset__lib {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--bg);
+  background: var(--chlorophyll);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.ph-preset__name {
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 12px rgba(0, 255, 106, 0.2);
+}
+.ph-preset__idx {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .ph-group {
   border: 1px solid var(--panel-line);
   border-radius: 9px;
