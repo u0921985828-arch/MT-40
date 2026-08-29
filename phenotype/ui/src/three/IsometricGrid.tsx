@@ -24,7 +24,6 @@ import * as THREE from "three";
 import { NodeGraph } from "./NodeGraph";
 import { DNAHelix } from "./DNAHelix";
 import { Trichomes } from "./Trichomes";
-import { CannabisLeaves } from "./CannabisLeaf";
 import { PALETTE } from "./theme";
 import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
@@ -177,7 +176,6 @@ export function IsometricGrid() {
       <ambientLight intensity={0.18} color={"#20302a"} />
       <CapillaryLight />
       <LavaFloor />
-      <CannabisLeaves />
       <DNAHelix />
       <Trichomes />
       <NodeGraph />
