@@ -59,7 +59,9 @@ const LAVA_FRAG = /* glsl */ `
     float tot = ga + gb;
     vec3 col = (uColA * ga + uColB * gb) / max(tot, 0.001);
     float body = smoothstep(0.55, 1.7, tot);
-    float edge = smoothstep(1.15, 0.1, length(p)); // fade well before the corners
+    // Fade fully to zero well inside the plane so its straight edges never show
+    // (a soft round pool, never a clipped diagonal).
+    float edge = smoothstep(0.9, 0.12, length(p));
     float a = body * edge * uOpacity;
     gl_FragColor = vec4(col * (0.6 + 0.9 * body), a);
   }`;
