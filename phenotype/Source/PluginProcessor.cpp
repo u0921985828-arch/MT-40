@@ -5,6 +5,7 @@
 #include "PluginProcessor.h"
 #include "PhenotypeWebEditor.h"
 #include "Presets.h"
+#include <juce_audio_formats/juce_audio_formats.h>
 
 namespace phenotype
 {

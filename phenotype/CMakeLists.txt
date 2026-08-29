@@ -98,3 +98,17 @@ target_link_libraries(Phenotype PRIVATE
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
+
+# On Linux the WebView backend needs GTK3 + WebKitGTK headers/libs. Attach them
+# to the target explicitly so juce_gui_extra's browser code finds gtk/gtk.h
+# (Ubuntu 24.04 ships webkit2gtk-4.1).
+if(UNIX AND NOT APPLE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PH_WEBKIT IMPORTED_TARGET webkit2gtk-4.1)
+    if(NOT PH_WEBKIT_FOUND)
+        pkg_check_modules(PH_WEBKIT IMPORTED_TARGET webkit2gtk-4.0)
+    endif()
+    if(PH_WEBKIT_FOUND)
+        target_link_libraries(Phenotype PRIVATE PkgConfig::PH_WEBKIT)
+    endif()
+endif()
