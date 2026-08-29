@@ -46,6 +46,7 @@ namespace phenotype::dsp
         dcX1L = dcY1L = dcX1R = dcY1R = 0.0f;
         sustainPedal = false;
         modWheel     = 0.0f;
+        driveX1L = driveX1R = 0.0f;
         svfL.reset();
         svfR.reset();
         modulator.reset();
@@ -636,9 +637,23 @@ namespace phenotype::dsp
             liveGrainCount = live;
 
             //  --- Tone stage: drive -> ZDF filter -> stereo width -------------
-            //  Analog-style saturation (odd-harmonic warmth, level-normalised).
-            float tL = fastmath::fastTanh (accL * driveGain) * driveMakeup;
-            float tR = fastmath::fastTanh (accR * driveGain) * driveMakeup;
+            //  Anti-aliased tanh drive via 1st-order antiderivative (ADAA):
+            //  y = (G(x)-G(x1))/(x-x1), G(x)=ln(cosh(k x))/k. Cuts the odd-
+            //  harmonic aliasing a plain waveshaper folds back, no oversampling.
+            const float invDrive = 1.0f / driveGain;
+            const float dL = accL - driveX1L;
+            float tL = (dL > 1.0e-4f || dL < -1.0e-4f)
+                ? (fastmath::fastLnCosh (driveGain * accL) - fastmath::fastLnCosh (driveGain * driveX1L)) * invDrive / dL
+                : fastmath::fastTanh (driveGain * 0.5f * (accL + driveX1L));
+            driveX1L = accL;
+            tL *= driveMakeup;
+
+            const float dR = accR - driveX1R;
+            float tR = (dR > 1.0e-4f || dR < -1.0e-4f)
+                ? (fastmath::fastLnCosh (driveGain * accR) - fastmath::fastLnCosh (driveGain * driveX1R)) * invDrive / dR
+                : fastmath::fastTanh (driveGain * 0.5f * (accR + driveX1R));
+            driveX1R = accR;
+            tR *= driveMakeup;
 
             //  Capillary-modulated cutoff, per sample, shared L/R; mod wheel
             //  lifts the cutoff up to +2 octaves (1.386 = 2*ln2).

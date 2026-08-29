@@ -26,6 +26,8 @@ namespace phenotype
         void releaseResources() override {}
         bool isBusesLayoutSupported (const BusesLayout&) const override;
         void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+        void processBlock (juce::AudioBuffer<double>&, juce::MidiBuffer&) override;
+        bool supportsDoublePrecisionProcessing() const override { return true; }
 
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override { return true; }
@@ -73,6 +75,9 @@ namespace phenotype
         std::array<std::atomic<float>*, params::kDefs.size()> rawParams {};
 
         dsp::GranularEngine granular;
+
+        //  Pre-allocated float scratch for the double-precision entry point.
+        juce::AudioBuffer<float> doubleScratch;
 
         //  --- Analysis (audio thread writes, UI thread reads) -----------------
         juce::dsp::FFT                       fft { kFftOrder };

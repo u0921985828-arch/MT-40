@@ -34,6 +34,7 @@ namespace phenotype
     void PhenotypeAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     {
         granular.prepare (sampleRate, samplesPerBlock);
+        doubleScratch.setSize (2, samplesPerBlock, false, false, true);   // preallocate
         fifo.fill (0.0f);
         magBuf[0].fill (0.0f);
         magBuf[1].fill (0.0f);
@@ -112,6 +113,33 @@ namespace phenotype
                 fifoIndex = 0;
                 pushToFft (fifo.data(), kFftSize);
             }
+        }
+    }
+
+    //  Double-precision hosts: convert into the pre-allocated float scratch,
+    //  run the single float engine path, convert back. No audio-thread alloc
+    //  (scratch is sized in prepareToPlay; setSize avoids reallocation).
+    void PhenotypeAudioProcessor::processBlock (juce::AudioBuffer<double>& buffer,
+                                                juce::MidiBuffer& midi)
+    {
+        const int numCh = juce::jmin (2, buffer.getNumChannels());
+        const int numSamples = buffer.getNumSamples();
+        doubleScratch.setSize (juce::jmax (1, numCh), numSamples, false, false, true);
+
+        for (int c = 0; c < numCh; ++c)
+        {
+            const double* src = buffer.getReadPointer (c);
+            float* dst = doubleScratch.getWritePointer (c);
+            for (int i = 0; i < numSamples; ++i) dst[i] = static_cast<float> (src[i]);
+        }
+
+        processBlock (doubleScratch, midi);
+
+        for (int c = 0; c < numCh; ++c)
+        {
+            const float* src = doubleScratch.getReadPointer (c);
+            double* dst = buffer.getWritePointer (c);
+            for (int i = 0; i < numSamples; ++i) dst[i] = static_cast<double> (src[i]);
         }
     }
 

@@ -207,6 +207,7 @@ namespace phenotype::dsp
 
         //  Post-granular tone stage: analog-style drive -> stereo SVF -> width.
         SVF      svfL, svfR;
+        float    driveX1L = 0.0f, driveX1R = 0.0f;   // ADAA drive state (prev input)
 
         //  Output DC / subsonic blocker (one-pole highpass, ~10 Hz).
         float    dcR    = 0.0f;

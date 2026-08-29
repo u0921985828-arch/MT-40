@@ -68,6 +68,27 @@ namespace phenotype::fastmath
         return x - 0.14814814814f * x * x * x;   // 4/27, maps +/-1.5 -> +/-1
     }
 
+    //  Fast natural log via IEEE-754 exponent split + degree-4 mantissa minimax.
+    //  x must be > 0. Relative error ~1e-3 — ample for anti-aliasing maths.
+    [[nodiscard]] inline float fastLog (float x) noexcept
+    {
+        union { float f; std::int32_t i; } u { x };
+        const float e = static_cast<float> (((u.i >> 23) & 0xFF) - 127);
+        u.i = (u.i & 0x007FFFFF) | 0x3F800000;               // mantissa in [1,2)
+        const float m = u.f;
+        const float p = -1.7417939f + (2.8212026f + (-1.4699568f
+                        + (0.4471623f - 0.0562163f * m) * m) * m) * m;
+        return 0.6931472f * e + p;
+    }
+
+    //  ln(cosh(x)) — the antiderivative core for anti-aliased tanh drive.
+    //  Numerically stable: ln(cosh x) = |x| - ln2 + ln(1 + e^{-2|x|}).
+    [[nodiscard]] inline float fastLnCosh (float x) noexcept
+    {
+        const float ax = x < 0.0f ? -x : x;
+        return ax - 0.6931472f + fastLog (1.0f + fastExp (-2.0f * ax));
+    }
+
     //  Accurate, bounded, monotonic tanh for a drive / warmth stage. Built from
     //  the (now high-accuracy) fastExp:  tanh(x) = (1 - e^{-2x}) / (1 + e^{-2x}).
     //  Odd-symmetric, |output| < 1, error tracks fastExp (< 1e-5). Trig-free.

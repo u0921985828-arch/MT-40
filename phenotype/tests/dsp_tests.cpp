@@ -212,23 +212,38 @@ static void testMelodicInstrument()
 }
 
 //  Estimate output pitch by counting zero crossings over a rendered window.
-static float measureZcr (GranularEngine& eng, int blocks, int N)
+//  Fundamental (Hz) via autocorrelation — tracks true pitch regardless of
+//  harmonic content, so it is immune to the mip anti-aliaser keeping the output
+//  bandwidth roughly constant (which defeats a zero-crossing-rate proxy).
+static float autocorrPitch (GranularEngine& eng, int blocks, int N)
 {
-    std::vector<float> outL ((size_t) N), outR ((size_t) N);
-    long crossings = 0, samples = 0;
-    float prev = 0.0f;
+    const int len = blocks * N;
+    std::vector<float> buf ((size_t) len);
+    std::vector<float> oL ((size_t) N), oR ((size_t) N);
     for (int b = 0; b < blocks; ++b)
     {
-        eng.process (nullptr, nullptr, outL.data(), outR.data(), N);
-        for (int n = 0; n < N; ++n)
-        {
-            const float s = outL[(size_t) n];
-            if ((prev <= 0.0f && s > 0.0f) || (prev >= 0.0f && s < 0.0f)) ++crossings;
-            prev = s;
-            ++samples;
-        }
+        eng.process (nullptr, nullptr, oL.data(), oR.data(), N);
+        for (int n = 0; n < N; ++n) buf[(size_t) (b * N + n)] = oL[(size_t) n];
     }
-    return samples > 0 ? static_cast<float> (crossings) / static_cast<float> (samples) : 0.0f;
+    double mean = 0.0;
+    for (float v : buf) mean += v;
+    mean /= len;
+    for (auto& v : buf) v -= static_cast<float> (mean);
+
+    double r0 = 0.0;
+    for (int i = 0; i < len; ++i) r0 += (double) buf[i] * buf[i];
+    if (r0 < 1e-9) return 0.0f;
+
+    const int minLag = 48000 / 1200, maxLag = 48000 / 60;   // ~60..1200 Hz window
+    double best = -1.0; int bestLag = minLag;
+    for (int lag = minLag; lag <= maxLag; ++lag)
+    {
+        double r = 0.0;
+        for (int i = 0; i + lag < len; ++i) r += (double) buf[i] * buf[i + lag];
+        const double norm = r / r0;
+        if (norm > best) { best = norm; bestLag = lag; }
+    }
+    return 48000.0f / static_cast<float> (bestLag);
 }
 
 static void testPitchAndBend()
@@ -245,24 +260,25 @@ static void testPitchAndBend()
     constexpr int N = 512;
 
     eng.noteOn (60, 1.0f);
-    const float z60 = measureZcr (eng, 30, N);   // C4
+    const float f60 = autocorrPitch (eng, 16, N);   // C4 ~261.6 Hz
     eng.allNotesOff();
     { float p; bool f; renderBlocks (eng, 120, N, p, f); }
 
     eng.noteOn (72, 1.0f);
-    const float z72 = measureZcr (eng, 30, N);   // C5, one octave up
-    std::printf ("  ZCR C4=%.4f  C5=%.4f  ratio=%.2f\n", z60, z72, z72 / (z60 + 1e-9f));
-    check (z72 > z60 * 1.6f, "octave-up note raises pitch (ZCR ~2x)");
+    const float f72 = autocorrPitch (eng, 16, N);   // C5, one octave up
+    std::printf ("  f C4=%.1f Hz  C5=%.1f Hz  ratio=%.2f\n", f60, f72, f72 / (f60 + 1e-9f));
+    check (f72 > f60 * 1.7f && f72 < f60 * 2.4f, "octave-up note doubles the fundamental");
     eng.allNotesOff();
     { float p; bool f; renderBlocks (eng, 120, N, p, f); }
 
-    //  Pitch bend up by +12 semis roughly doubles the pitch of C4.
+    //  Pitch bend up by +12 semis doubles the fundamental of C4.
     eng.noteOn (60, 1.0f);
-    const float zFlat = measureZcr (eng, 20, N);
+    const float fFlat = autocorrPitch (eng, 16, N);
     eng.setPitchBend (12.0f);
-    const float zBent = measureZcr (eng, 20, N);
-    std::printf ("  ZCR flat=%.4f  bent+12=%.4f\n", zFlat, zBent);
-    check (zBent > zFlat * 1.4f, "pitch bend up raises pitch");
+    { float p; bool f; renderBlocks (eng, 40, N, p, f); }   // flush old-pitch grains
+    const float fBent = autocorrPitch (eng, 16, N);
+    std::printf ("  f flat=%.1f Hz  bent+12=%.1f Hz\n", fFlat, fBent);
+    check (fBent > fFlat * 1.7f, "pitch bend up raises the fundamental");
     eng.setPitchBend (0.0f);
     eng.allNotesOff();
 }
@@ -509,6 +525,23 @@ static void testMipAntiAlias()
     check (peak > 0.01f, "very high note audibly present");
 }
 
+static void testFastLog()
+{
+    std::printf ("fastLog / fastLnCosh:\n");
+    double maxAbs = 0.0;
+    for (double x = 0.02; x <= 40.0; x += 0.02)
+        maxAbs = std::max (maxAbs, std::fabs (fastmath::fastLog (static_cast<float> (x)) - std::log (x)));
+    check (maxAbs < 0.02, "fastLog within 0.02 abs of std::log on [0.02,40]");
+
+    double maxErr = 0.0;
+    for (double x = -12.0; x <= 12.0; x += 0.02)
+    {
+        const double a = fastmath::fastLnCosh (static_cast<float> (x));
+        maxErr = std::max (maxErr, std::fabs (a - std::log (std::cosh (x))));
+    }
+    check (maxErr < 0.02, "fastLnCosh within 0.02 of ln(cosh) on [-12,12]");
+}
+
 static void testSustainPedal()
 {
     std::printf ("sustain pedal:\n");
@@ -556,6 +589,7 @@ int main()
     testSvfStability();
     testFilteredEngineClean();
     testMipAntiAlias();
+    testFastLog();
     testSustainPedal();
 
     std::printf ("== %s ==\n", failures == 0 ? "ALL PASSED" : "FAILURES PRESENT");
