@@ -59,19 +59,15 @@ const RACK: { title: string; tag: string; controls: KnobDef[] }[] = [
     ],
   },
   {
-    title: "Arpegiador",
+    title: "Arpegiador & Escala",
     tag: "ARP",
     controls: [
       { id: "arpOn", label: "Activo", def: 0.0 },
       { id: "arpRate", label: "Velocidad", def: 0.4 },
       { id: "arpMode", label: "Patrón", def: 0.0 },
       { id: "arpSync", label: "Sync", def: 0.0 },
+      { id: "scaleType", label: "Escala", def: 0.0 },
     ],
-  },
-  {
-    title: "Escala",
-    tag: "KEY",
-    controls: [{ id: "scaleType", label: "Cuantizador", def: 0.0 }],
   },
 ];
 
@@ -113,7 +109,10 @@ export default function App() {
                 <span className="ph-group__tag">{group.tag}</span>
                 {group.title}
               </legend>
-              <div className={`ph-knobs ph-knobs--${group.controls.length}`}>
+              <div
+                className="ph-knobs"
+                style={{ gridTemplateColumns: `repeat(${group.controls.length}, 1fr)` }}
+              >
                 {group.controls.map((c) => (
                   <Knob key={c.id} def={c} />
                 ))}

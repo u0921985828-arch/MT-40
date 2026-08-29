@@ -135,11 +135,11 @@ html, body, #root {
 
 /* ---- Rack --------------------------------------------------------------- */
 .ph-rack {
-  overflow-y: auto;
-  padding: 9px 10px 6px;
+  overflow: hidden;                 /* everything fits — no scroll */
+  padding: 9px 10px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.15));
 }
 .ph-rack::-webkit-scrollbar { width: 10px; }
@@ -149,9 +149,13 @@ html, body, #root {
 .ph-group {
   border: 1px solid var(--panel-line);
   border-radius: 9px;
-  padding: 3px 9px 7px;
+  padding: 4px 10px 6px;
   margin: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(0, 0, 0, 0.12));
+  flex: 1 1 0;                       /* groups share the rack height evenly */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .ph-group legend {
   display: flex;
@@ -175,14 +179,14 @@ html, body, #root {
   box-shadow: 0 0 8px rgba(0, 255, 106, 0.3);
 }
 
-/* knob grid */
+/* knob grid — columns set inline to the control count; fills the group height */
 .ph-knobs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2px;
-  margin-top: 3px;
+  gap: 2px 3px;
+  margin-top: 4px;
+  flex: 1 1 auto;
+  align-content: center;   /* centre the row(s) in the stretched group */
 }
-.ph-knobs--1 { grid-template-columns: repeat(4, 1fr); }
 
 /* ---- Knob --------------------------------------------------------------- */
 .knob {
@@ -194,7 +198,7 @@ html, body, #root {
 }
 .knob__dial {
   width: 100%;
-  max-width: 50px;
+  max-width: 58px;
   aspect-ratio: 1;
   cursor: ns-resize;
   touch-action: none;
