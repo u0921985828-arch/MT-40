@@ -16,12 +16,6 @@ import * as THREE from "three";
 import { PALETTE, GLOW } from "./theme";
 import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
-// Filter-cutoff room temperature — shared with the helix, floor and fog so the
-// whole plant shifts warm(closed)->cool(open) together.
-const warmTint = new THREE.Color("#ffcf9a");
-const coolTint = new THREE.Color("#bfffe0");
-const leafTint = new THREE.Color();
-
 const LEAFLETS = [-72, -46, -22, 0, 22, 46, 72].map((d) => (d * Math.PI) / 180 + Math.PI / 2);
 const LENGTHS = [0.44, 0.68, 0.9, 1.0, 0.9, 0.68, 0.44];
 const BLADE = 3.6;
@@ -91,6 +85,7 @@ function Leaf({
   y = -0.62,
   scale = 1,
   dim = 1,
+  chromo = 0,
 }: {
   color: string;
   rotation: number;
@@ -98,10 +93,10 @@ function Leaf({
   y?: number;
   scale?: number;
   dim?: number;
+  chromo?: 0 | 1;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const { geo, veins } = useMemo(buildLeaf, []);
-  const baseFill = useMemo(() => new THREE.Color(color), [color]);
   const glow = useMemo(() => new THREE.Color(color).multiplyScalar(GLOW.leaf), [color]);
   const phase = useMemo(() => offset[0] * 1.3 + offset[1] * 0.7, [offset]);
 
@@ -126,13 +121,11 @@ function Leaf({
   useFrame((state) => {
     const grains = Math.min(1, telemetry.activeGrains / 48);
     const breath = 0.7 + 0.3 * telemetry.capillary;
-    fillMat.opacity = (0.08 + 0.14 * telemetry.capillary) * dim;
-    veinMat.opacity = (0.15 + 0.28 * breath * (0.5 + grains * 0.5)) * dim;
-
-    // Take the room's filter temperature like the rest of the plant.
-    leafTint.copy(warmTint).lerp(coolTint, usePhenotypeStore.getState().params.filterCutoff);
-    fillMat.color.copy(baseFill).multiply(leafTint);
-    veinMat.color.copy(glow).multiply(leafTint);
+    // Oil & water: the recessive chromosome's leaf thins out (less dense).
+    const cb = usePhenotypeStore.getState().params.crossBlend;
+    const w = 0.35 + 0.95 * (chromo === 0 ? 1 - cb : cb);
+    fillMat.opacity = (0.08 + 0.14 * telemetry.capillary) * dim * w;
+    veinMat.opacity = (0.15 + 0.28 * breath * (0.5 + grains * 0.5)) * dim * w;
 
     // Living plant: a slow wind sway + gentle breath, desynced per leaf.
     const g = groupRef.current;
@@ -158,10 +151,10 @@ export function CannabisLeaves() {
   return (
     <group>
       {/* Big dim leaf fanning straight back from the genome base — depth. */}
-      <Leaf color={PALETTE.leafA} rotation={Math.PI} offset={[0, 0.9]} y={-0.68} scale={2.1} dim={0.22} />
+      <Leaf color={PALETTE.leafA} rotation={Math.PI} offset={[0, 0.9]} y={-0.68} scale={2.1} dim={0.22} chromo={0} />
       {/* Symmetric diploid pair fanning down-and-out from the helix foot. */}
-      <Leaf color={PALETTE.leafA} rotation={2.55} offset={[-2.9, 1.55]} scale={1.35} dim={0.6} />
-      <Leaf color={PALETTE.leafB} rotation={-2.55 + Math.PI * 2} offset={[2.9, 1.55]} scale={1.35} dim={0.6} />
+      <Leaf color={PALETTE.leafA} rotation={2.55} offset={[-2.9, 1.55]} scale={1.35} dim={0.6} chromo={0} />
+      <Leaf color={PALETTE.leafB} rotation={-2.55 + Math.PI * 2} offset={[2.9, 1.55]} scale={1.35} dim={0.6} chromo={1} />
     </group>
   );
 }

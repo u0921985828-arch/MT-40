@@ -17,10 +17,10 @@ import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 const RING_RADIUS = 4.15;
 const RING_Y = 0.05;
 
-// Shared filter-cutoff room temperature (warm closed -> cool open).
-const warmTint = new THREE.Color("#ffcf9a");
-const coolTint = new THREE.Color("#bfffe0");
-const nodeTint = new THREE.Color();
+// The two pigments; the halo takes their cross-synth emulsion (dominant hue).
+const chlA = new THREE.Color(PALETTE.chlorophyll);
+const chlB = new THREE.Color(PALETTE.ledMagenta);
+const emul = new THREE.Color();
 
 interface NodeDef {
   position: THREE.Vector3;
@@ -48,12 +48,13 @@ function Node({ node, index }: { node: NodeDef; index: number }) {
     const pulse = P.arpOn > 0.5
       ? 0.6 + 0.4 * Math.sin(state.clock.elapsedTime * (0.5 + P.arpRate * 7) * Math.PI * 2)
       : 1;
-    const s = (0.13 + energy * 0.32) * (0.75 + 0.25 * pulse);
+    // Oil & water: a node of the recessive chromosome dims to a sparse droplet.
+    const dom = node.chromosome === 0 ? 1 - P.crossBlend : P.crossBlend;
+    const w = 0.3 + 1.1 * dom;
+    const s = (0.13 + energy * 0.32) * (0.7 + 0.3 * pulse) * (0.5 + 0.5 * dom);
     mesh.scale.setScalar(s);
     const mat = mesh.material as THREE.MeshStandardMaterial;
-    mat.emissiveIntensity = (0.4 + energy * 2.6) * pulse;
-    nodeTint.copy(warmTint).lerp(coolTint, P.filterCutoff);
-    mat.emissive.copy(color).multiply(nodeTint);
+    mat.emissiveIntensity = (0.4 + energy * 2.6) * pulse * w;
   });
 
   return (
@@ -105,8 +106,9 @@ function RingHalo({ nodes }: { nodes: NodeDef[] }) {
       : 1;
     const mm = m.material as THREE.MeshBasicMaterial;
     mm.opacity = (0.32 + telemetry.capillary * 0.5) * pulse;
-    nodeTint.copy(warmTint).lerp(coolTint, P.filterCutoff);
-    mm.color.copy(baseCol).multiply(nodeTint);
+    // The halo glows the dominant chromosome's hue (the emulsion).
+    emul.copy(chlA).lerp(chlB, P.crossBlend).multiplyScalar(1.1);
+    mm.color.copy(emul);
   });
 
   return <mesh ref={meshRef} geometry={geo} material={mat} />;

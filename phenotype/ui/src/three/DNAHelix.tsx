@@ -27,14 +27,6 @@ const colA = new THREE.Color(PALETTE.chlorophyll);
 const colB = new THREE.Color(PALETTE.ledMagenta);
 const tmpColor = new THREE.Color();
 
-// Filter-cutoff room temperature, shared with the floor/fog so the whole plant
-// takes the same warm(closed)->cool(open) cast, not just the ambience.
-const warmTint = new THREE.Color("#ffcf9a");
-const coolTint = new THREE.Color("#bfffe0");
-const tint = new THREE.Color();
-const tintedA = new THREE.Color();
-const tintedB = new THREE.Color();
-
 export function DNAHelix() {
   const groupRef = useRef<THREE.Group>(null);
   const nucRef = useRef<THREE.InstancedMesh>(null);
@@ -123,14 +115,11 @@ export function DNAHelix() {
     // two strands green<->magenta (the receding chromosome truly recedes), and
     // output level sets the genome's overall glow.
     const P = usePhenotypeStore.getState().params;
+    // Oil & water: the dominant chromosome is dense/bright, the recessive one
+    // thins toward sparse dim droplets. Output level sets the overall glow.
     const gGain = 0.55 + P.outputGain * 0.95;
-    const aMul = (0.22 + 1.28 * (1 - P.crossBlend)) * gGain; // chromosome A weight
-    const bMul = (0.22 + 1.28 * P.crossBlend) * gGain;       // chromosome B weight
-
-    // Room temperature from the filter, applied to the strand colours too.
-    tint.copy(warmTint).lerp(coolTint, P.filterCutoff);
-    tintedA.copy(colA).multiply(tint);
-    tintedB.copy(colB).multiply(tint);
+    const aMul = (0.12 + 1.5 * (1 - P.crossBlend)) * gGain; // chromosome A weight
+    const bMul = (0.12 + 1.5 * P.crossBlend) * gGain;       // chromosome B weight
 
     const fft = telemetry.fft;
     const rungCol = rungGeo.getAttribute("color") as THREE.BufferAttribute;
@@ -144,15 +133,16 @@ export function DNAHelix() {
       // beads bloom; energy drives size/brightness, the end-fade dissolves the
       // tips so the strands emerge from nothing instead of stopping dead.
       const s = (0.11 + e * 0.2) * (0.35 + 0.65 * fade);
-      place(nuc, 2 * i, pairs[i]!.a, s, tintedA, GLOW.nucleusA * (0.55 + e * 1.2) * fade * aMul);
-      place(nuc, 2 * i + 1, pairs[i]!.b, s, tintedB, GLOW.nucleusB * (0.55 + e * 1.2) * fade * bMul);
+      const sA = s * (0.4 + 0.6 * (1 - P.crossBlend)); // recessive beads shrink to droplets
+      const sB = s * (0.4 + 0.6 * P.crossBlend);
+      place(nuc, 2 * i, pairs[i]!.a, sA, colA, GLOW.nucleusA * (0.55 + e * 1.2) * fade * aMul);
+      place(nuc, 2 * i + 1, pairs[i]!.b, sB, colB, GLOW.nucleusB * (0.55 + e * 1.2) * fade * bMul);
 
       // Rung colour: green->magenta gradient, brightened (HDR) by band energy,
-      // faded to black at the tips, biased by the cross-synth balance, tinted
-      // by the filter's room temperature.
+      // faded to black at the tips, biased toward the dominant chromosome.
       tmpColor
-        .copy(tintedA)
-        .lerp(tintedB, THREE.MathUtils.clamp(pairs[i]!.band * 0.5 + P.crossBlend * 0.5, 0, 1))
+        .copy(colA)
+        .lerp(colB, THREE.MathUtils.clamp(pairs[i]!.band * 0.5 + P.crossBlend * 0.5, 0, 1))
         .multiplyScalar(GLOW.rung * (0.4 + e * 1.6) * fade * gGain);
       rungCol.setXYZ(2 * i, tmpColor.r, tmpColor.g, tmpColor.b);
       rungCol.setXYZ(2 * i + 1, tmpColor.r, tmpColor.g, tmpColor.b);
@@ -162,10 +152,9 @@ export function DNAHelix() {
     rungCol.needsUpdate = true;
     rungMat.opacity = 0.5 + telemetry.capillary * 0.45;
 
-    // Backbones track the same cross-synth weighting (so a strand can recede)
-    // and the same room-temperature tint.
-    (backboneA.material as THREE.MeshBasicMaterial).color.copy(baseColA).multiply(tint).multiplyScalar((0.28 + 1.1 * (1 - P.crossBlend)) * gGain);
-    (backboneB.material as THREE.MeshBasicMaterial).color.copy(baseColB).multiply(tint).multiplyScalar((0.28 + 1.1 * P.crossBlend) * gGain);
+    // Backbones track the same cross-synth weighting so a strand can recede.
+    (backboneA.material as THREE.MeshBasicMaterial).color.copy(baseColA).multiplyScalar((0.18 + 1.25 * (1 - P.crossBlend)) * gGain);
+    (backboneB.material as THREE.MeshBasicMaterial).color.copy(baseColB).multiplyScalar((0.18 + 1.25 * P.crossBlend) * gGain);
   });
 
   return (

@@ -28,6 +28,13 @@ import { CannabisLeaves } from "./CannabisLeaf";
 import { PALETTE, GRID_HALF } from "./theme";
 import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
+// The scene's only two pigments. The illumination is their emulsion, weighted by
+// cross-synth (oil & water — the dominant chromosome lights the room), so every
+// glow belongs to the same family; nothing floats an alien hue.
+const chlA = new THREE.Color(PALETTE.chlorophyll);
+const chlB = new THREE.Color(PALETTE.ledMagenta);
+const emul = new THREE.Color();
+
 function IsoFloor() {
   const gridRef = useRef<THREE.GridHelper>(null);
   const grid = useRef(
@@ -67,15 +74,14 @@ function FloorGlow() {
   }, []);
 
   const meshRef = useRef<THREE.Mesh>(null);
-  const warm = useMemo(() => new THREE.Color("#ff9a4d"), []);
-  const cool = useMemo(() => new THREE.Color("#78ffc0"), []);
   useFrame((state) => {
     const P = usePhenotypeStore.getState().params;
     const breath = 0.9 + 0.1 * Math.sin(state.clock.elapsedTime * 0.4);
     if (matRef.current) {
-      matRef.current.opacity = (0.26 + telemetry.capillary * 0.32 + P.filterCutoff * 0.3) * breath;
-      // Filter cutoff colours the pool: warm/amber when closed, cool green open.
-      matRef.current.color.copy(warm).lerp(cool, P.filterCutoff);
+      // Filter cutoff sets brightness/openness (not hue); the pool's colour is
+      // the cross-synth emulsion so the room light matches the genome.
+      matRef.current.opacity = (0.24 + telemetry.capillary * 0.3 + P.filterCutoff * 0.28) * breath;
+      matRef.current.color.copy(chlA).lerp(chlB, P.crossBlend);
     }
     // Reverb size swells the pool of light — a bigger space reads as a wider glow.
     if (meshRef.current) {
@@ -105,8 +111,10 @@ function CapillaryLight() {
   const b = useRef<THREE.PointLight>(null);
   useFrame(() => {
     const c = telemetry.capillary;
-    if (a.current) a.current.intensity = 6 + c * 30;
-    if (b.current) b.current.intensity = 6 + (1 - c) * 30;
+    const cb = usePhenotypeStore.getState().params.crossBlend;
+    // Dominant chromosome throws the stronger light (oil & water).
+    if (a.current) a.current.intensity = (6 + c * 30) * (0.35 + 1.3 * (1 - cb));
+    if (b.current) b.current.intensity = (6 + (1 - c) * 30) * (0.35 + 1.3 * cb);
   });
   return (
     <>
@@ -135,8 +143,6 @@ function CameraRig() {
 // space; a dry preset opens the stage up.
 function AtmosphereRig() {
   const { scene } = useThree();
-  const warm = useMemo(() => new THREE.Color("#120a06"), []);
-  const cool = useMemo(() => new THREE.Color("#06120e"), []);
   useFrame(() => {
     const fog = scene.fog as THREE.Fog | null;
     if (!fog) return;
@@ -144,8 +150,9 @@ function AtmosphereRig() {
     const wet = Math.min(1, P.reverbMix * 0.7 + P.reverbSize * 0.5);
     fog.near = 16 - wet * 6;
     fog.far = 34 - wet * 12;
-    // Filter cutoff gives the whole room a warm(closed)/cool(open) cast.
-    fog.color.copy(warm).lerp(cool, P.filterCutoff);
+    // The haze is a very dark wash of the dominant chromosome, not an alien hue.
+    emul.copy(chlA).lerp(chlB, P.crossBlend).multiplyScalar(0.09);
+    fog.color.copy(emul);
   });
   return null;
 }
