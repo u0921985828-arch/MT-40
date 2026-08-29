@@ -168,7 +168,7 @@ function createMockIntegration(): JuceIntegration {
       return () => {};
     },
     program(action, index) {
-      const count = 300;
+      const count = 876;
       if (action === "next") mockProgram = (mockProgram + 1) % count;
       else if (action === "prev") mockProgram = (mockProgram - 1 + count) % count;
       else if (action === "set" && index !== undefined)
