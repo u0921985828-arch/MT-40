@@ -50,6 +50,20 @@ export function DNAHelix() {
     return out;
   }, []);
 
+  // Fade envelope: 0 at the two tips, 1 through the body, so the strands
+  // dissolve at their extremes instead of ending abruptly.
+  const endFade = useMemo(() => {
+    const n = pairs.length;
+    const edge = Math.max(2, Math.round(n * 0.18)); // ~18% of the length fades
+    const out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const d = Math.min(i, n - 1 - i) / edge; // 0 at a tip, >=1 inside
+      const t = Math.min(1, d);
+      out[i] = t * t * (3 - 2 * t); // smoothstep
+    }
+    return out;
+  }, [pairs]);
+
   // Rungs (A<->B per pair) as vertex-coloured line segments.
   const rungGeo = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -94,18 +108,21 @@ export function DNAHelix() {
     for (let i = 0; i < pairs.length; i++) {
       const bin = Math.min(fft.length - 1, Math.floor(pairs[i]!.band * fft.length));
       const e = fft[bin] ?? 0;
+      const fade = endFade[i]!; // 0 at the tips -> 1 in the body
 
       // Two nucleotide instances per pair (2i = A, 2i+1 = B). HDR colour so the
-      // beads bloom; energy drives both size and brightness.
-      const s = 0.11 + e * 0.2;
-      place(nuc, 2 * i, pairs[i]!.a, s, colA, GLOW.nucleusA * (0.55 + e * 1.2));
-      place(nuc, 2 * i + 1, pairs[i]!.b, s, colB, GLOW.nucleusB * (0.55 + e * 1.2));
+      // beads bloom; energy drives size/brightness, the end-fade dissolves the
+      // tips so the strands emerge from nothing instead of stopping dead.
+      const s = (0.11 + e * 0.2) * (0.35 + 0.65 * fade);
+      place(nuc, 2 * i, pairs[i]!.a, s, colA, GLOW.nucleusA * (0.55 + e * 1.2) * fade);
+      place(nuc, 2 * i + 1, pairs[i]!.b, s, colB, GLOW.nucleusB * (0.55 + e * 1.2) * fade);
 
-      // Rung colour: green->magenta gradient, brightened (HDR) by band energy.
+      // Rung colour: green->magenta gradient, brightened (HDR) by band energy,
+      // faded to black at the tips.
       tmpColor
         .copy(colA)
         .lerp(colB, pairs[i]!.band)
-        .multiplyScalar(GLOW.rung * (0.4 + e * 1.6));
+        .multiplyScalar(GLOW.rung * (0.4 + e * 1.6) * fade);
       rungCol.setXYZ(2 * i, tmpColor.r, tmpColor.g, tmpColor.b);
       rungCol.setXYZ(2 * i + 1, tmpColor.r, tmpColor.g, tmpColor.b);
     }
@@ -148,11 +165,31 @@ function place(
 
 function makeStrand(points: THREE.Vector3[], color: string): THREE.Mesh {
   // Volumetric sugar-phosphate strand: a smooth tube instead of a 1px line, so
-  // the backbone reads as a solid glowing ribbon and the bloom wraps it.
+  // the backbone reads as a solid glowing ribbon and the bloom wraps it. Vertex
+  // colours carry a fade envelope so the tube dies to black at both tips.
+  const radial = 8;
+  const tubular = points.length * 6;
   const curve = new THREE.CatmullRomCurve3(points);
-  const geo = new THREE.TubeGeometry(curve, points.length * 6, 0.05, 8, false);
+  const geo = new THREE.TubeGeometry(curve, tubular, 0.05, radial, false);
+
+  const edge = 0.18; // fraction of the length that fades at each end
+  const env = (u: number) => {
+    const d = Math.min(u, 1 - u) / edge;
+    const t = Math.min(1, d);
+    return t * t * (3 - 2 * t); // smoothstep
+  };
+  const count = geo.getAttribute("position").count;
+  const col = new Float32Array(count * 3);
+  for (let v = 0; v < count; v++) {
+    const ring = Math.floor(v / (radial + 1)); // 0..tubular
+    const f = env(ring / tubular);
+    col[v * 3] = f; col[v * 3 + 1] = f; col[v * 3 + 2] = f;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+
   const mat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(color).multiplyScalar(GLOW.rung * 0.8),
+    vertexColors: true,
     toneMapped: false,
   });
   return new THREE.Mesh(geo, mat);
