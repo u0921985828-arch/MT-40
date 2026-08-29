@@ -60,7 +60,7 @@ namespace phenotype
             processorRef.state().addParameterListener (d.id, this);
 
         setResizable (true, true);
-        setSize (780, 1000);   // portrait: viewport + full control rack, no scroll
+        setSize (780, 880);    // portrait: rack fills exactly to the status bar
         startTimerHz (kTelemetryHz);
     }
 
