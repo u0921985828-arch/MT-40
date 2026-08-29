@@ -25,7 +25,7 @@ import { NodeGraph } from "./NodeGraph";
 import { DNAHelix } from "./DNAHelix";
 import { Trichomes } from "./Trichomes";
 import { CannabisLeaves } from "./CannabisLeaf";
-import { PALETTE, GRID_HALF } from "./theme";
+import { PALETTE } from "./theme";
 import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 
 // The scene's only two pigments. The illumination is their emulsion, weighted by
@@ -34,24 +34,6 @@ import { telemetry, usePhenotypeStore } from "../store/usePhenotypeStore";
 const chlA = new THREE.Color(PALETTE.chlorophyll);
 const chlB = new THREE.Color(PALETTE.ledMagenta);
 const emul = new THREE.Color();
-
-function IsoFloor() {
-  const gridRef = useRef<THREE.GridHelper>(null);
-  const grid = useRef(
-    new THREE.GridHelper(GRID_HALF * 2, GRID_HALF * 3, PALETTE.chlorophyll, PALETTE.grid),
-  ).current;
-
-  useFrame(() => {
-    const P = usePhenotypeStore.getState().params;
-    const mat = grid.material as THREE.Material & { opacity: number; transparent: boolean };
-    mat.transparent = true;
-    // Filter cutoff opens the floor up: a bright preset lights the grid.
-    mat.opacity = 0.05 + telemetry.capillary * 0.14 + P.filterCutoff * 0.1;
-    if (gridRef.current) gridRef.current.position.y = -0.98 + telemetry.capillary * 0.06;
-  });
-
-  return <primitive ref={gridRef} object={grid} />;
-}
 
 // Lava-lamp emulsion pool on the grow floor: green (A) and magenta (B) metaballs
 // drift, merge and split. Cross-synth sets each phase's mass — the dominant
@@ -195,7 +177,6 @@ export function IsometricGrid() {
       <ambientLight intensity={0.18} color={"#20302a"} />
       <CapillaryLight />
       <LavaFloor />
-      <IsoFloor />
       <CannabisLeaves />
       <DNAHelix />
       <Trichomes />
