@@ -32,9 +32,19 @@ jobs:
           npm ci
           npm run build
 
+      - name: Install WebView2 SDK (NuGet)
+        working-directory: phenotype
+        shell: pwsh
+        run: |
+          nuget install Microsoft.Web.WebView2 -Version 1.0.1901.177 -OutputDirectory nuget -ExcludeVersion
+          Get-ChildItem nuget/Microsoft.Web.WebView2/build/native/include | Select-Object -First 3
+
       - name: Configure (CMake)
         working-directory: phenotype
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        shell: pwsh
+        run: >
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=${{ github.workspace }}/phenotype/nuget/Microsoft.Web.WebView2"
 
       - name: Build VST3 (Release)
         working-directory: phenotype
