@@ -66,7 +66,7 @@ namespace phenotype
             processorRef.state().addParameterListener (d.id, this);
 
         setResizable (true, true);
-        setSize (1200, 892);   // viewport + full-width flat console (all 7 sections)
+        setSize (1200, 846);   // viewport + compact flat console (FX bank collapsible)
         startTimerHz (kTelemetryHz);
     }
 

@@ -103,7 +103,7 @@ function RackSection({ group }: { group: (typeof RACK)[number] }) {
             aria-label={open ? "Colapsar FX" : "Expandir FX"}
             onClick={() => setOpen((o) => !o)}
           >
-            <span className="ph-sec__chev" data-open={open}>▾</span>
+            <span className="ph-sec__arw">{open ? "▼" : "▲"}</span>
           </button>
         )}
       </div>
