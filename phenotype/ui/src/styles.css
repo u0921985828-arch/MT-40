@@ -121,7 +121,7 @@ html, body, #root {
 .ph-main {
   flex: 1 1 auto;                   /* anchored stage between header and bar */
   display: grid;
-  grid-template-columns: 1fr 500px; /* viewport | flat console */
+  grid-template-columns: 1fr 384px; /* viewport | flat console */
   min-height: 0;
 }
 .ph-viewport {
@@ -170,12 +170,11 @@ html, body, #root {
 }
 .ph-sec__knobs {
   display: grid;
-  /* uniform column pitch across every section — knob spacing reads the same
-     whether the bank holds 4 or 6, remainder centred rather than stretched */
-  grid-template-columns: repeat(var(--n, 4), minmax(0, 70px));
-  justify-content: center;
+  /* each bank fills the (narrow) panel width — knobs share the row evenly so
+     the space lands between them, never as dead margin at the sides */
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
   align-items: start;
-  gap: 3px 10px;
+  gap: 3px 6px;
 }
 .ph-sec__tag {
   font-family: var(--mono);
@@ -305,7 +304,7 @@ html, body, #root {
 .knob__label { max-width: 100%; }
 .knob__dial {
   width: 100%;
-  max-width: 48px;
+  max-width: 52px;
   aspect-ratio: 1;
   cursor: ns-resize;
   touch-action: none;
