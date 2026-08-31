@@ -16,7 +16,7 @@ import json, math, os, struct, sys, wave
 import numpy as np
 
 SR = 44100
-DUR = 2.0
+DUR = 1.0                      # 1 s loop keeps full 44.1 kHz HQ while fitting the pack
 XF = 1536                      # loop crossfade length (~35 ms)
 N = int(SR * DUR)
 TAU = 2 * math.pi
