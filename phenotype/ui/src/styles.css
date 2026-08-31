@@ -233,10 +233,23 @@ html, body, #root {
 .ph-preset {
   grid-column: 1 / -1;             /* spans both rack columns */
   display: grid;
-  grid-template-columns: 38px 1fr 38px;
+  grid-template-columns: 38px 1fr 38px 34px;
   align-items: stretch;
   gap: 8px;
 }
+.ph-preset__imp {
+  border: 1px solid var(--panel-line);
+  background: linear-gradient(180deg, rgba(255, 43, 214, 0.08), rgba(0, 0, 0, 0.2));
+  color: var(--magenta);
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.ph-preset__imp:hover { background: rgba(255, 43, 214, 0.16); box-shadow: 0 0 12px rgba(255, 43, 214, 0.25) inset; }
+.ph-preset__imp:focus-visible { outline: 2px solid var(--magenta); outline-offset: 2px; }
+.ph-preset__imp:disabled { opacity: 0.5; cursor: default; }
 .ph-preset__arw {
   border: 1px solid var(--panel-line);
   background: linear-gradient(180deg, rgba(0, 255, 106, 0.06), rgba(0, 0, 0, 0.2));

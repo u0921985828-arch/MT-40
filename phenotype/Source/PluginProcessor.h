@@ -8,6 +8,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include "dsp/GranularEngine.h"
 #include "Parameters.h"
+#include "PresetLibrary.h"
 
 namespace phenotype
 {
@@ -49,6 +50,15 @@ namespace phenotype
         //  Load a user audio file as the granular genome (off the audio thread).
         bool loadSampleFile (const juce::File&);
 
+        //  --- Preset library / DLC banks --------------------------------------
+        //  Re-seed the factory and rescan the user preset dir for .phbank files.
+        void rescanLibrary();
+        //  Copy a bank (a .phbank file or a folder containing one) into the user
+        //  library and rescan. Returns true on success.
+        bool importBank (const juce::File& source);
+        //  Number of preset banks/entries currently registered.
+        int  libraryCount() const noexcept { return library.size(); }
+
         void getStateInformation (juce::MemoryBlock&) override;
         void setStateInformation (const void*, int) override;
 
@@ -77,6 +87,9 @@ namespace phenotype
         std::array<std::atomic<float>*, params::kDefs.size()> rawParams {};
 
         dsp::GranularEngine granular;
+
+        //  Preset registry: compiled factory + scanned .phbank DLC banks.
+        PresetLibrary library;
 
         //  Pre-allocated float scratch for the double-precision entry point.
         juce::AudioBuffer<float> doubleScratch;

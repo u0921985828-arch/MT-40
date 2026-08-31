@@ -47,12 +47,20 @@ namespace phenotype
         void onProgramFromUi (const juce::Array<juce::var>& args,
                               juce::WebBrowserComponent::NativeFunctionCompletion completion);
 
+        //  Preset library / DLC banks: {action:"count"|"rescan"|"import"} ->
+        //  {count}. "import" opens a native file/folder chooser.
+        void onLibraryFromUi (const juce::Array<juce::var>& args,
+                              juce::WebBrowserComponent::NativeFunctionCompletion completion);
+
         static const char* mimeForExtension (const juce::String& ext) noexcept;
 
         PhenotypeAudioProcessor& processorRef;
         ipc::MessageDispatcher   dispatcher;
 
         juce::WebBrowserComponent webView;
+
+        //  Kept alive across the async bank-import file chooser.
+        std::unique_ptr<juce::FileChooser> bankChooser;
 
         //  Telemetry staging (UI thread only).
         std::array<float, PhenotypeAudioProcessor::kNumBins> fftFrame {};

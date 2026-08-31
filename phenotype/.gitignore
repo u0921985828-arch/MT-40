@@ -9,3 +9,6 @@ nuget/
 # Frontend build output & deps (dist is embedded at CI build time)
 ui/node_modules/
 ui/dist/
+
+# Generated bank exports (tools/export_factory_bank.py)
+dist/

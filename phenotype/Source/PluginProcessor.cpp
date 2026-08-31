@@ -22,6 +22,10 @@ namespace phenotype
         //  Phenotype is a MIDI-driven granular instrument: granulate the internal
         //  wavetable genome per note rather than live input.
         granular.setInstrumentMode (true);
+
+        //  Preset registry: built-in factory + any DLC banks in the user dir.
+        library.seedFactory();
+        library.scan (PresetLibrary::userPresetDir());
     }
 
     void PhenotypeAudioProcessor::syncParametersToEngine() noexcept
@@ -176,19 +180,18 @@ namespace phenotype
     //==========================================================================
     int PhenotypeAudioProcessor::getNumPrograms()
     {
-        return static_cast<int> (presets::kFactory.size());
+        return juce::jmax (1, library.size());
     }
 
     const juce::String PhenotypeAudioProcessor::getProgramName (int index)
     {
-        if (index >= 0 && index < getNumPrograms())
-            return presets::kFactory[(size_t) index].name;
-        return {};
+        return library.nameAt (index);
     }
 
     void PhenotypeAudioProcessor::setCurrentProgram (int index)
     {
-        if (index < 0 || index >= getNumPrograms())
+        const auto* e = library.at (index);
+        if (e == nullptr)
             return;
         currentProgram = index;
 
@@ -197,10 +200,53 @@ namespace phenotype
             if (auto* p = apvts.getParameter (d.id))
                 p->setValueNotifyingHost (d.defaultValue);
 
-        for (const auto& kv : presets::kFactory[(size_t) index].overrides)
-            if (kv.id != nullptr)
-                if (auto* p = apvts.getParameter (kv.id))
-                    p->setValueNotifyingHost (kv.value);
+        for (const auto& kv : e->params)
+            if (auto* p = apvts.getParameter (kv.first))
+                p->setValueNotifyingHost (kv.second);
+
+        //  HQ genome: load the preset's own sample, or fall back to the built-in
+        //  wavetable genome when the preset carries none.
+        if (e->sample != juce::File())
+            loadSampleFile (e->sample);
+        else
+            granular.useBuiltinGenome();
+    }
+
+    void PhenotypeAudioProcessor::rescanLibrary()
+    {
+        library.clear();
+        library.seedFactory();
+        library.scan (PresetLibrary::userPresetDir());
+        if (currentProgram >= library.size())
+            currentProgram = 0;
+        updateHostDisplay();
+    }
+
+    bool PhenotypeAudioProcessor::importBank (const juce::File& source)
+    {
+        const auto dest = PresetLibrary::userPresetDir();
+        bool ok = false;
+
+        if (source.isDirectory())
+        {
+            //  Copy the whole DLC folder (bank + its samples) into the library.
+            ok = source.copyDirectoryTo (dest.getChildFile (source.getFileName()));
+        }
+        else if (source.hasFileExtension ("phbank"))
+        {
+            //  Copy the .phbank into its own folder, bringing a sibling
+            //  "samples" directory along if present.
+            const auto folder = dest.getChildFile (source.getFileNameWithoutExtension());
+            folder.createDirectory();
+            ok = source.copyFileTo (folder.getChildFile (source.getFileName()));
+            const auto sib = source.getParentDirectory().getChildFile ("samples");
+            if (sib.isDirectory())
+                sib.copyDirectoryTo (folder.getChildFile ("samples"));
+        }
+
+        if (ok)
+            rescanLibrary();
+        return ok;
     }
 
     //==========================================================================

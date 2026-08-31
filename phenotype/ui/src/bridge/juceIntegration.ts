@@ -33,6 +33,12 @@ export interface ProgramInfo {
 }
 export type ProgramAction = "next" | "prev" | "set" | "get";
 
+export interface LibraryInfo {
+  count: number;
+  imported: number;
+}
+export type LibraryAction = "count" | "rescan" | "import";
+
 export interface JuceIntegration {
   readonly hosted: boolean;
   /** Push a single parameter edit to the backend (async, non-blocking). */
@@ -45,9 +51,12 @@ export interface JuceIntegration {
   onParams(listener: ParamsListener): () => void;
   /** Change / query the current factory program (preset). */
   program(action: ProgramAction, index?: number): Promise<ProgramInfo>;
+  /** Import a DLC bank / rescan / count the preset library. */
+  library(action: LibraryAction): Promise<LibraryInfo>;
 }
 
 const NATIVE_PROGRAM = "phenotypeProgram";
+const NATIVE_LIBRARY = "phenotypeLibrary";
 
 function normaliseProgram(r: unknown): ProgramInfo {
   const o = (typeof r === "object" && r !== null ? r : {}) as Partial<ProgramInfo>;
@@ -85,6 +94,7 @@ const NATIVE_SEND = "phenotypeSend";
 function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
   const send = getNativeFunction(NATIVE_SEND) as (payload: string) => Promise<unknown>;
   const programFn = getNativeFunction(NATIVE_PROGRAM) as (payload: string) => Promise<unknown>;
+  const libraryFn = getNativeFunction(NATIVE_LIBRARY) as (payload: string) => Promise<unknown>;
   const telemetryListeners = new Set<TelemetryListener>();
   const paramsListeners = new Set<ParamsListener>();
 
@@ -116,6 +126,15 @@ function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
     },
     program(action, index) {
       return programFn(JSON.stringify({ action, index })).then(normaliseProgram);
+    },
+    library(action) {
+      return libraryFn(JSON.stringify({ action })).then((r) => {
+        const o = (typeof r === "object" && r !== null ? r : {}) as Partial<LibraryInfo>;
+        return {
+          count: typeof o.count === "number" ? o.count : 0,
+          imported: typeof o.imported === "number" ? o.imported : 0,
+        };
+      });
     },
   };
 }
@@ -174,6 +193,11 @@ function createMockIntegration(): JuceIntegration {
       else if (action === "set" && index !== undefined)
         mockProgram = Math.max(0, Math.min(count - 1, index));
       return Promise.resolve({ index: mockProgram, name: `Preset ${mockProgram + 1}`, count });
+    },
+    library(action) {
+      // eslint-disable-next-line no-console
+      console.debug(`[mock] library ${action}`);
+      return Promise.resolve({ count: 876, imported: 0 });
     },
   };
 }

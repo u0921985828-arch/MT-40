@@ -369,6 +369,11 @@ namespace phenotype::dsp
         buildMips (sourceB);
     }
 
+    void GranularEngine::useBuiltinGenome() noexcept
+    {
+        fillGenome();
+    }
+
     void GranularEngine::allNotesOff() noexcept
     {
         heldCount = 0;

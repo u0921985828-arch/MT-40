@@ -130,6 +130,15 @@ function PresetBar() {
   const step = useCallback((dir: "prev" | "next") => {
     juceIntegration.program(dir).then(setInfo);
   }, []);
+  const [busy, setBusy] = useState(false);
+  const importBank = useCallback(() => {
+    setBusy(true);
+    juceIntegration
+      .library("import")
+      .then(() => juceIntegration.program("get"))
+      .then(setInfo)
+      .finally(() => setBusy(false));
+  }, []);
 
   const [lib, rest] = info.name.includes(" > ")
     ? [info.name.split(" > ")[0]!, info.name.split(" > ").slice(1).join(" > ")]
@@ -149,6 +158,15 @@ function PresetBar() {
       </div>
       <button className="ph-preset__arw" aria-label="Preset siguiente" onClick={() => step("next")}>
         ▶
+      </button>
+      <button
+        className="ph-preset__imp"
+        aria-label="Importar banco / DLC"
+        title="Importar banco / DLC"
+        onClick={importBank}
+        disabled={busy}
+      >
+        {busy ? "…" : "＋"}
       </button>
     </div>
   );

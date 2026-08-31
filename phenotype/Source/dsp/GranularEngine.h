@@ -90,6 +90,10 @@ namespace phenotype::dsp
         //  Looped to fill and peak-normalised. Off the audio thread.
         void loadGenomeFromSample (const float* mono, int numSamples) noexcept;
 
+        //  Restore the synthesised built-in wavetable genome (used when a preset
+        //  carries no sample). Off the audio thread.
+        void useBuiltinGenome() noexcept;
+
         //  Band-limited mip index for a playback increment (anti-alias): mip m
         //  is alias-free up to inc = 2^m. Exposed for tests.
         [[nodiscard]] static int mipForInc (float inc) noexcept;

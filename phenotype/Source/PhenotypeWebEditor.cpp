@@ -56,6 +56,12 @@ namespace phenotype
                            juce::WebBrowserComponent::NativeFunctionCompletion completion)
                    {
                        onProgramFromUi (args, std::move (completion));
+                   })
+              .withNativeFunction ("phenotypeLibrary",
+                   [this] (const juce::Array<juce::var>& args,
+                           juce::WebBrowserComponent::NativeFunctionCompletion completion)
+                   {
+                       onLibraryFromUi (args, std::move (completion));
                    }))
     {
         addAndMakeVisible (webView);
@@ -115,6 +121,59 @@ namespace phenotype
         obj->setProperty ("count", n);
         obj->setProperty ("name",  processorRef.getProgramName (idx));
         completion (juce::var (obj));
+    }
+
+    void PhenotypeWebEditor::onLibraryFromUi (const juce::Array<juce::var>& args,
+                                              juce::WebBrowserComponent::NativeFunctionCompletion completion)
+    {
+        juce::var payload;
+        if (args.size() > 0)
+            payload = args[0].isString() ? juce::JSON::parse (args[0].toString()) : args[0];
+        const juce::String action = payload.getProperty ("action", "count").toString();
+
+        auto reply = [this] (juce::WebBrowserComponent::NativeFunctionCompletion c, int imported = 0)
+        {
+            auto* obj = new juce::DynamicObject();
+            obj->setProperty ("count", processorRef.getNumPrograms());
+            obj->setProperty ("imported", imported);
+            c (juce::var (obj));
+        };
+
+        if (action == "rescan")
+        {
+            processorRef.rescanLibrary();
+            reply (std::move (completion));
+            return;
+        }
+
+        if (action == "import")
+        {
+            //  Native chooser: pick a .phbank file or a DLC folder. Async — the
+            //  completion resolves once the copy + rescan finishes.
+            bankChooser = std::make_unique<juce::FileChooser> (
+                "Importar banco / DLC Phenotype",
+                PresetLibrary::userPresetDir(),
+                "*.phbank");
+
+            const auto flags = juce::FileBrowserComponent::openMode
+                             | juce::FileBrowserComponent::canSelectFiles
+                             | juce::FileBrowserComponent::canSelectDirectories;
+
+            auto shared = std::make_shared<juce::WebBrowserComponent::NativeFunctionCompletion> (std::move (completion));
+            bankChooser->launchAsync (flags,
+                [this, reply, shared] (const juce::FileChooser& fc)
+                {
+                    int imported = 0;
+                    const auto result = fc.getResult();
+                    if (result != juce::File() && processorRef.importBank (result))
+                        imported = 1;
+                    reply (std::move (*shared), imported);
+                });
+            return;
+        }
+
+        //  "count" (default)
+        reply (std::move (completion));
     }
 
     void PhenotypeWebEditor::timerCallback()

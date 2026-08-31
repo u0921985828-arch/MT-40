@@ -1,0 +1,106 @@
+{
+  "bank": "DEMO DLC",
+  "format": 1,
+  "author": "Phenotype",
+  "presets": [
+    {
+      "name": "Resin Saw Pad",
+      "params": {
+        "grainDensity": 0.66,
+        "grainSize": 0.8,
+        "caudal": 0.3,
+        "soilDensity": 0.7,
+        "modDepth": 0.7,
+        "crossBlend": 0.5,
+        "unison": 0.5,
+        "unisonDetune": 0.3,
+        "filterCutoff": 0.7,
+        "drive": 0.12,
+        "stereoWidth": 0.85
+      },
+      "sample": "samples/resin_saw.wav"
+    },
+    {
+      "name": "Resin Saw Bass",
+      "params": {
+        "grainDensity": 0.55,
+        "grainSize": 0.34,
+        "pitchA": 0.4,
+        "pitchB": 0.4,
+        "crossBlend": 0.5,
+        "filterCutoff": 0.42,
+        "filterReso": 0.4,
+        "drive": 0.3,
+        "unison": 0.15,
+        "stereoWidth": 0.3,
+        "outputGain": 0.5
+      },
+      "sample": "samples/resin_saw.wav"
+    },
+    {
+      "name": "Crystal FM Key",
+      "params": {
+        "grainDensity": 0.66,
+        "grainSize": 0.8,
+        "caudal": 0.3,
+        "soilDensity": 0.7,
+        "modDepth": 0.7,
+        "crossBlend": 0.5,
+        "unison": 0.5,
+        "unisonDetune": 0.3,
+        "filterCutoff": 0.7,
+        "drive": 0.12,
+        "stereoWidth": 0.85
+      },
+      "sample": "samples/crystal_fm.wav"
+    },
+    {
+      "name": "Crystal FM Pluck",
+      "params": {
+        "grainDensity": 0.7,
+        "grainSize": 0.22,
+        "caudal": 0.6,
+        "soilDensity": 0.4,
+        "crossBlend": 0.5,
+        "filterCutoff": 0.66,
+        "filterReso": 0.45,
+        "drive": 0.2,
+        "unison": 0.3,
+        "stereoWidth": 0.7
+      },
+      "sample": "samples/crystal_fm.wav"
+    },
+    {
+      "name": "Terpene Pluck",
+      "params": {
+        "grainDensity": 0.7,
+        "grainSize": 0.22,
+        "caudal": 0.6,
+        "soilDensity": 0.4,
+        "crossBlend": 0.5,
+        "filterCutoff": 0.66,
+        "filterReso": 0.45,
+        "drive": 0.2,
+        "unison": 0.3,
+        "stereoWidth": 0.7
+      },
+      "sample": "samples/terp_pluck.wav"
+    },
+    {
+      "name": "Built-in Genome",
+      "params": {
+        "grainDensity": 0.66,
+        "grainSize": 0.8,
+        "caudal": 0.3,
+        "soilDensity": 0.7,
+        "modDepth": 0.7,
+        "crossBlend": 0.5,
+        "unison": 0.5,
+        "unisonDetune": 0.3,
+        "filterCutoff": 0.7,
+        "drive": 0.12,
+        "stereoWidth": 0.85
+      }
+    }
+  ]
+}
