@@ -132,16 +132,23 @@ function CapillaryLight() {
   );
 }
 
+// Screen-horizontal pan: translating camera + look-at target together by the
+// same world vector is a pure pan (no rotation of the isometric view). Screen
+// "right" for this [8,·,8] view is (1,0,-1)/√2, so a positive PAN pushes the
+// genome LEFT on screen — filling the dead air left of the floating console,
+// whose panel then covers the overflow on the right.
+const PAN = 2.6;
+
 // Slow, small camera breath around the framing point so the stage feels alive.
 function CameraRig() {
   const { camera } = useThree();
   const base = useMemo(() => camera.position.clone(), [camera]);
-  const target = useMemo(() => new THREE.Vector3(0, 0.4, 0), []);
+  const target = useMemo(() => new THREE.Vector3(PAN, 0.4, -PAN), []);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    camera.position.x = base.x + Math.sin(t * 0.12) * 0.5;
+    camera.position.x = base.x + PAN + Math.sin(t * 0.12) * 0.5;
     camera.position.y = base.y + Math.sin(t * 0.09 + 1.3) * 0.28;
-    camera.position.z = base.z + Math.cos(t * 0.12) * 0.5;
+    camera.position.z = base.z - PAN + Math.cos(t * 0.12) * 0.5;
     camera.lookAt(target);
   });
   return null;
@@ -169,7 +176,7 @@ export function IsometricGrid() {
   return (
     <Canvas
       orthographic
-      camera={{ position: [8, 6.6, 8], zoom: 56, near: 0.1, far: 100 }}
+      camera={{ position: [8, 6.6, 8], zoom: 66, near: 0.1, far: 100 }}
       gl={{ antialias: true, alpha: false }}
       onCreated={({ gl, scene, camera }) => {
         gl.setClearColor(new THREE.Color(PALETTE.background), 1);
