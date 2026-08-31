@@ -16,6 +16,7 @@
   --ink-faint: #56705f;
   --chlorophyll: #00ff6a;
   --magenta: #ff2bd6;
+  --glass-line: rgba(0, 255, 106, 0.16);   /* neon-tinted glass edge */
   color-scheme: dark;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -35,29 +36,45 @@ html, body, #root {
 }
 
 .ph-root {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background:
-    radial-gradient(1200px 600px at 26% 8%, rgba(0, 255, 106, 0.06), transparent 60%),
-    radial-gradient(900px 520px at 84% 92%, rgba(255, 43, 214, 0.055), transparent 62%),
-    var(--bg);
+  background: var(--bg);
 }
 
-/* ---- Header ------------------------------------------------------------- */
-.ph-header {
-  flex: 0 0 auto;                   /* anchored top band */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 18px;
-  border-bottom: 1px solid var(--panel-line);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(3px);
+/* ---- Immersive stage: full-bleed genome behind the HUD ------------------ */
+.ph-stage { position: absolute; inset: 0; z-index: 0; }
+.ph-stage canvas { display: block; }
+
+/* HUD layer is click-through; only its panels capture the pointer, so empty
+   space still reaches the 3D scene (node scrubbing). */
+.ph-hud { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.ph-top, .ph-console, .ph-bottom { pointer-events: auto; }
+
+/* Shared glass panel surface. */
+.ph-top, .ph-console, .ph-bottom {
+  background:
+    linear-gradient(180deg, rgba(10, 16, 14, 0.72), rgba(6, 10, 9, 0.66));
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid var(--glass-line);
 }
-.ph-brand { display: flex; align-items: center; gap: 14px; }
+
+/* ---- Top HUD bar -------------------------------------------------------- */
+.ph-top {
+  position: absolute;
+  top: 10px; left: 10px; right: 10px;
+  height: 52px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+  border-radius: 13px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.ph-brand { display: flex; align-items: center; gap: 12px; justify-self: start; }
 
 /* double-helix mark: two counter-rotating gradient bars */
 .ph-mark {
@@ -87,18 +104,19 @@ html, body, #root {
 .ph-title h1 {
   margin: 0;
   font-family: var(--mono);
-  font-size: 19px;
-  letter-spacing: 0.34em;
+  font-size: 16px;
+  letter-spacing: 0.3em;
   font-weight: 600;
   text-shadow: 0 0 18px rgba(0, 255, 106, 0.3);
 }
 .ph-tag {
-  margin: 2px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  margin: 1px 0 0;
+  font-size: 9px;
+  letter-spacing: 0.16em;
   color: var(--ink-faint);
   text-transform: uppercase;
 }
+.ph-status { justify-self: end; }
 .ph-status {
   display: flex;
   align-items: center;
@@ -117,41 +135,31 @@ html, body, #root {
 }
 .ph-dot--live { background: var(--chlorophyll); box-shadow: 0 0 12px var(--chlorophyll); border-color: transparent; }
 
-/* ---- Main split --------------------------------------------------------- */
-.ph-main {
-  flex: 1 1 auto;                   /* anchored stage between header and bar */
-  display: grid;
-  grid-template-columns: 1fr 384px; /* viewport | flat console */
-  min-height: 0;
-}
-.ph-viewport {
-  position: relative;
-  min-width: 0;
-  border-right: 1px solid var(--panel-line);
-}
-.ph-viewport canvas { display: block; }
 .ph-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  box-shadow: inset 0 0 160px 20px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 220px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* ---- Rack --------------------------------------------------------------- */
-/* Flat console: a vertical stack of sections. Each section fills the full
-   console width — its knobs share the row as `repeat(n, 1fr)`, and the dial
-   is size-capped so every knob reads identically whatever the count. Sections
-   are separated by hairline dividers; leftover height breathes between them,
-   never as dead space on the right. */
-.ph-rack {
+/* ---- Console (floating glass panel, right) ------------------------------ */
+/* A vertical stack of sections; each fills the panel width, knobs share the
+   row as repeat(n, 1fr) with a size-capped dial. Hairline dividers; leftover
+   height breathes between banks. Floats over the genome with the glow behind. */
+.ph-console {
+  position: absolute;
+  top: 72px;                        /* below the top HUD */
+  right: 10px;
+  bottom: 62px;                     /* above the bottom HUD */
+  width: 378px;
+  border-radius: 13px;
   overflow: hidden;
-  min-height: 0;
-  padding: 9px 14px 8px;
+  padding: 10px 14px 8px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;   /* distribute breathing room, no trailing air */
+  justify-content: space-between;
   gap: 4px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.15));
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .ph-sec {
@@ -230,12 +238,15 @@ html, body, #root {
 .ph-rack::-webkit-scrollbar-track { background: transparent; }
 
 /* ---- Preset selector (top of the rack) ---------------------------------- */
+/* Preset selector = the HUD's central "screen". */
 .ph-preset {
-  grid-column: 1 / -1;             /* spans both rack columns */
+  justify-self: center;
+  width: min(480px, 44vw);
   display: grid;
-  grid-template-columns: 38px 1fr 38px 34px;
+  grid-template-columns: 34px 1fr 34px 32px;
   align-items: stretch;
-  gap: 8px;
+  gap: 7px;
+  height: 34px;
 }
 .ph-preset__imp {
   border: 1px solid var(--panel-line);
@@ -265,15 +276,18 @@ html, body, #root {
 }
 .ph-preset__arw:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; }
 .ph-preset__disp {
-  border: 1px solid var(--panel-line);
-  border-radius: 7px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.22));
+  border: 1px solid var(--glass-line);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(0, 255, 106, 0.07), transparent 70%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.5));
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
   padding: 3px 11px;
   overflow: hidden;
+  box-shadow: inset 0 0 14px rgba(0, 255, 106, 0.08);
 }
 .ph-preset__lib {
   font-family: var(--mono);
@@ -371,28 +385,24 @@ html, body, #root {
 .ph-geno__id { display: block; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.28em; color: var(--ink); text-shadow: 0 0 12px rgba(0, 255, 106, 0.4); }
 .ph-geno__meta { display: flex; gap: 8px; justify-content: center; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--ink-dim); margin-top: 3px; }
 
-/* ---- Bottom status bar -------------------------------------------------- */
-.ph-bar {
-  flex: 0 0 auto;                   /* anchored bottom band */
+/* ---- Bottom HUD readout ------------------------------------------------- */
+.ph-bottom {
+  position: absolute;
+  left: 10px; right: 10px; bottom: 10px;
+  height: 40px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 16px;
-  padding: 10px 22px;
-  border-top: 1px solid var(--panel-line);
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(3px);
+  padding: 0 18px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.1em;
+  color: var(--ink-dim);
 }
-.ph-bar__geno { display: flex; align-items: center; gap: 10px; }
-.ph-bar__label {
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--ink-faint);
-  font-size: 10px;
-}
+.ph-bottom__geno { display: flex; align-items: center; gap: 10px; justify-self: start; }
 .ph-chip {
   padding: 3px 9px;
   border-radius: 5px;
@@ -401,8 +411,8 @@ html, body, #root {
 }
 .ph-chip--a { color: var(--chlorophyll); border-color: rgba(0, 255, 106, 0.35); box-shadow: 0 0 10px rgba(0, 255, 106, 0.15) inset; }
 .ph-chip--b { color: var(--magenta); border-color: rgba(255, 43, 214, 0.35); box-shadow: 0 0 10px rgba(255, 43, 214, 0.15) inset; }
-.ph-bar__x { color: var(--ink-faint); }
-.ph-bar__mid {
+.ph-bottom__x { color: var(--ink-faint); }
+.ph-bottom__mid {
   justify-self: center;
   color: var(--ink-faint);
   text-transform: uppercase;
@@ -411,17 +421,14 @@ html, body, #root {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ph-bar__stat { justify-self: end; display: flex; align-items: center; gap: 12px; color: var(--ink-dim); }
-.ph-bar__grains b { color: var(--ink); font-weight: 600; }
-.ph-bar__sep { width: 1px; height: 14px; background: var(--panel-line); }
+.ph-bottom__stat { justify-self: end; display: flex; align-items: center; gap: 12px; }
+.ph-bottom__grains b { color: var(--ink); font-weight: 600; }
 
 @media (max-width: 860px) {
-  .ph-bar__mid { display: none; }
-  .ph-bar { grid-template-columns: 1fr auto; }
+  .ph-bottom__mid { display: none; }
+  .ph-bottom { grid-template-columns: 1fr auto; }
 }
 @media (max-width: 720px) {
-  .ph-main { grid-template-columns: 1fr; grid-template-rows: minmax(140px, 26vh) 1fr; }
-  .ph-viewport { min-height: 0; border-right: none; border-bottom: 1px solid var(--panel-line); }
-  .ph-rack { min-height: 0; }
-  .ph-group { flex: 0 0 auto; }     /* natural height; the rack scrolls on phones */
+  /* Narrow: the console spans the width as a bottom sheet above the readout. */
+  .ph-console { top: auto; right: 10px; left: 10px; width: auto; height: 46%; bottom: 60px; }
 }

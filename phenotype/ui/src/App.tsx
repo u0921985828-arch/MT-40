@@ -178,55 +178,57 @@ export default function App() {
 
   return (
     <div className="ph-root">
-      <header className="ph-header">
-        <div className="ph-brand">
-          <div className="ph-mark" aria-hidden="true">
-            <span className="ph-mark__a" />
-            <span className="ph-mark__b" />
-          </div>
-          <div className="ph-title">
-            <h1>
-              PHENO<span style={{ color: PALETTE.chlorophyll }}>TYPE</span>
-            </h1>
-            <p className="ph-tag">granular diploide · cross-synthesis</p>
-          </div>
-        </div>
-        <div className="ph-status">
-          <span className={hosted ? "ph-dot ph-dot--live" : "ph-dot"} />
-          <span className="ph-conn">{hosted ? "JUCE BACKEND" : "BROWSER MOCK"}</span>
-        </div>
-      </header>
+      {/* Full-bleed living genome behind everything. */}
+      <div className="ph-stage">
+        <IsometricGrid />
+        <div className="ph-vignette" aria-hidden="true" />
+      </div>
 
-      <main className="ph-main">
-        <section className="ph-viewport">
-          <IsometricGrid />
-          <div className="ph-vignette" aria-hidden="true" />
-        </section>
+      {/* Floating HUD. The layer itself is click-through; panels re-enable it,
+          so empty space still passes clicks to the 3D scene (node scrubbing). */}
+      <div className="ph-hud">
+        <header className="ph-top">
+          <div className="ph-brand">
+            <div className="ph-mark" aria-hidden="true">
+              <span className="ph-mark__a" />
+              <span className="ph-mark__b" />
+            </div>
+            <div className="ph-title">
+              <h1>
+                PHENO<span style={{ color: PALETTE.chlorophyll }}>TYPE</span>
+              </h1>
+              <p className="ph-tag">granular diploide</p>
+            </div>
+          </div>
 
-        <aside className="ph-rack">
           <PresetBar />
+
+          <div className="ph-status">
+            <span className={hosted ? "ph-dot ph-dot--live" : "ph-dot"} />
+            <span className="ph-conn">{hosted ? "LIVE" : "MOCK"}</span>
+          </div>
+        </header>
+
+        <aside className="ph-console">
           {RACK.map((group) => (
             <RackSection key={group.title} group={group} />
           ))}
         </aside>
-      </main>
 
-      <footer className="ph-bar">
-        <div className="ph-bar__geno">
-          <span className="ph-bar__label">Genotipo</span>
-          <span className="ph-chip ph-chip--a">◆ A</span>
-          <span className="ph-bar__x">×</span>
-          <span className="ph-chip ph-chip--b">◆ B</span>
-        </div>
-        <div className="ph-bar__mid">granular cross-synthesis · capillary modulation</div>
-        <div className="ph-bar__stat">
-          <span className="ph-bar__grains">
-            <b>{activeGrains}</b> granos activos
-          </span>
-          <span className="ph-bar__sep" />
-          <span className={hosted ? "ph-dot ph-dot--live" : "ph-dot"} />
-        </div>
-      </footer>
+        <footer className="ph-bottom">
+          <div className="ph-bottom__geno">
+            <span className="ph-chip ph-chip--a">◆ A</span>
+            <span className="ph-bottom__x">×</span>
+            <span className="ph-chip ph-chip--b">◆ B</span>
+          </div>
+          <div className="ph-bottom__mid">granular cross-synthesis · capillary modulation</div>
+          <div className="ph-bottom__stat">
+            <span className="ph-bottom__grains">
+              <b>{activeGrains}</b> granos
+            </span>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
