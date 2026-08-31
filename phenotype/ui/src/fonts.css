@@ -1,0 +1,68 @@
+/* ==========================================================================
+   Phenotype — embedded typeface trio (self-hosted, offline WebView safe).
+
+   Latin-subset woff2 vendored under src/fonts/; Vite inlines each url() as a
+   base64 data URI into the single-file bundle, so the plugin never touches the
+   network to render text.
+
+     Space Grotesk — display / brand / section tags (technical, distinctive)
+     Inter         — interface labels & body (crisp at small sizes)
+     JetBrains Mono— numeric readouts & values (tabular, engineered digits)
+
+   All three are SIL OFL 1.1. Weights limited to what the UI actually paints.
+   ========================================================================== */
+
+/* --- Space Grotesk (display) --------------------------------------------- */
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/spacegrotesk-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/spacegrotesk-700.woff2") format("woff2");
+}
+
+/* --- Inter (interface) --------------------------------------------------- */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/inter-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./fonts/inter-600.woff2") format("woff2");
+}
+
+/* --- JetBrains Mono (numeric) -------------------------------------------- */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/jetbrainsmono-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/jetbrainsmono-700.woff2") format("woff2");
+}
