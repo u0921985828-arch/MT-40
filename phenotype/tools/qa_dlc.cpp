@@ -107,17 +107,16 @@ int main(int argc,char**argv){
         float g0=pv[11];                        // provisional outputGain
 
         double rms=0; auto [c0,p0]=measure(g0,rms);
-        float gg=g0; double c=c0; int it=0;
-        while(c>0.03 && gg>0.12f && it<12){ gg*=0.9f; double r2; auto pr=measure(gg,r2); c=pr.first; rms=r2; ++it; }
+        float gg=g0; double c=c0, pk=p0; int it=0;
+        while(c>0.03 && gg>0.12f && it<12){ gg*=0.9f; double r2; auto pr=measure(gg,r2); c=pr.first; pk=pr.second; rms=r2; ++it; }
         if(it) ++hot;
 
-        // final finiteness + silence probe (already have rms/peak from last measure)
-        double r_last; auto [cf,pf]=measure(gg,r_last);
+        // Use the last render's stats directly (no extra probe render).
         const char* flag="ok";
-        if(!std::isfinite(pf)||!std::isfinite(r_last)){ flag="nonfinite"; ++nf; }
-        else if(r_last<1e-4){ flag="silent"; ++sil; }
+        if(!std::isfinite(pk)||!std::isfinite(rms)){ flag="nonfinite"; ++nf; }
+        else if(rms<1e-4){ flag="silent"; ++sil; }
 
-        out<<idxs<<"\t"<<gg<<"\t"<<(cf*100.0)<<"\t"<<pf<<"\t"<<r_last<<"\t"<<flag<<"\n";
+        out<<idxs<<"\t"<<gg<<"\t"<<(c*100.0)<<"\t"<<pk<<"\t"<<rms<<"\t"<<flag<<"\n";
         if(++done % 1000 == 0) std::fprintf(stderr,"  %ld/10000  (hot=%ld silent=%ld nonfinite=%ld)\n",done,hot,sil,nf);
     }
     std::fprintf(stderr,"done: %ld presets, recalibrated=%ld, silent=%ld, nonfinite=%ld\n",done,hot,sil,nf);

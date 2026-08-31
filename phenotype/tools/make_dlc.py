@@ -36,66 +36,73 @@ PIDX = {p: i for i, (p, _) in enumerate(PARAMS)}
 #  tightens outputGain per preset so nothing rides the clipper.
 # ---------------------------------------------------------------------------
 R = lambda a, b: (a, b)
+# Genre-focused banks: Ambient, Synth, Trap. Each tuple:
+#   (filekey, tag, bankname, roles, param-archetype).
+# `tag` is the concise label shown before ">" in the preset name; `roles`
+# selects which synthesised genome families feed the bank.
 THEMES = [
-    ("NEBULA",     "Nebula Pads",        ["pad", "texture"], {
-        "grainSize": R(.55, .95), "grainDensity": R(.5, .85), "caudal": R(.2, .5),
-        "soilDensity": R(.55, .85), "modDepth": R(.4, .8), "crossBlend": R(.3, .7),
-        "unison": R(.3, .7), "unisonDetune": R(.2, .5), "filterCutoff": R(.5, .85),
-        "stereoWidth": R(.7, 1.), "reverbMix": R(.3, .7), "reverbSize": R(.5, .9),
-        "reverbDamp": R(.3, .6), "outputGain": R(.5, .66)}),
-    ("SUBMARINE",  "Submarine Bass",     ["bass"], {
-        "grainSize": R(.2, .42), "grainDensity": R(.45, .7), "pitchA": R(.35, .5),
-        "pitchB": R(.35, .5), "crossBlend": R(.35, .65), "filterCutoff": R(.32, .55),
-        "filterReso": R(.2, .55), "drive": R(.15, .45), "unison": R(.0, .3),
-        "stereoWidth": R(.2, .5), "outputGain": R(.42, .58)}),
-    ("SOLAR",      "Solar Leads",        ["lead"], {
-        "grainSize": R(.3, .55), "grainDensity": R(.4, .7), "caudal": R(.35, .7),
-        "crossBlend": R(.35, .65), "unison": R(.3, .8), "unisonDetune": R(.2, .5),
-        "filterCutoff": R(.55, .9), "filterReso": R(.15, .5), "drive": R(.1, .4),
+    # ---------------- AMBIENT ---------------------------------------------
+    ("AMBIENT_PADS", "AMBIENT PADS", "Ambient · Ethereal Pads", ["pad", "texture"], {
+        "grainSize": R(.6, .98), "grainDensity": R(.5, .85), "caudal": R(.12, .35),
+        "soilDensity": R(.6, .92), "modDepth": R(.4, .8), "crossBlend": R(.3, .7),
+        "unison": R(.3, .7), "unisonDetune": R(.2, .5), "filterCutoff": R(.45, .8),
+        "stereoWidth": R(.8, 1.), "delayMix": R(.1, .35), "reverbMix": R(.45, .85),
+        "reverbSize": R(.6, .98), "reverbDamp": R(.3, .6), "outputGain": R(.48, .62)}),
+    ("AMBIENT_TEXTURES", "AMBIENT TEXTURE", "Ambient · Deep Textures", ["texture", "pad"], {
+        "grainSize": R(.55, .98), "grainDensity": R(.45, .9), "spray": R(.3, .75),
+        "caudal": R(.12, .4), "soilDensity": R(.55, .9), "modDepth": R(.5, .9),
+        "position": R(.1, .9), "crossBlend": R(.2, .8), "filterCutoff": R(.4, .8),
+        "filterMod": R(.1, .5), "stereoWidth": R(.75, 1.), "reverbMix": R(.4, .85),
+        "reverbSize": R(.55, .95), "outputGain": R(.46, .6)}),
+    ("AMBIENT_DRONES", "AMBIENT DRONE", "Ambient · Cinematic Drones", ["texture", "pad", "key"], {
+        "grainSize": R(.65, .98), "grainDensity": R(.4, .8), "caudal": R(.1, .3),
+        "soilDensity": R(.65, .95), "modDepth": R(.3, .8), "crossBlend": R(.3, .7),
+        "filterCutoff": R(.4, .78), "stereoWidth": R(.8, 1.), "reverbMix": R(.5, .9),
+        "reverbSize": R(.7, .99), "reverbDamp": R(.25, .55), "outputGain": R(.46, .6)}),
+    # ---------------- SYNTH ------------------------------------------------
+    ("SYNTH_LEADS", "SYNTH LEAD", "Synth · Analog Leads", ["lead"], {
+        "grainSize": R(.3, .55), "grainDensity": R(.45, .75), "caudal": R(.35, .7),
+        "crossBlend": R(.35, .65), "unison": R(.4, .85), "unisonDetune": R(.25, .55),
+        "filterCutoff": R(.55, .92), "filterReso": R(.15, .5), "drive": R(.12, .4),
         "stereoWidth": R(.4, .8), "delayMix": R(.15, .45), "delayFb": R(.2, .5),
         "reverbMix": R(.1, .35), "outputGain": R(.5, .64)}),
-    ("CRYSTAL",    "Crystal Keys",       ["key"], {
+    ("SYNTH_KEYS", "SYNTH KEYS", "Synth · Retro Keys", ["key"], {
         "grainSize": R(.35, .6), "grainDensity": R(.45, .7), "caudal": R(.3, .6),
-        "crossBlend": R(.35, .65), "unison": R(.1, .5), "filterCutoff": R(.55, .9),
-        "filterReso": R(.12, .4), "stereoWidth": R(.5, .85), "delayMix": R(.1, .35),
-        "reverbMix": R(.25, .55), "reverbSize": R(.4, .75), "outputGain": R(.5, .66)}),
-    ("RESIN",      "Resin Plucks",       ["pluck", "arp"], {
-        "grainSize": R(.18, .38), "grainDensity": R(.5, .8), "caudal": R(.5, .85),
-        "soilDensity": R(.3, .6), "crossBlend": R(.35, .65), "filterCutoff": R(.5, .85),
-        "filterReso": R(.2, .55), "drive": R(.1, .35), "unison": R(.2, .5),
-        "stereoWidth": R(.5, .85), "delayMix": R(.15, .45), "delayFb": R(.2, .5),
-        "reverbMix": R(.1, .4), "outputGain": R(.5, .64)}),
-    ("PULSE",      "Pulse Arps",         ["arp", "pluck"], {
-        "arpOn": 1.0, "arpRate": R(.3, .7), "arpMode": R(0., 1.), "arpSync": R(0., 1.),
-        "scaleType": R(0., 1.), "grainSize": R(.18, .35), "grainDensity": R(.5, .8),
-        "caudal": R(.5, .85), "crossBlend": R(.35, .65), "filterCutoff": R(.5, .88),
-        "filterReso": R(.2, .55), "stereoWidth": R(.4, .8), "delayMix": R(.15, .4),
-        "delayFb": R(.2, .5), "outputGain": R(.5, .62)}),
-    ("AURORA",     "Aurora Textures",    ["texture", "pad"], {
-        "grainSize": R(.6, .98), "grainDensity": R(.5, .9), "spray": R(.3, .7),
-        "caudal": R(.15, .45), "soilDensity": R(.55, .9), "modDepth": R(.5, .9),
-        "crossBlend": R(.25, .75), "position": R(.2, .8), "filterCutoff": R(.4, .8),
-        "stereoWidth": R(.75, 1.), "reverbMix": R(.4, .8), "reverbSize": R(.6, .95),
-        "outputGain": R(.48, .62)}),
-    ("VOID",       "Void FX",            ["fx", "texture", "key"], {
-        "grainSize": R(.3, .9), "grainDensity": R(.4, .85), "spray": R(.3, .8),
-        "position": R(.1, .9), "modDepth": R(.4, .9), "crossBlend": R(.2, .8),
-        "filterCutoff": R(.35, .85), "filterReso": R(.2, .6), "filterMod": R(.2, .7),
-        "stereoWidth": R(.6, 1.), "delayMix": R(.2, .5), "delayFb": R(.25, .55),
-        "reverbMix": R(.35, .75), "reverbSize": R(.5, .95), "outputGain": R(.46, .6)}),
-    ("CINEMATIC",  "Cinematic",          ["pad", "texture", "key"], {
-        "grainSize": R(.6, .98), "grainDensity": R(.45, .8), "caudal": R(.15, .4),
-        "soilDensity": R(.6, .92), "modDepth": R(.4, .85), "crossBlend": R(.3, .7),
-        "unison": R(.3, .7), "filterCutoff": R(.45, .8), "stereoWidth": R(.75, 1.),
-        "reverbMix": R(.45, .85), "reverbSize": R(.65, .98), "reverbDamp": R(.25, .55),
-        "outputGain": R(.46, .6)}),
-    ("EXPERIMENTAL", "Experimental",     ["pad", "key", "lead", "pluck", "bass", "arp", "texture", "fx"], {
-        "grainSize": R(.15, .95), "grainDensity": R(.35, .9), "spray": R(.1, .7),
-        "caudal": R(.15, .85), "soilDensity": R(.25, .9), "position": R(.1, .9),
-        "modDepth": R(.2, .9), "crossBlend": R(.15, .85), "unison": R(.0, .7),
-        "filterCutoff": R(.35, .95), "filterReso": R(.12, .6), "filterMod": R(.0, .6),
-        "drive": R(.1, .45), "stereoWidth": R(.3, 1.), "delayMix": R(.0, .45),
-        "reverbMix": R(.1, .7), "outputGain": R(.46, .62)}),
+        "crossBlend": R(.35, .65), "unison": R(.2, .6), "unisonDetune": R(.2, .45),
+        "filterCutoff": R(.55, .9), "filterReso": R(.12, .4), "stereoWidth": R(.55, .9),
+        "delayMix": R(.1, .35), "reverbMix": R(.2, .5), "reverbSize": R(.4, .75),
+        "outputGain": R(.5, .66)}),
+    ("SYNTH_PLUCKS", "SYNTH PLUCK", "Synth · Pluck & Arp", ["pluck", "arp"], {
+        "arpOn": R(0., 1.), "arpRate": R(.3, .7), "arpMode": R(0., 1.), "arpSync": R(0., 1.),
+        "grainSize": R(.18, .4), "grainDensity": R(.5, .8), "caudal": R(.5, .85),
+        "soilDensity": R(.3, .6), "crossBlend": R(.35, .65), "filterCutoff": R(.5, .9),
+        "filterReso": R(.2, .55), "unison": R(.2, .5), "stereoWidth": R(.5, .85),
+        "delayMix": R(.15, .45), "delayFb": R(.2, .5), "reverbMix": R(.1, .4),
+        "outputGain": R(.5, .64)}),
+    ("SYNTH_BASS", "SYNTH BASS", "Synth · Analog Bass", ["bass"], {
+        "grainSize": R(.22, .45), "grainDensity": R(.45, .7), "pitchA": R(.38, .5),
+        "pitchB": R(.38, .5), "crossBlend": R(.35, .65), "filterCutoff": R(.35, .6),
+        "filterReso": R(.2, .55), "drive": R(.15, .45), "unison": R(.0, .35),
+        "stereoWidth": R(.25, .5), "outputGain": R(.44, .58)}),
+    # ---------------- TRAP -------------------------------------------------
+    ("TRAP_808", "TRAP 808", "Trap · 808 & Sub", ["bass"], {
+        "grainSize": R(.25, .5), "grainDensity": R(.4, .65), "pitchA": R(.3, .45),
+        "pitchB": R(.3, .45), "crossBlend": R(.3, .6), "filterCutoff": R(.3, .52),
+        "filterReso": R(.15, .45), "drive": R(.2, .5), "unison": R(.0, .25),
+        "stereoWidth": R(.15, .4), "reverbMix": R(.0, .15), "outputGain": R(.42, .56)}),
+    ("TRAP_BELLS", "TRAP BELL", "Trap · Bells & Keys", ["key", "pluck"], {
+        "grainSize": R(.3, .55), "grainDensity": R(.45, .72), "caudal": R(.4, .75),
+        "crossBlend": R(.35, .65), "filterCutoff": R(.6, .95), "filterReso": R(.12, .4),
+        "unison": R(.1, .4), "stereoWidth": R(.5, .85), "delayMix": R(.2, .5),
+        "delayFb": R(.25, .55), "reverbMix": R(.25, .6), "reverbSize": R(.45, .8),
+        "outputGain": R(.5, .64)}),
+    ("TRAP_LEADS", "TRAP LEAD", "Trap · Dark Leads & Flutes", ["lead", "pluck"], {
+        "arpOn": R(0., .6), "arpRate": R(.35, .7), "arpSync": R(0., 1.),
+        "grainSize": R(.25, .5), "grainDensity": R(.45, .75), "caudal": R(.4, .8),
+        "crossBlend": R(.3, .65), "filterCutoff": R(.45, .85), "filterReso": R(.2, .55),
+        "drive": R(.1, .35), "unison": R(.2, .5), "stereoWidth": R(.45, .8),
+        "delayMix": R(.2, .5), "delayFb": R(.25, .5), "reverbMix": R(.2, .5),
+        "outputGain": R(.5, .62)}),
 ]
 
 ADJ = ["Whispering", "Frozen", "Radiant", "Velvet", "Hollow", "Astral", "Molten", "Silken",
@@ -138,7 +145,7 @@ def sample(rng, spec):
 def build_plan():
     by_role = load_genomes()
     plan = []
-    for bi, (prefix, bankname, roles, arch) in enumerate(THEMES):
+    for bi, (filekey, tag, bankname, roles, arch) in enumerate(THEMES):
         pool = []
         for r in roles:
             pool += by_role.get(r, [])
@@ -156,8 +163,8 @@ def build_plan():
                 params[p] = sample(grng, spec)
             row = [params.get(pn, dv) for pn, dv in PARAMS]
             plan.append({
-                "bank": bankname, "prefix": prefix,
-                "name": f"{prefix} > {names[i]}",
+                "bank": bankname, "filekey": filekey,
+                "name": f"{tag} > {names[i]}",
                 "genome": genome, "params": row,
             })
     return plan
@@ -201,17 +208,17 @@ def cmd_finalize():
         # emit only non-default params to keep the bank compact
         defaults = {pn: dv for pn, dv in PARAMS}
         slim = {k: v for k, v in params.items() if abs(v - defaults[k]) > 1e-6}
-        banks.setdefault(pr["prefix"], {"bank": pr["bank"], "presets": []})
-        banks[pr["prefix"]]["presets"].append({
+        banks.setdefault(pr["filekey"], {"bank": pr["bank"], "presets": []})
+        banks[pr["filekey"]]["presets"].append({
             "name": pr["name"], "params": slim, "sample": f"samples/{pr['genome']}.wav",
         })
     total = 0
-    for prefix, b in banks.items():
+    for filekey, b in banks.items():
         out = {"bank": b["bank"], "format": 1, "author": "Phenotype", "presets": b["presets"]}
-        with open(os.path.join(DLC, f"{prefix}.phbank"), "w") as f:
+        with open(os.path.join(DLC, f"{filekey}.phbank"), "w") as f:
             json.dump(out, f)
         total += len(b["presets"])
-        print(f"  {prefix}.phbank: {len(b['presets'])} presets")
+        print(f"  {filekey}.phbank: {len(b['presets'])} presets")
     print(f"finalised {total} presets ({dropped} dropped by QA)")
 
 
