@@ -49,6 +49,9 @@ namespace phenotype
 
         //  Load a user audio file as the granular genome (off the audio thread).
         bool loadSampleFile (const juce::File&);
+        //  Load an embedded HQ genome (BinaryData, "<name>.wav") — the factory
+        //  palette. Returns false if the resource isn't found.
+        bool loadEmbeddedGenome (const juce::String& name);
 
         //  --- Preset library / DLC banks --------------------------------------
         //  Re-seed the factory and rescan the user preset dir for .phbank files.

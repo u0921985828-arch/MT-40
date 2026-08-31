@@ -102,7 +102,12 @@ if(NOT PHENOTYPE_UI_FILES)
     set(PHENOTYPE_UI_FILES "${CMAKE_CURRENT_SOURCE_DIR}/ui/fallback.html")
 endif()
 
-juce_add_binary_data(PhenotypeUI SOURCES ${PHENOTYPE_UI_FILES})
+# Embedded HQ genome palette (tools/make_genome_palette.py) — factory presets
+# reference these by name via BinaryData; see Source/PluginProcessor loadEmbeddedGenome.
+file(GLOB PHENOTYPE_GENOME_FILES CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_SOURCE_DIR}/genomes/*.wav")
+
+juce_add_binary_data(PhenotypeUI SOURCES ${PHENOTYPE_UI_FILES} ${PHENOTYPE_GENOME_FILES})
 
 # BinaryData objects must be PIC when linked into the shared plugin format.
 set_target_properties(PhenotypeUI PROPERTIES POSITION_INDEPENDENT_CODE TRUE)

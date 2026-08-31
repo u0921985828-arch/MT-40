@@ -1,0 +1,38 @@
+{
+ "pad": [
+  "warm_saw_ens",
+  "choir_aah",
+  "glass_pad",
+  "airy_pwm",
+  "organ_add"
+ ],
+ "key": [
+  "glass_fm",
+  "e_piano",
+  "bell_soft"
+ ],
+ "lead": [
+  "super_saw",
+  "square_lead",
+  "fm_horn",
+  "bright_saw"
+ ],
+ "pluck": [
+  "mallet",
+  "karplus",
+  "fm_pluck",
+  "kalimba"
+ ],
+ "bass": [
+  "sub_sine",
+  "saw_sub",
+  "reese",
+  "fm_bass"
+ ],
+ "arp": [
+  "pluck_short",
+  "blip",
+  "digi_pluck",
+  "mallet_hi"
+ ]
+}

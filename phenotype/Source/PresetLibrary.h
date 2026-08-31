@@ -35,7 +35,9 @@ namespace phenotype
     {
         juce::String name;                                     // "LIBRARY > Name"
         std::vector<std::pair<juce::String, float>> params;    // id -> normalised
-        juce::File   sample;                                   // empty == built-in
+        juce::File   sample;                                   // external DLC sample
+        juce::String embeddedGenome;                           // built-in HQ palette id
+        // Genome priority: sample (DLC) > embeddedGenome (factory) > built-in.
     };
 
     class PresetLibrary
@@ -51,6 +53,8 @@ namespace phenotype
                 for (const auto& kv : p.overrides)
                     if (kv.id != nullptr)
                         e.params.emplace_back (juce::String (kv.id), kv.value);
+                if (p.genome != nullptr)
+                    e.embeddedGenome = juce::String (p.genome);
                 entries.push_back (std::move (e));
             }
         }

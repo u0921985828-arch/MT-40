@@ -5,6 +5,7 @@
 #include "PluginProcessor.h"
 #include "PhenotypeWebEditor.h"
 #include "Presets.h"
+#include "BinaryData.h"
 #include <juce_audio_formats/juce_audio_formats.h>
 
 namespace phenotype
@@ -204,10 +205,12 @@ namespace phenotype
             if (auto* p = apvts.getParameter (kv.first))
                 p->setValueNotifyingHost (kv.second);
 
-        //  HQ genome: load the preset's own sample, or fall back to the built-in
-        //  wavetable genome when the preset carries none.
+        //  HQ genome, in priority: external DLC sample -> embedded factory
+        //  palette -> built-in wavetable.
         if (e->sample != juce::File())
             loadSampleFile (e->sample);
+        else if (e->embeddedGenome.isNotEmpty() && loadEmbeddedGenome (e->embeddedGenome))
+            {}
         else
             granular.useBuiltinGenome();
     }
@@ -252,11 +255,10 @@ namespace phenotype
     //==========================================================================
     //  Sample genome loader
     //==========================================================================
-    bool PhenotypeAudioProcessor::loadSampleFile (const juce::File& file)
+    //  Shared: fold a reader's first ~8 s to mono and hand it to the engine.
+    static bool loadGenomeFromReader (dsp::GranularEngine& engine,
+                                      juce::AudioFormatReader* reader)
     {
-        juce::AudioFormatManager fmt;
-        fmt.registerBasicFormats();
-        std::unique_ptr<juce::AudioFormatReader> reader (fmt.createReaderFor (file));
         if (reader == nullptr || reader->lengthInSamples <= 0)
             return false;
 
@@ -265,14 +267,46 @@ namespace phenotype
         juce::AudioBuffer<float> buf ((int) reader->numChannels, len);
         reader->read (&buf, 0, len, 0, true, true);
 
-        //  Fold to mono for the genome loader.
         juce::AudioBuffer<float> mono (1, len);
         mono.clear();
         for (int ch = 0; ch < buf.getNumChannels(); ++ch)
             mono.addFrom (0, 0, buf, ch, 0, len, 1.0f / (float) buf.getNumChannels());
 
-        granular.loadGenomeFromSample (mono.getReadPointer (0), len);
+        engine.loadGenomeFromSample (mono.getReadPointer (0), len);
         return true;
+    }
+
+    bool PhenotypeAudioProcessor::loadSampleFile (const juce::File& file)
+    {
+        juce::AudioFormatManager fmt;
+        fmt.registerBasicFormats();
+        std::unique_ptr<juce::AudioFormatReader> reader (fmt.createReaderFor (file));
+        return loadGenomeFromReader (granular, reader.get());
+    }
+
+    bool PhenotypeAudioProcessor::loadEmbeddedGenome (const juce::String& name)
+    {
+        //  Find the embedded resource whose original filename is "<name>.wav".
+        const juce::String wanted = name + ".wav";
+        for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
+        {
+            const juce::String orig { BinaryData::getNamedResourceOriginalFilename (
+                                          BinaryData::namedResourceList[i]) };
+            if (! orig.equalsIgnoreCase (wanted))
+                continue;
+
+            int size = 0;
+            const char* data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], size);
+            if (data == nullptr || size <= 0)
+                return false;
+
+            juce::AudioFormatManager fmt;
+            fmt.registerBasicFormats();
+            std::unique_ptr<juce::AudioFormatReader> reader (
+                fmt.createReaderFor (std::make_unique<juce::MemoryInputStream> (data, (size_t) size, false)));
+            return loadGenomeFromReader (granular, reader.get());
+        }
+        return false;
     }
 
     juce::AudioProcessorEditor* PhenotypeAudioProcessor::createEditor()
