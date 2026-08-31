@@ -9,13 +9,10 @@ name: Build Windows VST
 # VST2 requires Steinberg's withdrawn VST 2.4 SDK, supplied by the repo owner
 # under phenotype/sdk/vstsdk2.4. Without it, only VST3 is emitted.
 
+#  Manual-only: builds run when dispatched (Actions tab -> Run workflow, or via
+#  API/tooling), never automatically on push, so pushes don't spend CI minutes.
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/vst3-granular-plugin-j7rj44]
-    paths:
-      - "phenotype/**"
-      - ".github/workflows/build-windows.yml"
 
 permissions:
   contents: write
