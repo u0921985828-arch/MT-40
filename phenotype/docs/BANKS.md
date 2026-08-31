@@ -71,11 +71,40 @@ A ready-to-import demo lives in [`banks/DEMO_DLC/`](../banks/DEMO_DLC): copy tha
 folder into `~/Documents/Phenotype/Presets/` (or use Import) and browse the
 `DEMO DLC > …` presets — five are sample-backed, one plays the built-in genome.
 
-## Authoring a 10k pack
+## The 10k DLC pack (`ASTRAL 10K`)
 
-1. Gather / render your source samples (one genome per timbre) into `samples/`.
-2. Emit a `.phbank` whose presets reference them with varied `params` (a
-   generator script is the practical way to produce thousands).
-3. Validate levels with the offline QA (`tools/` — render each preset through
-   the DSP core and check nothing rides the soft-clipper) before release.
+A ready pipeline produces a **10,000-preset** pack across 10 themed banks, each
+preset a synthesised **HQ 44.1 kHz genome** crossed with a seeded parameter
+genotype, QA-levelled so none rides the clipper. Everything is deterministic
+(seeded) and regenerable — the built pack is shipped as a zip, not committed.
+
+```bash
+# 1. Synthesise the HQ genome palette (~338 loop-safe 44.1 kHz WAVs)
+python3 tools/make_dlc_genomes.py                 # -> dlc/samples/*.wav + _genomes.json
+
+# 2. Compose 10 banks x ~1000 presets (plan + QA input)
+python3 tools/make_dlc.py build                   # -> dlc/_plan.json, dlc/_qa_in.tsv
+
+# 3. QA: render every preset through the real DSP, recalibrate outputGain
+g++ -O2 -std=c++20 -I Source -I Source/dsp tools/qa_dlc.cpp \
+    Source/dsp/GranularEngine.cpp -o qa_dlc
+./qa_dlc dlc/_qa_in.tsv dlc/_qa_out.tsv dlc
+
+# 4. Write the QA-corrected .phbank banks
+python3 tools/make_dlc.py finalize                # -> dlc/<BANK>.phbank
+```
+
+Banks: **NEBULA** (pads), **SUBMARINE** (bass), **SOLAR** (leads), **CRYSTAL**
+(keys), **RESIN** (plucks), **PULSE** (arps), **AURORA** (textures), **VOID**
+(fx), **CINEMATIC**, **EXPERIMENTAL**. Genomes are loop-crossfaded (no click),
+sustained timbres — attack/decay is shaped by the engine, not baked in.
+
+To ship: zip `dlc/` (the 10 `.phbank` + shared `samples/`) and drop it in
+`~/Documents/Phenotype/Presets/`, or Import any single `.phbank`.
+
+### Authoring your own pack
+
+1. Render your source samples (one genome per timbre) into `samples/`.
+2. Emit a `.phbank` whose presets reference them with varied `params`.
+3. Validate levels with the offline QA above before release.
 4. Ship the folder; users drop it in or Import it.

@@ -12,3 +12,7 @@ ui/dist/
 
 # Generated bank exports (tools/export_factory_bank.py)
 dist/
+
+# Generated 10k DLC pack (regenerate with tools/make_dlc_genomes.py + make_dlc.py);
+# the built pack is distributed as a zip, not committed.
+dlc/
