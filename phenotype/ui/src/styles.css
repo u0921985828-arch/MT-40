@@ -186,16 +186,6 @@ html, body, #root {
   align-items: start;
   gap: 3px 6px;
 }
-.ph-sec__tag {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: var(--bg);
-  background: var(--chlorophyll);
-  padding: 2px 6px;
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(0, 255, 106, 0.3);
-}
 .ph-sec__name {
   font-size: 9px;
   letter-spacing: 0.14em;
@@ -250,135 +240,9 @@ html, body, #root {
   gap: 7px;
   height: 34px;
 }
-.ph-preset__imp {
-  border: 1px solid var(--panel-line);
-  background: linear-gradient(180deg, rgba(255, 43, 214, 0.08), rgba(0, 0, 0, 0.2));
-  color: var(--magenta);
-  border-radius: 8px;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
-}
-.ph-preset__imp:hover { background: rgba(255, 43, 214, 0.16); box-shadow: 0 0 12px rgba(255, 43, 214, 0.25) inset; }
-.ph-preset__imp:focus-visible { outline: 2px solid var(--magenta); outline-offset: 2px; }
-.ph-preset__imp:disabled { opacity: 0.5; cursor: default; }
-.ph-preset__arw {
-  border: 1px solid var(--panel-line);
-  background: linear-gradient(180deg, rgba(0, 255, 106, 0.06), rgba(0, 0, 0, 0.2));
-  color: var(--chlorophyll);
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
-}
-.ph-preset__arw:hover {
-  background: rgba(0, 255, 106, 0.14);
-  box-shadow: 0 0 12px rgba(0, 255, 106, 0.25) inset;
-}
-.ph-preset__arw:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; }
-.ph-preset__disp {
-  border: 1px solid var(--glass-line);
-  border-radius: 8px;
-  background:
-    radial-gradient(120% 140% at 50% 0%, rgba(0, 255, 106, 0.07), transparent 70%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.5));
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 11px;
-  overflow: hidden;
-  box-shadow: inset 0 0 14px rgba(0, 255, 106, 0.08);
-}
-.ph-preset__lib {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: var(--bg);
-  background: var(--chlorophyll);
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-.ph-preset__name {
-  font-weight: 600;
-  font-size: 12.5px;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 0 12px rgba(0, 255, 106, 0.2);
-}
-.ph-preset__idx {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--ink-faint);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- Knob --------------------------------------------------------------- */
-.knob {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  user-select: none;
-  min-width: 0;                     /* let the cell shrink — never overflow/clip */
-}
-.knob__read,
-.knob__label { max-width: 100%; }
-.knob__dial {
-  width: 100%;
-  max-width: 52px;
-  aspect-ratio: 1;
-  cursor: ns-resize;
-  touch-action: none;
-  outline: none;
-}
-.knob__dial:focus-visible .knob__well { stroke: var(--chlorophyll); stroke-width: 1.2; }
-.knob__well {
-  fill: radial-gradient(#000, #000);
-  fill: #070b09;
-  stroke: var(--panel-line);
-  stroke-width: 1;
-}
-.knob__track {
-  fill: none;
-  stroke: var(--hair);
-  stroke-width: 5;
-  stroke-linecap: round;
-}
-.knob__value {
-  fill: none;
-  stroke-width: 5;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 3px currentColor);
-}
-.knob__ind { stroke-width: 2.6; stroke-linecap: round; opacity: 0.95; }
-.knob__tip { filter: drop-shadow(0 0 4px currentColor); }
-.knob__read {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 1;
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  font-variant-numeric: tabular-nums;
-}
-.knob__unit { font-size: 8px; font-weight: 500; opacity: 0.72; }
-.knob__label {
-  font-size: 8px;
-  letter-spacing: 0.03em;
-  color: var(--ink-dim);
-  text-align: center;
-  text-transform: uppercase;
-  line-height: 1.1;
-}
+/* Nav arrows / import (IconButton), preset screen (Screen) and section tags
+   (Tag) now live as primitives under src/components — their styles ship with
+   the component, so only the layout that arranges them stays here. */
 
 .ph-foot { display: none; }
 

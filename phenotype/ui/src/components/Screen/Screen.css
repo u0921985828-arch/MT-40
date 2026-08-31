@@ -1,0 +1,34 @@
+/* Screen — small glass readout: label · title · meta. */
+.screen {
+  border: 1px solid var(--glass-line);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(0, 255, 106, 0.07), transparent 70%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.5));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 11px;
+  overflow: hidden;
+  box-shadow: inset 0 0 14px rgba(0, 255, 106, 0.08);
+}
+.screen__label { font-size: 9px; letter-spacing: 0.12em; }
+.screen__title {
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 12px rgba(0, 255, 106, 0.2);
+}
+.screen__meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

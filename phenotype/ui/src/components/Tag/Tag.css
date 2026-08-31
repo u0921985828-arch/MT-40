@@ -1,0 +1,13 @@
+/* Tag — neon pill badge. */
+.tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.tag--chlorophyll { background: var(--chlorophyll); box-shadow: 0 0 8px rgba(0, 255, 106, 0.3); }
+.tag--magenta { background: var(--magenta); box-shadow: 0 0 8px rgba(255, 43, 214, 0.3); }
+.tag--ink { background: var(--ink); }

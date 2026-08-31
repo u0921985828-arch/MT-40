@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { IsometricGrid } from "./three/IsometricGrid";
 import { usePhenotypeStore } from "./store/usePhenotypeStore";
-import { Knob, type KnobDef } from "./Knob";
+import { Knob, type KnobDef, Tag, IconButton, Screen } from "./components";
 import { PALETTE } from "./three/theme";
 import { juceIntegration, type ProgramInfo } from "./bridge/juceIntegration";
 
@@ -94,7 +94,7 @@ function RackSection({ group }: { group: (typeof RACK)[number] }) {
       style={{ ["--n" as string]: group.controls.length }}
     >
       <div className="ph-sec__hd">
-        <span className="ph-sec__tag">{group.tag}</span>
+        <Tag>{group.tag}</Tag>
         <span className="ph-sec__name">{group.title}</span>
         {group.collapsible && (
           <button
@@ -146,28 +146,22 @@ function PresetBar() {
 
   return (
     <div className="ph-preset">
-      <button className="ph-preset__arw" aria-label="Preset anterior" onClick={() => step("prev")}>
+      <IconButton aria-label="Preset anterior" onClick={() => step("prev")}>
         ◀
-      </button>
-      <div className="ph-preset__disp">
-        <span className="ph-preset__lib">{lib}</span>
-        <span className="ph-preset__name">{rest}</span>
-        <span className="ph-preset__idx">
-          {info.count > 0 ? `${info.index + 1} / ${info.count}` : ""}
-        </span>
-      </div>
-      <button className="ph-preset__arw" aria-label="Preset siguiente" onClick={() => step("next")}>
+      </IconButton>
+      <Screen label={lib} title={rest} meta={info.count > 0 ? `${info.index + 1} / ${info.count}` : undefined} />
+      <IconButton aria-label="Preset siguiente" onClick={() => step("next")}>
         ▶
-      </button>
-      <button
-        className="ph-preset__imp"
+      </IconButton>
+      <IconButton
+        tone="magenta"
         aria-label="Importar banco / DLC"
         title="Importar banco / DLC"
         onClick={importBank}
         disabled={busy}
       >
         {busy ? "…" : "＋"}
-      </button>
+      </IconButton>
     </div>
   );
 }

@@ -1,0 +1,27 @@
+/* IconButton — square glass button with a tone accent. */
+.icon-btn {
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.icon-btn:disabled { opacity: 0.5; cursor: default; }
+
+.icon-btn--chlorophyll {
+  background: linear-gradient(180deg, rgba(0, 255, 106, 0.06), rgba(0, 0, 0, 0.2));
+  color: var(--chlorophyll);
+}
+.icon-btn--chlorophyll:hover { background: rgba(0, 255, 106, 0.14); box-shadow: 0 0 12px rgba(0, 255, 106, 0.25) inset; }
+.icon-btn--chlorophyll:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; }
+
+.icon-btn--magenta {
+  background: linear-gradient(180deg, rgba(255, 43, 214, 0.08), rgba(0, 0, 0, 0.2));
+  color: var(--magenta);
+}
+.icon-btn--magenta:hover { background: rgba(255, 43, 214, 0.16); box-shadow: 0 0 12px rgba(255, 43, 214, 0.25) inset; }
+.icon-btn--magenta:focus-visible { outline: 2px solid var(--magenta); outline-offset: 2px; }
+
+.icon-btn--ink { background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2)); color: var(--ink); }
+.icon-btn--ink:hover { background: rgba(255, 255, 255, 0.1); }

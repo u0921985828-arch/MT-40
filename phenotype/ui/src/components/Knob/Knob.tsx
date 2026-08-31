@@ -7,9 +7,10 @@
 //==============================================================================
 
 import { useCallback, useRef } from "react";
-import { usePhenotypeStore, type ParamId } from "./store/usePhenotypeStore";
-import { formatParam } from "./format";
-import { PALETTE } from "./three/theme";
+import { usePhenotypeStore, type ParamId } from "../../store/usePhenotypeStore";
+import { formatParam } from "../../format";
+import { toneColor } from "../../design/tokens";
+import "./Knob.css";
 
 const A0 = 135; // start angle (deg, screen clockwise) — gap at the bottom
 const SWEEP = 270;
@@ -39,7 +40,7 @@ export function Knob({ def }: { def: KnobDef }) {
   const drag = useRef<{ y: number; v: number } | null>(null);
 
   const accent =
-    def.chromosome === 0 ? PALETTE.chlorophyll : def.chromosome === 1 ? PALETTE.ledMagenta : PALETTE.ink;
+    def.chromosome === 0 ? toneColor.chlorophyll : def.chromosome === 1 ? toneColor.magenta : toneColor.ink;
 
   const onDown = useCallback(
     (e: React.PointerEvent) => {
