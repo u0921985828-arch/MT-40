@@ -211,8 +211,8 @@ namespace phenotype
             updateAB();
 
             setResizable (true, true);
-            setResizeLimits (600, 460, 1100, 1000);
-            setSize (juce::jlimit (600, 1100, settings().getIntValue ("w", 780)),
+            setResizeLimits (520, 460, 1100, 1000);
+            setSize (juce::jlimit (520, 1100, settings().getIntValue ("w", 560)),
                      juce::jlimit (460, 1000, settings().getIntValue ("h", 660)));
             startTimerHz (12);
         }
@@ -450,8 +450,9 @@ namespace phenotype
         void layoutContent()
         {
             const int W = viewport.getWidth() - 14;   // account for scrollbar
-            const int pad = 14, cell = 84, rowH = 96, headH = 24;
-            const int perRow = juce::jmax (3, W / cell);
+            const int pad = 14, rowH = 90, headH = 22;
+            const int cellMax = 116;                   // cap so knobs don't spread apart
+            const int avail = W - pad * 2;
             int y = pad;
 
             for (auto& sec : sections)
@@ -459,18 +460,20 @@ namespace phenotype
                 sec.header->setBounds (pad, y, W - pad, headH);
                 y += headH;
                 const int n = (int) sec.ctls.size();
-                const int cols = juce::jmin (perRow, n);
-                const int cw = (W - pad) / cols;
+                // as many columns as fit at >= ~92px each, never more than n
+                const int cols = juce::jlimit (1, n, avail / 92);
+                const int cell = juce::jmin (cellMax, avail / cols);
+                const int startX = pad;                    // left-align under the section header
                 for (int i = 0; i < n; ++i)
                 {
                     const int col = i % cols, rr = i / cols;
                     auto& c = sec.ctls[(size_t) i];
-                    juce::Rectangle<int> cellR (pad + col * cw, y + rr * rowH, cw, rowH);
-                    c.name->setBounds (cellR.removeFromBottom (16));
-                    c.slider->setBounds (cellR.reduced (6, 2));
+                    juce::Rectangle<int> cellR (startX + col * cell, y + rr * rowH, cell, rowH);
+                    c.name->setBounds (cellR.removeFromBottom (15));
+                    c.slider->setBounds (cellR.reduced (4, 2));
                 }
                 const int rows = (n + cols - 1) / cols;
-                y += rows * rowH + 10;
+                y += rows * rowH + 8;
             }
             content.setSize (viewport.getWidth(), y + pad);
         }
