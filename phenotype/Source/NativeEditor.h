@@ -123,15 +123,22 @@ namespace phenotype
             setLookAndFeel (&lnf);
 
             // ---- preset bar ----
+            // Brand wordmark + double-helix mark are painted in paint(); the
+            // `title`/`presetName` labels stay only as data holders (presetName
+            // mirrors the current program name for the centre screen).
             title.setText ("PHENOTYPE", juce::dontSendNotification);
-            title.setFont (juce::Font (18.0f, juce::Font::bold).withExtraKerningFactor (0.18f));
-            title.setColour (juce::Label::textColourId, ne::ink);
-            addAndMakeVisible (title);
-
-            addAndMakeVisible (presetName);
             presetName.setJustificationType (juce::Justification::centred);
             presetName.setFont (juce::Font (14.0f, juce::Font::bold));
             presetName.setColour (juce::Label::textColourId, ne::chloro);
+
+            // bottom-bar centre tagline (mirrors the WebView footer)
+            bottomMid.setText (juce::String (juce::CharPointer_UTF8 (
+                "granular cross-synthesis \xC2\xB7 capillary modulation")),
+                juce::dontSendNotification);
+            bottomMid.setJustificationType (juce::Justification::centred);
+            bottomMid.setFont (juce::Font (11.0f).withExtraKerningFactor (0.14f));
+            bottomMid.setColour (juce::Label::textColourId, ne::faint);
+            addAndMakeVisible (bottomMid);
 
             auto initStep = [this] (juce::TextButton& btn, int dir)
             {
@@ -144,6 +151,7 @@ namespace phenotype
 
             addAndMakeVisible (presetCombo);
             presetCombo.setTextWhenNothingSelected ("Preset");
+            presetCombo.setJustificationType (juce::Justification::centred);
             presetCombo.onChange = [this]
             {
                 const int id = presetCombo.getSelectedId();
@@ -173,8 +181,10 @@ namespace phenotype
             };
             addAndMakeVisible (rescanBtn);
 
-            // A/B compare
+            // A/B compare — the bottom-bar genome chips
             abCopy.setColour (juce::TextButton::buttonColourId, ne::panel2);
+            abA.setColour (juce::TextButton::textColourOffId, ne::chloro);
+            abB.setColour (juce::TextButton::textColourOffId, ne::magenta);
             abA.onClick    = [this] { selectSlot (0); };
             abB.onClick    = [this] { selectSlot (1); };
             abCopy.onClick = [this]
@@ -211,9 +221,9 @@ namespace phenotype
             updateAB();
 
             setResizable (true, true);
-            setResizeLimits (520, 460, 1100, 1000);
-            setSize (juce::jlimit (520, 1100, settings().getIntValue ("w", 560)),
-                     juce::jlimit (460, 1000, settings().getIntValue ("h", 660)));
+            setResizeLimits (720, 560, 1400, 1100);
+            setSize (juce::jlimit (720, 1400, settings().getIntValue ("w", 940)),
+                     juce::jlimit (560, 1100, settings().getIntValue ("h", 680)));
             startTimerHz (12);
         }
 
@@ -227,56 +237,105 @@ namespace phenotype
             setLookAndFeel (nullptr);
         }
 
+        //  The chassis: a top bar (brand · presets · status), a thin utility
+        //  strip, the control bay, and a bottom readout bar — mirrors the
+        //  WebView HUD so both editors read as the same instrument.
         void paint (juce::Graphics& g) override
         {
+            const int W = getWidth(), H = getHeight();
             g.fillAll (ne::bg);
-            // top bar backing
+
+            // --- top bar + utility strip backing ---
             g.setColour (ne::panel);
-            g.fillRect (getLocalBounds().removeFromTop (kBarH));
+            g.fillRect (0, 0, W, topH);
             g.setColour (ne::line);
-            g.fillRect (0, kBarH - 1, getWidth(), 1);
+            g.fillRect (0, topH - 1, W, 1);
+            g.fillRect (0, 56, W, 1);   // divider between bar and utility strip
+
+            // --- bottom bar backing ---
+            g.setColour (ne::panel);
+            g.fillRect (0, H - botH, W, botH);
+            g.setColour (ne::line);
+            g.fillRect (0, H - botH, W, 1);
+
+            // --- brand: double-helix mark + two-tone wordmark + tag ---
+            drawMark (g, juce::Rectangle<float> (14.0f, 13.0f, 24.0f, 30.0f));
+            const float tx = 48.0f;
+            g.setFont (juce::Font (18.0f, juce::Font::bold).withExtraKerningFactor (0.16f));
+            const juce::String pre = "PHENO", suf = "TYPE";
+            const float preW = g.getCurrentFont().getStringWidthFloat (pre);
+            g.setColour (ne::ink);    g.drawText (pre, juce::Rectangle<float> (tx, 14.0f, preW + 4, 22.0f), juce::Justification::centredLeft);
+            g.setColour (ne::chloro); g.drawText (suf, juce::Rectangle<float> (tx + preW + 3, 14.0f, 90.0f, 22.0f), juce::Justification::centredLeft);
+            g.setColour (ne::faint);
+            g.setFont (juce::Font (9.0f).withExtraKerningFactor (0.18f));
+            g.drawText ("GRANULAR DIPLOIDE", juce::Rectangle<float> (tx, 34.0f, 200.0f, 12.0f), juce::Justification::centredLeft);
+
+            // --- status dot (top-right, before the preset count) ---
+            const bool live = proc.engine().activeGrains() > 0;
+            const auto dot = juce::Rectangle<float> (9.0f, 9.0f).withCentre ({ (float) (W - 160), 27.0f });
+            g.setColour (live ? ne::chloro : ne::line);
+            g.fillEllipse (dot);
+            if (live) { g.setColour (ne::chloro.withAlpha (0.35f)); g.drawEllipse (dot.expanded (2.5f), 1.5f); }
+        }
+
+        //  Two counter-rotating gradient arcs = the DNA mark from the WebView.
+        static void drawMark (juce::Graphics& g, juce::Rectangle<float> area)
+        {
+            auto strand = [&] (juce::Colour c, float deg)
+            {
+                juce::Path p;
+                p.addRoundedRectangle (area.getX(), area.getY(), area.getWidth(), area.getHeight(),
+                                       area.getWidth() * 0.5f, area.getHeight() * 0.36f);
+                p.applyTransform (juce::AffineTransform::rotation (
+                    juce::degreesToRadians (deg), area.getCentreX(), area.getCentreY()));
+                g.setColour (c);
+                g.strokePath (p, juce::PathStrokeType (2.0f));
+            };
+            strand (ne::chloro,  24.0f);
+            strand (ne::magenta, -24.0f);
         }
 
         void resized() override
         {
             auto r = getLocalBounds();
-            auto bar = r.removeFromTop (kBarH).reduced (12, 6);
 
-            // row 1 — title | current preset | activity meter | count
-            auto row1 = bar.removeFromTop (24);
-            title.setBounds (row1.removeFromLeft (150));
-            statusLbl.setBounds (row1.removeFromRight (140));
-            meter.setBounds (row1.removeFromRight (168));
-            presetName.setBounds (row1.reduced (6, 0));
+            // ---- top bar: brand (painted) | preset screen | status ----
+            auto bar = r.removeFromTop (56).reduced (12, 10);
+            bar.removeFromLeft (210);                       // brand zone (painted)
+            statusLbl.setBounds (bar.removeFromRight (150)); // preset count
+            bar.removeFromRight (16);                        // room for the live dot
+            auto centre = bar.withSizeKeepingCentre (juce::jmin (480, bar.getWidth()), bar.getHeight());
+            prev.setBounds (centre.removeFromLeft (34).reduced (1, 1));
+            centre.removeFromLeft (6);
+            next.setBounds (centre.removeFromRight (34).reduced (1, 1));
+            centre.removeFromRight (6);
+            presetCombo.setBounds (centre.reduced (0, 1));
 
-            bar.removeFromTop (4);
+            // ---- utility strip: search | rescan | import ----
+            auto strip = r.removeFromTop (topH - 56).reduced (12, 5);
+            importBtn.setBounds (strip.removeFromRight (150).reduced (2, 0));
+            rescanBtn.setBounds (strip.removeFromRight (80).reduced (2, 0));
+            strip.removeFromRight (8);
+            searchBox.setBounds (strip.reduced (2, 0));
 
-            // row 2 — prev | next | combo | A B Copy
-            auto row2 = bar.removeFromTop (32);
-            prev.setBounds (row2.removeFromLeft (32).reduced (1, 2));
-            next.setBounds (row2.removeFromLeft (32).reduced (1, 2));
-            row2.removeFromLeft (6);
-            abCopy.setBounds (row2.removeFromRight (56).reduced (1, 2));
-            abB.setBounds (row2.removeFromRight (30).reduced (1, 2));
-            abA.setBounds (row2.removeFromRight (30).reduced (1, 2));
-            row2.removeFromRight (6);
-            presetCombo.setBounds (row2.reduced (2, 2));
+            // ---- bottom bar: A B Copy | tagline | grains ----
+            auto bot = r.removeFromBottom (botH).reduced (12, 5);
+            abA.setBounds (bot.removeFromLeft (30).reduced (1, 1));
+            bot.removeFromLeft (4);
+            abB.setBounds (bot.removeFromLeft (30).reduced (1, 1));
+            bot.removeFromLeft (6);
+            abCopy.setBounds (bot.removeFromLeft (54).reduced (1, 1));
+            meter.setBounds (bot.removeFromRight (168));
+            bottomMid.setBounds (bot);
 
-            bar.removeFromTop (4);
-
-            // row 3 — search | import | rescan
-            auto row3 = bar.removeFromTop (32);
-            importBtn.setBounds (row3.removeFromRight (128).reduced (2, 2));
-            rescanBtn.setBounds (row3.removeFromRight (76).reduced (2, 2));
-            row3.removeFromRight (6);
-            searchBox.setBounds (row3.reduced (2, 2));
-
+            // ---- control bay ----
             viewport.setBounds (r);
             layoutContent();
         }
 
     private:
-        static constexpr int kBarH = 112;
+        static constexpr int topH = 92;   // brand/preset/status bar + utility strip
+        static constexpr int botH = 34;   // bottom readout bar
 
         //  Rotary with Shift = fine drag and Shift = fine wheel.
         struct Rotary : juce::Slider
@@ -312,6 +371,20 @@ namespace phenotype
             }
         };
 
+        //  A section card: rounded panel background + hairline border, so the
+        //  rack reads as ordered tiles rather than a loose column of knobs.
+        struct Panel : juce::Component
+        {
+            void paint (juce::Graphics& g) override
+            {
+                auto r = getLocalBounds().toFloat();
+                g.setColour (ne::panel2);
+                g.fillRoundedRectangle (r, 9.0f);
+                g.setColour (ne::line);
+                g.drawRoundedRectangle (r.reduced (0.5f), 9.0f, 1.0f);
+            }
+        };
+
         //  Per-user settings (window size + last search), persisted across sessions.
         static juce::PropertiesFile& settings()
         {
@@ -337,8 +410,10 @@ namespace phenotype
         {
             juce::String tag, title;
             juce::StringArray ids;
+            std::unique_ptr<Panel> panel;
             std::unique_ptr<juce::Label> header;
             std::vector<Ctl> ctls;
+            int perRow = 4, rows = 1;   // filled in during layout
         };
 
         //  Normalised 0..1 -> human, unit-bearing readout — mirrors the WebView
@@ -382,14 +457,14 @@ namespace phenotype
             c.slider->getProperties().set ("accent", accent);
             c.slider->setScrollWheelEnabled (true);   // mouse wheel adjusts
             if (def) c.slider->setDoubleClickReturnValue (true, def->defaultValue); // dbl-click = default
-            content.addAndMakeVisible (*c.slider);
+            sec.panel->addAndMakeVisible (*c.slider);
 
             c.name = std::make_unique<juce::Label>();
             c.name->setText (def ? juce::String (def->name) : id, juce::dontSendNotification);
             c.name->setJustificationType (juce::Justification::centred);
             c.name->setFont (juce::Font (10.0f).withExtraKerningFactor (0.04f));
             c.name->setColour (juce::Label::textColourId, ne::dim);
-            content.addAndMakeVisible (*c.name);
+            sec.panel->addAndMakeVisible (*c.name);
 
             c.att = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
                 proc.state(), id, *c.slider);
@@ -427,13 +502,15 @@ namespace phenotype
             {
                 Section sec;
                 sec.tag = d.tag; sec.title = d.title;
+                sec.panel = std::make_unique<Panel>();
+                content.addAndMakeVisible (*sec.panel);
                 sec.header = std::make_unique<juce::Label>();
                 sec.header->setText (juce::String (juce::CharPointer_UTF8 (d.tag)) + "   "
                                      + juce::String (juce::CharPointer_UTF8 (d.title)),
                                      juce::dontSendNotification);
                 sec.header->setFont (juce::Font (11.0f, juce::Font::bold).withExtraKerningFactor (0.08f));
                 sec.header->setColour (juce::Label::textColourId, ne::chloro);
-                content.addAndMakeVisible (*sec.header);
+                sec.panel->addAndMakeVisible (*sec.header);
 
                 for (const char* id : d.ids)
                 {
@@ -447,35 +524,82 @@ namespace phenotype
             }
         }
 
+        //  Single-tab, no-scroll masonry. Sections become cards packed into 1–3
+        //  columns (by width); the knob row height is then solved so the tallest
+        //  column fits the visible height exactly — everything on one page.
         void layoutContent()
         {
-            const int W = viewport.getWidth() - 14;   // account for scrollbar
-            const int pad = 14, rowH = 90, headH = 22;
-            const int cellMax = 116;                   // cap so knobs don't spread apart
-            const int avail = W - pad * 2;
-            int y = pad;
+            const int Vw = viewport.getWidth();
+            const int Vh = viewport.getHeight();
+            const int pad = 12, gap = 10, headH = 20, pt = 8, pb = 8, labelH = 14, cellMin = 78;
 
+            const int ncol = Vw >= 1180 ? 3 : Vw >= 720 ? 2 : 1;
+            const int avail = Vw - pad * 2;
+            const int colW  = (avail - (ncol - 1) * gap) / ncol;
+
+            // per-section geometry (perRow limited by card width, then row count)
             for (auto& sec : sections)
             {
-                sec.header->setBounds (pad, y, W - pad, headH);
-                y += headH;
                 const int n = (int) sec.ctls.size();
-                // as many columns as fit at >= ~92px each, never more than n
-                const int cols = juce::jlimit (1, n, avail / 92);
-                const int cell = juce::jmin (cellMax, avail / cols);
-                const int startX = pad;                    // left-align under the section header
-                for (int i = 0; i < n; ++i)
-                {
-                    const int col = i % cols, rr = i / cols;
-                    auto& c = sec.ctls[(size_t) i];
-                    juce::Rectangle<int> cellR (startX + col * cell, y + rr * rowH, cell, rowH);
-                    c.name->setBounds (cellR.removeFromBottom (15));
-                    c.slider->setBounds (cellR.reduced (4, 2));
-                }
-                const int rows = (n + cols - 1) / cols;
-                y += rows * rowH + 8;
+                const int fit = juce::jmax (1, (colW - 2 * pt) / cellMin);
+                sec.perRow = juce::jlimit (1, juce::jmin (n, 4), fit);
+                sec.rows   = (n + sec.perRow - 1) / sec.perRow;
             }
-            content.setSize (viewport.getWidth(), y + pad);
+
+            // greedy masonry: drop each card into the currently-shortest column
+            std::vector<std::vector<int>> cols ((size_t) ncol);
+            std::vector<double> load ((size_t) ncol, 0.0);
+            for (int s = 0; s < (int) sections.size(); ++s)
+            {
+                int best = 0;
+                for (int c = 1; c < ncol; ++c) if (load[(size_t) c] < load[(size_t) best]) best = c;
+                cols[(size_t) best].push_back (s);
+                load[(size_t) best] += sections[(size_t) s].rows + 0.42; // header ≈ 0.42 rows
+            }
+
+            // solve the knob row height R so the tightest column fits the height
+            const int availH = Vh - pad * 2;
+            int R = 92;
+            for (const auto& col : cols)
+            {
+                if (col.empty()) continue;
+                int fixedPx = (int) col.size() * (pt + headH + pb) + ((int) col.size() - 1) * gap;
+                int rowsPx  = 0; for (int s : col) rowsPx += sections[(size_t) s].rows;
+                if (rowsPx > 0) R = juce::jmin (R, (availH - fixedPx) / rowsPx);
+            }
+            R = juce::jlimit (46, 92, R);
+
+            // place cards column by column, and knobs inside each card
+            int maxBottom = pad;
+            for (int c = 0; c < ncol; ++c)
+            {
+                int x = pad + c * (colW + gap);
+                int y = pad;
+                for (int s : cols[(size_t) c])
+                {
+                    auto& sec = sections[(size_t) s];
+                    const int n = (int) sec.ctls.size();
+                    const int panelH = pt + headH + sec.rows * R + pb;
+                    sec.panel->setBounds (x, y, colW, panelH);
+
+                    auto inner = juce::Rectangle<int> (0, 0, colW, panelH).reduced (pt, 0);
+                    inner.removeFromTop (pt);
+                    sec.header->setBounds (inner.removeFromTop (headH));
+                    const int cellW = inner.getWidth() / sec.perRow;
+                    for (int i = 0; i < n; ++i)
+                    {
+                        const int cc = i % sec.perRow, rr = i / sec.perRow;
+                        auto& ct = sec.ctls[(size_t) i];
+                        juce::Rectangle<int> cell (inner.getX() + cc * cellW, inner.getY() + rr * R, cellW, R);
+                        ct.name->setBounds (cell.removeFromBottom (labelH));
+                        ct.slider->setBounds (cell.reduced (3, 1));
+                    }
+                    y += panelH + gap;
+                }
+                maxBottom = juce::jmax (maxBottom, y);
+            }
+            // exact fit → no scrollbar; only a shrunk-below-minimum window scrolls
+            content.setSize (Vw, juce::jmax (Vh, maxBottom + pad - gap));
         }
 
         // ---- preset browser ----
@@ -601,7 +725,7 @@ namespace phenotype
         PhenotypeAudioProcessor& proc;
         NeonLNF lnf;
 
-        juce::Label title, presetName, statusLbl;
+        juce::Label title, presetName, statusLbl, bottomMid;
         juce::TextButton prev { juce::String (juce::CharPointer_UTF8 ("\xE2\x97\x80")) };
         juce::TextButton next { juce::String (juce::CharPointer_UTF8 ("\xE2\x96\xB6")) };
         //  Split the "\xC3\xAD" escape from the trailing 'a' — otherwise MSVC
