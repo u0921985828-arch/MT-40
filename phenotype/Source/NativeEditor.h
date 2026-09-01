@@ -197,8 +197,11 @@ namespace phenotype
             viewport.setViewedComponent (&content, false);
             viewport.setScrollBarsShown (true, false);
 
+            addAndMakeVisible (meter);
+
             buildSections();
             loadNames();
+            searchBox.setText (settings().getValue ("search", ""), juce::dontSendNotification);
             populatePresetCombo();
             refreshName();
 
@@ -209,12 +212,17 @@ namespace phenotype
 
             setResizable (true, true);
             setResizeLimits (600, 460, 1100, 1000);
-            setSize (780, 660);
-            startTimerHz (8);
+            setSize (juce::jlimit (600, 1100, settings().getIntValue ("w", 780)),
+                     juce::jlimit (460, 1000, settings().getIntValue ("h", 660)));
+            startTimerHz (12);
         }
 
         ~NativeEditor() override
         {
+            settings().setValue ("w", getWidth());
+            settings().setValue ("h", getHeight());
+            settings().setValue ("search", searchBox.getText());
+            settings().saveIfNeeded();
             stopTimer();
             setLookAndFeel (nullptr);
         }
@@ -234,11 +242,12 @@ namespace phenotype
             auto r = getLocalBounds();
             auto bar = r.removeFromTop (kBarH).reduced (12, 6);
 
-            // row 1 — title | current preset | count
+            // row 1 — title | current preset | activity meter | count
             auto row1 = bar.removeFromTop (24);
             title.setBounds (row1.removeFromLeft (150));
-            statusLbl.setBounds (row1.removeFromRight (150));
-            presetName.setBounds (row1);
+            statusLbl.setBounds (row1.removeFromRight (140));
+            meter.setBounds (row1.removeFromRight (168));
+            presetName.setBounds (row1.reduced (6, 0));
 
             bar.removeFromTop (4);
 
@@ -285,6 +294,38 @@ namespace phenotype
                 juce::Slider::mouseWheelMove (e, d);
             }
         };
+
+        //  Live activity strip: capillary-level bar + grain count.
+        struct Meter : juce::Component
+        {
+            int grains = 0; float level = 0.0f;
+            void set (int g, float l) { grains = g; level = juce::jlimit (0.0f, 1.0f, l); repaint(); }
+            void paint (juce::Graphics& g) override
+            {
+                auto r = getLocalBounds();
+                auto bar = r.removeFromLeft (72).withSizeKeepingCentre (66, 5).toFloat();
+                g.setColour (ne::line);   g.fillRoundedRectangle (bar, 2.5f);
+                g.setColour (ne::chloro);  g.fillRoundedRectangle (bar.withWidth (bar.getWidth() * level), 2.5f);
+                g.setColour (ne::dim);     g.setFont (juce::Font (11.0f));
+                g.drawText (juce::String (grains) + " granos", r.reduced (6, 0),
+                            juce::Justification::centredLeft);
+            }
+        };
+
+        //  Per-user settings (window size + last search), persisted across sessions.
+        static juce::PropertiesFile& settings()
+        {
+            static juce::PropertiesFile pf ( []
+            {
+                juce::PropertiesFile::Options o;
+                o.applicationName     = "Phenotype";
+                o.filenameSuffix      = "settings";
+                o.folderName          = "Phenotype";
+                o.osxLibrarySubFolder = "Application Support";
+                return o;
+            }() );
+            return pf;
+        }
 
         struct Ctl
         {
@@ -548,6 +589,7 @@ namespace phenotype
 
         void timerCallback() override
         {
+            meter.set (proc.engine().activeGrains(), proc.engine().capillaryLevel());
             // reflect external program changes (host automation / preset recall)
             const int idx = proc.getCurrentProgram();
             if (idx != lastProgram) refreshName();
@@ -566,6 +608,7 @@ namespace phenotype
         juce::ComboBox presetCombo;
         juce::TextEditor searchBox;
         juce::TextButton abA { "A" }, abB { "B" }, abCopy { "Copy" };
+        Meter meter;
 
         juce::Viewport viewport;
         juce::Component content;
