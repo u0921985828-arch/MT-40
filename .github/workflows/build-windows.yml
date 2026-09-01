@@ -26,11 +26,14 @@ jobs:
         include:
           # x64 keeps the WebGL WebView UI (modern 64-bit hosts).
           - { cmake_arch: x64,   label: x64, branch: ci-win-x64, native: "OFF" }
-          # x86 targets legacy hosts (FL Studio 11). Built with native=OFF so it
-          # ships the WebView UI too; at runtime the plugin uses WebView when the
-          # Edge WebView2 runtime is present and falls back to the native editor
-          # when it is not (hybrid — never a blank page).
-          - { cmake_arch: Win32, label: x86, branch: ci-win-x86, native: "OFF" }
+          # x86 targets legacy hosts (FL Studio 11). Built native=ON so it ALWAYS
+          # uses the full native editor — no WebView compiled in. FL Studio 11 is
+          # a 32-bit host where the Edge WebView2 control can be "present" in the
+          # registry yet still fail to serve the bundled UI (blank "no se puede
+          # acceder a https://juce.backend" page), so hybrid detection isn't
+          # enough. The native editor is a complete first-class UI, so x86 ships
+          # it unconditionally.
+          - { cmake_arch: Win32, label: x86, branch: ci-win-x86, native: "ON" }
     steps:
       - uses: actions/checkout@v4
 
