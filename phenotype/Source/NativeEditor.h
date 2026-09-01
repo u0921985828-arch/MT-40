@@ -405,7 +405,9 @@ namespace phenotype
         juce::Label title, presetName, statusLbl;
         juce::TextButton prev { juce::String (juce::CharPointer_UTF8 ("\xE2\x97\x80")) };
         juce::TextButton next { juce::String (juce::CharPointer_UTF8 ("\xE2\x96\xB6")) };
-        juce::TextButton importBtn { juce::String (juce::CharPointer_UTF8 ("Importar librer\xC3\xADa")) },
+        //  Split the "\xC3\xAD" escape from the trailing 'a' — otherwise MSVC
+        //  parses "\xADa" as one (out-of-range) hex escape.
+        juce::TextButton importBtn { juce::String (juce::CharPointer_UTF8 ("Importar librer\xC3\xAD" "a")) },
                          rescanBtn { "Rescan" };
         juce::ComboBox presetCombo;
 
