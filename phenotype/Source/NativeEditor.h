@@ -150,6 +150,16 @@ namespace phenotype
                 if (id > 0) { proc.setCurrentProgram (id - 1); refreshName(); }
             };
 
+            // search filter over the whole roster
+            addAndMakeVisible (searchBox);
+            searchBox.setTextToShowWhenEmpty (juce::String (juce::CharPointer_UTF8 (
+                "Buscar preset o librer\xC3\xAD" "a\xE2\x80\xA6")), ne::faint);
+            searchBox.setColour (juce::TextEditor::backgroundColourId, ne::panel2);
+            searchBox.setColour (juce::TextEditor::textColourId, ne::ink);
+            searchBox.setColour (juce::TextEditor::outlineColourId, ne::line);
+            searchBox.setColour (juce::TextEditor::focusedOutlineColourId, ne::chloro);
+            searchBox.onTextChange = [this] { populatePresetCombo(); };
+
             importBtn.setColour (juce::TextButton::buttonColourId, ne::magenta.withAlpha (0.16f));
             importBtn.onClick = [this] { doImport(); };
             addAndMakeVisible (importBtn);
@@ -157,10 +167,25 @@ namespace phenotype
             rescanBtn.onClick = [this]
             {
                 proc.rescanLibrary();
+                loadNames();
                 populatePresetCombo();
                 refreshName();
             };
             addAndMakeVisible (rescanBtn);
+
+            // A/B compare
+            abCopy.setColour (juce::TextButton::buttonColourId, ne::panel2);
+            abA.onClick    = [this] { selectSlot (0); };
+            abB.onClick    = [this] { selectSlot (1); };
+            abCopy.onClick = [this]
+            {
+                captureTo (activeSlot == 0 ? slotA : slotB);          // snapshot current
+                (activeSlot == 0 ? slotB : slotA) = (activeSlot == 0 ? slotA : slotB); // copy to the other
+            };
+            abCopy.setTooltip ("Copiar el estado actual al otro (A<->B)");
+            addAndMakeVisible (abA);
+            addAndMakeVisible (abB);
+            addAndMakeVisible (abCopy);
 
             addAndMakeVisible (statusLbl);
             statusLbl.setJustificationType (juce::Justification::centredRight);
@@ -173,12 +198,18 @@ namespace phenotype
             viewport.setScrollBarsShown (true, false);
 
             buildSections();
+            loadNames();
             populatePresetCombo();
             refreshName();
 
+            // seed both A/B slots from the current state
+            captureTo (slotA);
+            slotB = slotA;
+            updateAB();
+
             setResizable (true, true);
-            setResizeLimits (560, 420, 1100, 1000);
-            setSize (760, 620);
+            setResizeLimits (600, 460, 1100, 1000);
+            setSize (780, 660);
             startTimerHz (8);
         }
 
@@ -201,26 +232,59 @@ namespace phenotype
         void resized() override
         {
             auto r = getLocalBounds();
-            auto bar = r.removeFromTop (kBarH).reduced (12, 0);
+            auto bar = r.removeFromTop (kBarH).reduced (12, 6);
 
-            auto row1 = bar.removeFromTop (34).withTrimmedTop (8);
-            title.setBounds (row1.removeFromLeft (140));
-            statusLbl.setBounds (row1.removeFromRight (130));
+            // row 1 — title | current preset | count
+            auto row1 = bar.removeFromTop (24);
+            title.setBounds (row1.removeFromLeft (150));
+            statusLbl.setBounds (row1.removeFromRight (150));
+            presetName.setBounds (row1);
 
-            auto row2 = bar.removeFromTop (34);
-            prev.setBounds (row2.removeFromLeft (34).reduced (0, 2));
-            next.setBounds (row2.removeFromRight (34).reduced (0, 2));
-            rescanBtn.setBounds (row2.removeFromRight (78).reduced (3, 2));
-            importBtn.setBounds (row2.removeFromRight (128).reduced (3, 2));
-            presetCombo.setBounds (row2.removeFromLeft (juce::jmin (240, row2.getWidth() / 2)).reduced (3, 2));
-            presetName.setBounds (row2.reduced (6, 2));
+            bar.removeFromTop (4);
+
+            // row 2 — prev | next | combo | A B Copy
+            auto row2 = bar.removeFromTop (32);
+            prev.setBounds (row2.removeFromLeft (32).reduced (1, 2));
+            next.setBounds (row2.removeFromLeft (32).reduced (1, 2));
+            row2.removeFromLeft (6);
+            abCopy.setBounds (row2.removeFromRight (56).reduced (1, 2));
+            abB.setBounds (row2.removeFromRight (30).reduced (1, 2));
+            abA.setBounds (row2.removeFromRight (30).reduced (1, 2));
+            row2.removeFromRight (6);
+            presetCombo.setBounds (row2.reduced (2, 2));
+
+            bar.removeFromTop (4);
+
+            // row 3 — search | import | rescan
+            auto row3 = bar.removeFromTop (32);
+            importBtn.setBounds (row3.removeFromRight (128).reduced (2, 2));
+            rescanBtn.setBounds (row3.removeFromRight (76).reduced (2, 2));
+            row3.removeFromRight (6);
+            searchBox.setBounds (row3.reduced (2, 2));
 
             viewport.setBounds (r);
             layoutContent();
         }
 
     private:
-        static constexpr int kBarH = 74;
+        static constexpr int kBarH = 112;
+
+        //  Rotary with Shift = fine drag and Shift = fine wheel.
+        struct Rotary : juce::Slider
+        {
+            Rotary() : juce::Slider (juce::Slider::RotaryVerticalDrag, juce::Slider::TextBoxBelow) {}
+            void mouseDown (const juce::MouseEvent& e) override
+            {
+                setMouseDragSensitivity (e.mods.isShiftDown() ? 900 : 240);
+                juce::Slider::mouseDown (e);
+            }
+            void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w) override
+            {
+                juce::MouseWheelDetails d = w;
+                if (e.mods.isShiftDown()) { d.deltaX *= 0.25f; d.deltaY *= 0.25f; }
+                juce::Slider::mouseWheelMove (e, d);
+            }
+        };
 
         struct Ctl
         {
@@ -270,12 +334,13 @@ namespace phenotype
         {
             const auto* def = findDef (id);
             Ctl c;
-            c.slider = std::make_unique<juce::Slider> (juce::Slider::RotaryVerticalDrag,
-                                                       juce::Slider::TextBoxBelow);
+            c.slider = std::make_unique<Rotary>();
             c.slider->setTextBoxStyle (juce::Slider::TextBoxBelow, false, 74, 15);
             c.slider->setTextBoxIsEditable (false);   // display-only readout; drag to change
             c.slider->setColour (juce::Slider::textBoxTextColourId, ne::ink);
             c.slider->getProperties().set ("accent", accent);
+            c.slider->setScrollWheelEnabled (true);   // mouse wheel adjusts
+            if (def) c.slider->setDoubleClickReturnValue (true, def->defaultValue); // dbl-click = default
             content.addAndMakeVisible (*c.slider);
 
             c.name = std::make_unique<juce::Label>();
@@ -370,22 +435,32 @@ namespace phenotype
         }
 
         // ---- preset browser ----
+        //  Rebuilds the dropdown from the cached roster, filtered by the search
+        //  box (matches name or library, case-insensitive). Item ids stay the
+        //  program index + 1 so a filtered pick still loads the right preset.
         void populatePresetCombo()
         {
             presetCombo.clear (juce::dontSendNotification);
-            const int n = proc.getNumPrograms();
+            const juce::String q = searchBox.getText().trim().toLowerCase();
             juce::String lastLib;
             auto* menu = presetCombo.getRootMenu();
-            for (int i = 0; i < n; ++i)
+            int shown = 0;
+            for (int i = 0; i < allNames.size(); ++i)
             {
-                const juce::String full = proc.getProgramName (i);
+                const juce::String& full = allNames.getReference (i);
+                if (q.isNotEmpty() && ! full.toLowerCase().contains (q))
+                    continue;
                 juce::String lib = "PRESET", nm = full;
                 const int sep = full.indexOf (" > ");
                 if (sep >= 0) { lib = full.substring (0, sep); nm = full.substring (sep + 3); }
                 if (lib != lastLib) { menu->addSectionHeader (lib); lastLib = lib; }
                 presetCombo.addItem (nm.isEmpty() ? full : nm, i + 1);
+                ++shown;
             }
-            statusLbl.setText (juce::String (n) + " presets", juce::dontSendNotification);
+            presetCombo.setSelectedId (proc.getCurrentProgram() + 1, juce::dontSendNotification);
+            statusLbl.setText (q.isEmpty() ? juce::String (allNames.size()) + " presets"
+                                           : juce::String (shown) + " / " + juce::String (allNames.size()),
+                               juce::dontSendNotification);
         }
 
         void refreshName()
@@ -422,11 +497,53 @@ namespace phenotype
                 if (f != juce::File())
                 {
                     proc.importBank (f);
+                    loadNames();
                     populatePresetCombo();
                     refreshName();
                 }
                 importBtn.setEnabled (true);
             });
+        }
+
+        // ---- A/B compare (two live snapshots of all params) ----
+        void captureTo (std::array<float, params::kDefs.size()>& slot)
+        {
+            for (size_t i = 0; i < params::kDefs.size(); ++i)
+                if (auto* v = proc.state().getRawParameterValue (params::kDefs[i].id))
+                    slot[i] = v->load();
+        }
+        void applyFrom (const std::array<float, params::kDefs.size()>& slot)
+        {
+            for (size_t i = 0; i < params::kDefs.size(); ++i)
+                if (auto* p = proc.state().getParameter (params::kDefs[i].id))
+                    p->setValueNotifyingHost (slot[i]);   // params are 0..1, raw == normalised
+        }
+        void selectSlot (int s)
+        {
+            if (s == activeSlot) return;
+            captureTo (activeSlot == 0 ? slotA : slotB);       // stash current edits
+            activeSlot = s;
+            applyFrom (activeSlot == 0 ? slotA : slotB);
+            updateAB();
+        }
+        void updateAB()
+        {
+            auto tint = [this] (juce::TextButton& b, bool on)
+            {
+                b.setColour (juce::TextButton::buttonColourId, on ? ne::chloro : ne::panel2);
+                b.setColour (juce::TextButton::textColourOffId, on ? ne::bg : ne::ink);
+                b.repaint();
+            };
+            tint (abA, activeSlot == 0);
+            tint (abB, activeSlot == 1);
+        }
+
+        void loadNames()
+        {
+            allNames.clearQuick();
+            const int n = proc.getNumPrograms();
+            for (int i = 0; i < n; ++i)
+                allNames.add (proc.getProgramName (i));
         }
 
         void timerCallback() override
@@ -447,12 +564,18 @@ namespace phenotype
         juce::TextButton importBtn { juce::String (juce::CharPointer_UTF8 ("Importar librer\xC3\xAD" "a")) },
                          rescanBtn { "Rescan" };
         juce::ComboBox presetCombo;
+        juce::TextEditor searchBox;
+        juce::TextButton abA { "A" }, abB { "B" }, abCopy { "Copy" };
 
         juce::Viewport viewport;
         juce::Component content;
         std::vector<Section> sections;
         std::unique_ptr<juce::FileChooser> chooser;
         int lastProgram = -1;
+
+        juce::StringArray allNames;                             // full roster (search cache)
+        std::array<float, params::kDefs.size()> slotA {}, slotB {};
+        int activeSlot = 0;                                     // 0 = A, 1 = B
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NativeEditor)
     };
