@@ -236,14 +236,45 @@ namespace phenotype
             std::vector<Ctl> ctls;
         };
 
+        //  Normalised 0..1 -> human, unit-bearing readout — mirrors the WebView
+        //  (ui/src/format.ts) and the DSP mappings, so the native editor reads
+        //  like the instrument sounds (Hz, dB, st, ms, LP/HP, Up/Down…).
+        static juce::String nativeFormat (const juce::String& id, double v)
+        {
+            static const char* ARP[]  = { "Up", "Down", "Up-Down", "Random" };
+            static const char* SCAL[] = { "Cromatica", "Mayor", "Menor", "Pentatonica", "Dorica" };
+            static const char* FILT[] = { "LP", "BP", "HP" };
+            auto stepv = [] (double x, const char* const* list, int n)
+            { return juce::String (list[juce::jlimit (0, n - 1, (int) std::floor (x * (n - 0.0001)))]); };
+
+            if (id == "grainDensity") return juce::String (juce::roundToInt (2 + v * 198)) + " gr/s";
+            if (id == "grainSize")    return juce::String (juce::roundToInt (8 + v * 392)) + " ms";
+            if (id == "pitchA" || id == "pitchB") { const double s = (v - 0.5) * 24.0; return (s >= 0 ? "+" : "") + juce::String (s, 1) + " st"; }
+            if (id == "outputGain")   { const double db = v <= 0.0001 ? -60.0 : 20.0 * std::log10 (v); return (db > -0.05 ? juce::String ("0.0") : juce::String (db, 1)) + " dB"; }
+            if (id == "filterCutoff") { const double hz = 20.0 * std::exp (v * 6.9077); return hz >= 1000.0 ? juce::String (hz / 1000.0, 2) + " kHz" : juce::String (juce::roundToInt (hz)) + " Hz"; }
+            if (id == "filterReso")   return juce::String (0.5 + v * 9.5, 1) + " Q";
+            if (id == "filterType")   return stepv (v, FILT, 3);
+            if (id == "filterMod")    return juce::String (juce::roundToInt (v * 100)) + "%";
+            if (id == "unison")       return juce::String (1 + juce::roundToInt (v * 6)) + " voces";
+            if (id == "unisonDetune") return juce::String::fromUTF8 ("\xC2\xB1") + juce::String (juce::roundToInt (v * 50)) + " cent";
+            if (id == "stereoWidth")  return juce::String (juce::roundToInt (v * 200)) + "%";
+            if (id == "delayTime")    return juce::String (juce::roundToInt (20 + v * 730)) + " ms";
+            if (id == "arpOn" || id == "arpSync") return v > 0.5 ? "On" : "Off";
+            if (id == "arpMode")      return stepv (v, ARP, 4);
+            if (id == "arpRate")      return juce::String (0.5 + v * 19.5, 1) + " Hz";
+            if (id == "scaleType")    return stepv (v, SCAL, 5);
+            return juce::String (juce::roundToInt (v * 100)) + "%";
+        }
+
         void addCtl (Section& sec, const juce::String& id, const char* accent)
         {
             const auto* def = findDef (id);
             Ctl c;
             c.slider = std::make_unique<juce::Slider> (juce::Slider::RotaryVerticalDrag,
                                                        juce::Slider::TextBoxBelow);
-            c.slider->setTextBoxStyle (juce::Slider::TextBoxBelow, false, 62, 15);
-            c.slider->setColour (juce::Slider::textBoxTextColourId, ne::dim);
+            c.slider->setTextBoxStyle (juce::Slider::TextBoxBelow, false, 74, 15);
+            c.slider->setTextBoxIsEditable (false);   // display-only readout; drag to change
+            c.slider->setColour (juce::Slider::textBoxTextColourId, ne::ink);
             c.slider->getProperties().set ("accent", accent);
             content.addAndMakeVisible (*c.slider);
 
@@ -256,6 +287,12 @@ namespace phenotype
 
             c.att = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
                 proc.state(), id, *c.slider);
+            //  Override the attachment's default (raw 0..1) text with our
+            //  unit-bearing readout — must be set AFTER the attachment, whose
+            //  constructor installs its own textFromValueFunction.
+            const juce::String pid = id;
+            c.slider->textFromValueFunction = [pid] (double v) { return nativeFormat (pid, v); };
+            c.slider->updateText();   // show the formatted readout from the start
 
             sec.ctls.push_back (std::move (c));
         }
