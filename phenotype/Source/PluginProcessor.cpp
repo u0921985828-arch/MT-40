@@ -4,9 +4,7 @@
 
 #include "PluginProcessor.h"
 #include "PhenotypeWebEditor.h"
-#if PHENOTYPE_NATIVE_EDITOR
- #include "NativeEditor.h"
-#endif
+#include "NativeEditor.h"
 #include "Presets.h"
 #include "BinaryData.h"
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -312,15 +310,45 @@ namespace phenotype
         return false;
     }
 
+   #if JUCE_WINDOWS && ! PHENOTYPE_NATIVE_EDITOR
+    //  The WebGL WebView UI needs the Microsoft Edge WebView2 runtime. It is
+    //  present on most Windows 10/11 machines but can be missing on the older
+    //  setups that still run 32-bit hosts (FL Studio 11). Detect it via the
+    //  EdgeUpdate registry entry (loader-independent) so we can fall back to the
+    //  native editor instead of rendering a blank page.
+    static bool webView2RuntimeAvailable()
+    {
+        static constexpr const char* kClient =
+            "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}\\pv";
+        const juce::String bases[] = {
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\EdgeUpdate\\Clients\\",
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\",
+            "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\EdgeUpdate\\Clients\\",
+        };
+        for (const auto& base : bases)
+        {
+            const auto pv = juce::WindowsRegistry::getValue (base + kClient);
+            if (pv.isNotEmpty() && pv != "0.0.0.0")
+                return true;
+        }
+        return false;
+    }
+   #endif
+
     juce::AudioProcessorEditor* PhenotypeAudioProcessor::createEditor()
     {
        #if PHENOTYPE_NATIVE_EDITOR
-        //  Legacy-host fallback (e.g. FL Studio 11): the embedded WebView can't
-        //  serve the modern WebGL UI on old Trident/WebView2 hosts, so expose a
-        //  full native editor — preset browser, library Import, and the real
-        //  grouped controls. Fully automatable; works in every host.
+        //  Build forced to the native editor (no WebView compiled in).
         return new NativeEditor (*this);
        #else
+        //  Hybrid: prefer the WebGL WebView UI; if the WebView2 runtime is
+        //  missing (older Windows / FL Studio 11 boxes), use the full native
+        //  editor — preset browser, library Import and the real controls — so
+        //  the plugin is complete and never shows a blank page on any host.
+       #if JUCE_WINDOWS
+        if (! webView2RuntimeAvailable())
+            return new NativeEditor (*this);
+       #endif
         return new PhenotypeWebEditor (*this);
        #endif
     }
