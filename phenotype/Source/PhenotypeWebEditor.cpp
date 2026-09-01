@@ -139,6 +139,24 @@ namespace phenotype
             c (juce::var (obj));
         };
 
+        if (action == "list")
+        {
+            //  Full preset roster for the in-UI browser: names in program order
+            //  (the UI splits "LIBRARY > name" itself). Cheap enough to send in
+            //  one JSON even for large DLC libraries.
+            auto* obj = new juce::DynamicObject();
+            const int n = processorRef.getNumPrograms();
+            juce::Array<juce::var> names;
+            names.ensureStorageAllocated (n);
+            for (int i = 0; i < n; ++i)
+                names.add (processorRef.getProgramName (i));
+            obj->setProperty ("count", n);
+            obj->setProperty ("imported", 0);
+            obj->setProperty ("presets", names);
+            completion (juce::var (obj));
+            return;
+        }
+
         if (action == "rescan")
         {
             processorRef.rescanLibrary();

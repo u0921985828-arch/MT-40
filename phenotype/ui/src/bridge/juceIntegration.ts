@@ -36,8 +36,10 @@ export type ProgramAction = "next" | "prev" | "set" | "get";
 export interface LibraryInfo {
   count: number;
   imported: number;
+  /** Full preset roster in program order (only returned for the "list" action). */
+  presets?: string[];
 }
-export type LibraryAction = "count" | "rescan" | "import";
+export type LibraryAction = "count" | "rescan" | "import" | "list";
 
 export interface JuceIntegration {
   readonly hosted: boolean;
@@ -133,6 +135,7 @@ function createHostedIntegration(juce: JuceGlobal): JuceIntegration {
         return {
           count: typeof o.count === "number" ? o.count : 0,
           imported: typeof o.imported === "number" ? o.imported : 0,
+          ...(Array.isArray(o.presets) ? { presets: o.presets.map(String) } : {}),
         };
       });
     },
@@ -192,17 +195,23 @@ function createMockIntegration(): JuceIntegration {
       else if (action === "prev") mockProgram = (mockProgram - 1 + count) % count;
       else if (action === "set" && index !== undefined)
         mockProgram = Math.max(0, Math.min(count - 1, index));
-      return Promise.resolve({ index: mockProgram, name: `Preset ${mockProgram + 1}`, count });
+      return Promise.resolve({ index: mockProgram, name: mockName(mockProgram), count });
     },
     library(action) {
       // eslint-disable-next-line no-console
       console.debug(`[mock] library ${action}`);
+      if (action === "list") {
+        const presets = Array.from({ length: 876 }, (_, i) => mockName(i));
+        return Promise.resolve({ count: 876, imported: 0, presets });
+      }
       return Promise.resolve({ count: 876, imported: 0 });
     },
   };
 }
 
 let mockProgram = 0;
+const MOCK_LIBS = ["GENESIS", "AURORA", "RESIN LAB", "LANDRACE", "TERPENE", "COSMIC", "HALON", "BOTANICA", "VOLTA", "PHENO"];
+const mockName = (i: number) => `${MOCK_LIBS[i % MOCK_LIBS.length]} > Preset ${i + 1}`;
 
 function normaliseParams(payload: unknown): ParamsFrame | null {
   if (typeof payload === "object" && payload !== null) {

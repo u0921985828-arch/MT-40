@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { IsometricGrid } from "./three/IsometricGrid";
 import { usePhenotypeStore } from "./store/usePhenotypeStore";
-import { Knob, type KnobDef, Tag, IconButton, Screen } from "./components";
+import { Knob, type KnobDef, Tag, IconButton, Screen, PresetBrowser } from "./components";
 import { PALETTE } from "./three/theme";
 import { juceIntegration, type ProgramInfo } from "./bridge/juceIntegration";
 
@@ -130,14 +130,10 @@ function PresetBar() {
   const step = useCallback((dir: "prev" | "next") => {
     juceIntegration.program(dir).then(setInfo);
   }, []);
-  const [busy, setBusy] = useState(false);
-  const importBank = useCallback(() => {
-    setBusy(true);
-    juceIntegration
-      .library("import")
-      .then(() => juceIntegration.program("get"))
-      .then(setInfo)
-      .finally(() => setBusy(false));
+  const [browse, setBrowse] = useState(false);
+  const pick = useCallback((index: number) => {
+    juceIntegration.program("set", index).then(setInfo);
+    setBrowse(false);
   }, []);
 
   const [lib, rest] = info.name.includes(" > ")
@@ -145,24 +141,33 @@ function PresetBar() {
     : ["PRESET", info.name];
 
   return (
-    <div className="ph-preset">
-      <IconButton aria-label="Preset anterior" onClick={() => step("prev")}>
-        ◀
-      </IconButton>
-      <Screen label={lib} title={rest} meta={info.count > 0 ? `${info.index + 1} / ${info.count}` : undefined} />
-      <IconButton aria-label="Preset siguiente" onClick={() => step("next")}>
-        ▶
-      </IconButton>
-      <IconButton
-        tone="magenta"
-        aria-label="Importar banco / DLC"
-        title="Importar banco / DLC"
-        onClick={importBank}
-        disabled={busy}
-      >
-        {busy ? "…" : "＋"}
-      </IconButton>
-    </div>
+    <>
+      <div className="ph-preset">
+        <IconButton aria-label="Preset anterior" onClick={() => step("prev")}>
+          ◀
+        </IconButton>
+        <button
+          className="ph-preset__open"
+          aria-label="Abrir navegador de presets"
+          title="Explorar librería"
+          onClick={() => setBrowse(true)}
+        >
+          <Screen label={lib} title={rest} meta={info.count > 0 ? `${info.index + 1} / ${info.count}` : undefined} />
+        </button>
+        <IconButton aria-label="Preset siguiente" onClick={() => step("next")}>
+          ▶
+        </IconButton>
+        <IconButton
+          tone="magenta"
+          aria-label="Explorar / importar librería"
+          title="Explorar / importar librería"
+          onClick={() => setBrowse(true)}
+        >
+          ☰
+        </IconButton>
+      </div>
+      <PresetBrowser open={browse} currentIndex={info.index} onSelect={pick} onClose={() => setBrowse(false)} />
+    </>
   );
 }
 

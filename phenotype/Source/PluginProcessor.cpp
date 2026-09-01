@@ -4,6 +4,9 @@
 
 #include "PluginProcessor.h"
 #include "PhenotypeWebEditor.h"
+#if PHENOTYPE_NATIVE_EDITOR
+ #include "NativeEditor.h"
+#endif
 #include "Presets.h"
 #include "BinaryData.h"
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -314,9 +317,9 @@ namespace phenotype
        #if PHENOTYPE_NATIVE_EDITOR
         //  Legacy-host fallback (e.g. FL Studio 11): the embedded WebView can't
         //  serve the modern WebGL UI on old Trident/WebView2 hosts, so expose a
-        //  native generic editor with a labelled slider per APVTS parameter.
-        //  Fully automatable; works in every host.
-        return new juce::GenericAudioProcessorEditor (*this);
+        //  full native editor — preset browser, library Import, and the real
+        //  grouped controls. Fully automatable; works in every host.
+        return new NativeEditor (*this);
        #else
         return new PhenotypeWebEditor (*this);
        #endif

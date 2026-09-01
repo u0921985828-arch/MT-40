@@ -243,6 +243,16 @@ html, body, #root {
 /* Nav arrows / import (IconButton), preset screen (Screen) and section tags
    (Tag) now live as primitives under src/components — their styles ship with
    the component, so only the layout that arranges them stays here. */
+/* The preset screen doubles as the button that opens the full browser. */
+.ph-preset__open {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  min-width: 0;
+}
+.ph-preset__open:focus-visible { outline: 2px solid var(--chlorophyll); outline-offset: 2px; border-radius: 8px; }
 
 .ph-foot { display: none; }
 
