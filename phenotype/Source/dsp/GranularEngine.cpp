@@ -13,12 +13,16 @@ namespace phenotype::dsp
         sampleRate = newSampleRate;
         sourceLen  = static_cast<int> (kSourceSeconds * newSampleRate);
 
-        //  Off-thread allocation only. One buffer per band-limited mip.
-        for (int m = 0; m < kNumMips; ++m)
-        {
-            sourceA[(size_t) m].assign (static_cast<size_t> (sourceLen), 0.0f);
-            sourceB[(size_t) m].assign (static_cast<size_t> (sourceLen), 0.0f);
-        }
+        //  Off-thread allocation only. One buffer per band-limited mip, for ALL
+        //  three triple-buffer slots.
+        genWriteIdx = 0; genReadIdx = 1;
+        genMailbox.store (2, std::memory_order_relaxed);
+        for (int b = 0; b < 3; ++b)
+            for (int m = 0; m < kNumMips; ++m)
+            {
+                sourceA[b][(size_t) m].assign (static_cast<size_t> (sourceLen), 0.0f);
+                sourceB[b][(size_t) m].assign (static_cast<size_t> (sourceLen), 0.0f);
+            }
 
         modulator.prepare (newSampleRate);
         gainPole     = fastmath::onePoleCoeff (0.005f, newSampleRate);  // ~5 ms de-zip
@@ -79,6 +83,11 @@ namespace phenotype::dsp
         if (sourceLen <= 0)
             return;
 
+        //  Build into the writer's private slot, then publish atomically so the
+        //  audio thread never reads a partially-written wavetable.
+        MipSet& SA = sourceA[genWriteIdx];
+        MipSet& SB = sourceB[genWriteIdx];
+
         constexpr double kPi = 3.14159265358979323846;
         const double w0     = 2.0 * kPi * kGenomeHz / sampleRate;
         const int    nyqK   = static_cast<int> ((sampleRate * 0.5) / kGenomeHz) - 1;
@@ -92,8 +101,8 @@ namespace phenotype::dsp
         {
             const int kMax = std::max (1, kFull >> m);
             float peakA = 1.0e-6f, peakB = 1.0e-6f;
-            auto& aBuf = sourceA[(size_t) m];
-            auto& bBuf = sourceB[(size_t) m];
+            auto& aBuf = SA[(size_t) m];
+            auto& bBuf = SB[(size_t) m];
             for (int n = 0; n < sourceLen; ++n)
             {
                 const double ph = w0 * n;
@@ -105,9 +114,11 @@ namespace phenotype::dsp
                 peakA = std::max (peakA, std::fabs (aBuf[(size_t) n]));
                 peakB = std::max (peakB, std::fabs (bBuf[(size_t) n]));
             }
-            const float na = 0.9f / peakA, nb = 0.9f / peakB;
-            for (int n = 0; n < sourceLen; ++n) { aBuf[(size_t) n] *= na; bBuf[(size_t) n] *= nb; }
+            const float na = 0.9f / peakA, nb2 = 0.9f / peakB;
+            for (int n = 0; n < sourceLen; ++n) { aBuf[(size_t) n] *= na; bBuf[(size_t) n] *= nb2; }
         }
+
+        publishGenome();
     }
 
     //  Derive octave mips 1.. from mip 0 by repeated band-limiting. Each step
@@ -350,9 +361,13 @@ namespace phenotype::dsp
         if (mono == nullptr || numSamples <= 0 || sourceLen <= 0)
             return;
 
+        //  Build into the writer's private slot, then publish (see fillGenome).
+        MipSet& SA = sourceA[genWriteIdx];
+        MipSet& SB = sourceB[genWriteIdx];
+
         float peak = 1.0e-6f;
-        auto& a0 = sourceA[0];
-        auto& b0 = sourceB[0];
+        auto& a0 = SA[0];
+        auto& b0 = SB[0];
         for (int n = 0; n < sourceLen; ++n)
         {
             const float s = mono[n % numSamples];   // loop to fill
@@ -365,8 +380,10 @@ namespace phenotype::dsp
         for (int n = 0; n < sourceLen; ++n) { a0[(size_t) n] *= norm; b0[(size_t) n] *= norm; }
 
         //  Band-limit the higher mips off the loaded waveform (anti-alias).
-        buildMips (sourceA);
-        buildMips (sourceB);
+        buildMips (SA);
+        buildMips (SB);
+
+        publishGenome();
     }
 
     void GranularEngine::useBuiltinGenome() noexcept
@@ -489,6 +506,17 @@ namespace phenotype::dsp
     {
         const ParameterSnapshot p = hub.snapshot();
 
+        //  Adopt the freshest published genome ONCE per block (wait-free): if the
+        //  mailbox is dirty, swap our read slot for it. The block then reads one
+        //  consistent, fully-written wavetable set that no writer can touch.
+        if (genMailbox.load (std::memory_order_acquire) & kGenDirty)
+        {
+            const int prev = genMailbox.exchange (genReadIdx, std::memory_order_acq_rel);
+            genReadIdx = prev & kGenIdxMask;
+        }
+        MipSet& SA = sourceA[genReadIdx];
+        MipSet& SB = sourceB[genReadIdx];
+
         //  Push control values into the modulator (cheap; recompute is guarded).
         modulator.setCaudal        (p.caudal);
         modulator.setDensidadSuelo (p.soilDensity);
@@ -542,8 +570,8 @@ namespace phenotype::dsp
             if (! instrumentMode)
             {
                 //  Live capture goes to mip 0; effect-mode grains read mip 0.
-                sourceA[0][(size_t) writeHead] = inL ? inL[n] : 0.0f;
-                sourceB[0][(size_t) writeHead] = inR ? inR[n] : (inL ? inL[n] : 0.0f);
+                SA[0][(size_t) writeHead] = inL ? inL[n] : 0.0f;
+                SB[0][(size_t) writeHead] = inR ? inR[n] : (inL ? inL[n] : 0.0f);
                 if (++writeHead >= sourceLen) writeHead = 0;
             }
             else
@@ -622,8 +650,8 @@ namespace phenotype::dsp
                 ++live;
                 const float w = Grain::window (g.phase);
 
-                const float a = readSource (sourceA, g.readPosA, g.mipA);
-                const float b = readSource (sourceB, g.readPosB, g.mipB);
+                const float a = readSource (SA, g.readPosA, g.mipA);
+                const float b = readSource (SB, g.readPosB, g.mipB);
 
                 float gA, gB;
                 fastmath::equalPowerPair (g.blend, gA, gB);

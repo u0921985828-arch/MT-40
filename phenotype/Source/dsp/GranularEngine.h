@@ -23,6 +23,7 @@
 #include "FX.h"
 #include <vector>
 #include <array>
+#include <atomic>
 #include <cstdint>
 
 namespace phenotype::dsp
@@ -170,8 +171,29 @@ namespace phenotype::dsp
         //  Chromosome A/B genomes, each as kNumMips band-limited octave copies
         //  (mip 0 = full band; mip m band-limited an octave lower). Grains pick a
         //  mip from their playback increment so pitched-up notes never alias.
-        MipSet sourceA;
-        MipSet sourceB;
+        //
+        //  Triple-buffered: genome (re)builds run on the message thread while the
+        //  audio thread reads. Writer fills its private slot then publishes via an
+        //  atomic mailbox exchange; the reader adopts the freshest slot at block
+        //  start. The three indices stay a permutation of {0,1,2}, so writer and
+        //  reader never touch the same buffer — no torn reads even if the writer
+        //  publishes several times within one audio block. Without this, a preset
+        //  change mid-playback lets the audio thread read half-rewritten
+        //  wavetables — heard as clicks / noise / garbage.
+        static constexpr int kGenIdxMask = 0x3;
+        static constexpr int kGenDirty   = 0x4;
+        MipSet sourceA[3];
+        MipSet sourceB[3];
+        int genWriteIdx = 0;                    // message-thread owned slot
+        int genReadIdx  = 1;                    // audio-thread owned slot
+        std::atomic<int> genMailbox { 2 };      // spare idx (bits0-1) | dirty (bit2)
+
+        void publishGenome() noexcept           // message thread, after filling
+        {
+            const int prev = genMailbox.exchange (genWriteIdx | kGenDirty,
+                                                  std::memory_order_acq_rel);
+            genWriteIdx = prev & kGenIdxMask;
+        }
 
         Grain  grains[kMaxGrains];
         int    liveGrainCount = 0;
