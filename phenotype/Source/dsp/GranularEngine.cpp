@@ -149,6 +149,27 @@ namespace phenotype::dsp
         }
     }
 
+    //  Cheap 2-point linear read — used under heavy grain load (the adaptive CPU
+    //  governor). The genome is already band-limited per mip, so on dense clouds
+    //  linear is nearly indistinguishable from cubic but roughly half the cost.
+    float GranularEngine::readSourceLinear (const MipSet& mips, float pos, int mip) const noexcept
+    {
+        const int mi = mip < 0 ? 0 : (mip >= kNumMips ? kNumMips - 1 : mip);
+        const std::vector<float>& buf = mips[(size_t) mi];
+        if (sourceLen <= 1)
+            return sourceLen <= 0 ? 0.0f : buf[0];
+
+        const float len = static_cast<float> (sourceLen);
+        float wrapped = pos;
+        if (wrapped >= len) wrapped -= len;
+        else if (wrapped < 0.0f) wrapped += len;
+
+        const int   i1 = static_cast<int> (wrapped);
+        const float f  = wrapped - static_cast<float> (i1);
+        int i2 = i1 + 1; if (i2 >= sourceLen) i2 -= sourceLen;
+        return buf[(size_t) i1] + (buf[(size_t) i2] - buf[(size_t) i1]) * f;
+    }
+
     //  Cubic Hermite (Catmull-Rom) read from a source ring buffer at fractional
     //  pos. A 4-point cubic rejects far more imaging/aliasing than linear when
     //  grains are pitched, so pitched material stays smooth instead of gritty.
@@ -517,6 +538,13 @@ namespace phenotype::dsp
         MipSet& SA = sourceA[genReadIdx];
         MipSet& SB = sourceB[genReadIdx];
 
+        //  Adaptive CPU governor: on dense clouds (many concurrent grains) the
+        //  per-grain 4-point cubic dominates cost. Above a threshold, fall back
+        //  to 2-point linear for the whole block — the mips already band-limit,
+        //  so it is near-transparent but ~half the grain-loop cost. Light patches
+        //  keep the pristine cubic. Decision uses the previous block's count.
+        const bool cheapRead = liveGrainCount > kCheapGrainThresh;
+
         //  Push control values into the modulator (cheap; recompute is guarded).
         modulator.setCaudal        (p.caudal);
         modulator.setDensidadSuelo (p.soilDensity);
@@ -650,19 +678,16 @@ namespace phenotype::dsp
                 ++live;
                 const float w = Grain::window (g.phase);
 
-                const float a = readSource (SA, g.readPosA, g.mipA);
-                const float b = readSource (SB, g.readPosB, g.mipB);
+                const float a = cheapRead ? readSourceLinear (SA, g.readPosA, g.mipA)
+                                          : readSource       (SA, g.readPosA, g.mipA);
+                const float b = cheapRead ? readSourceLinear (SB, g.readPosB, g.mipB)
+                                          : readSource       (SB, g.readPosB, g.mipB);
 
-                float gA, gB;
-                fastmath::equalPowerPair (g.blend, gA, gB);
-                const float s = (a * gA + b * gB) * w * g.amp;
-
-                //  Constant-power stereo placement from the grain's pan (which
-                //  already folds in the diploid lean + unison spread).
-                float pl, pr;
-                fastmath::equalPowerPair (g.pan, pl, pr);
-                accL += s * pl;
-                accR += s * pr;
+                //  Blend + pan equal-power gains were resolved at trigger();
+                //  gAmp/bAmp already fold in the grain gain.
+                const float s = (a * g.gAmp + b * g.bAmp) * w;
+                accL += s * g.panL;
+                accR += s * g.panR;
 
                 g.readPosA += g.incA;
                 g.readPosB += g.incB;

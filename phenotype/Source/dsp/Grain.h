@@ -28,6 +28,13 @@ namespace phenotype::dsp
         int   mipA     = 0;      // band-limited genome mip for A (anti-alias)
         int   mipB     = 0;      // band-limited genome mip for B
 
+        //  Blend / pan are constant for the grain's whole lifetime, so their
+        //  equal-power gains are resolved ONCE at trigger() instead of twice per
+        //  sample in the render loop (a large saving at high grain counts).
+        //  gAmp/bAmp already fold in the grain gain `amp`.
+        float gAmp = 0.0f, bAmp = 0.0f;   // source A/B gain * amp
+        float panL = 0.707f, panR = 0.707f;
+
         void trigger (float startA, float startB,
                       float pitchA, float pitchB,
                       float lengthSamples, float gain, float ab,
@@ -45,6 +52,12 @@ namespace phenotype::dsp
             pan      = panPos;
             mipA     = mipIdxA;
             mipB     = mipIdxB;
+
+            float gA, gB;
+            fastmath::equalPowerPair (ab, gA, gB);
+            gAmp = gA * gain;
+            bAmp = gB * gain;
+            fastmath::equalPowerPair (panPos, panL, panR);
         }
 
         //  Raised-cosine window approximated with a trig-free parabola-squared

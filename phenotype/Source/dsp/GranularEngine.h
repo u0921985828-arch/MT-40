@@ -32,6 +32,7 @@ namespace phenotype::dsp
     {
     public:
         static constexpr int   kMaxGrains        = 128;
+        static constexpr int   kCheapGrainThresh = 32;   // >this grains -> linear read
         static constexpr int   kMaxVoices        = 16;
         static constexpr int   kNumMips          = 8;    // band-limited octaves
         static constexpr float kSourceSeconds    = 4.0f;   // capture / genome window
@@ -144,6 +145,7 @@ namespace phenotype::dsp
         int   spawnGrain (const ParameterSnapshot& p, float modValue,
                           float pitchMul, float ampMul, float panPos) noexcept;
         float readSource (const MipSet& mips, float pos, int mip) const noexcept;
+        float readSourceLinear (const MipSet& mips, float pos, int mip) const noexcept;
         void  fillGenome() noexcept;                 // band-limited wavetables -> source A/B
         void  buildMips (MipSet& mips) noexcept;     // derive octave mips from mip 0
         void  advanceVoices() noexcept;              // per-sample envelope integration
